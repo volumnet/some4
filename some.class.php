@@ -1882,7 +1882,8 @@ abstract class SOME extends \ArrayObject
                 $idN = $classname::_idN();
                 $orderBy = $classname::_defaultOrderBy();
                 // 2013-12-08 добавлено tl.* для получения промежуточных параметров ссылок
-                $SQL_query = "SELECT te.*, tl.* FROM " . $te . " AS te JOIN " . $tl . " AS tl ON tl." . $fto . " = te." . $idN
+                // 2014-02-12 переставили местами tl, te - иначе при присутствии в tl поля id выдается id исходной сущности, а не искомых
+                $SQL_query = "SELECT tl.*, te.* FROM " . $te . " AS te JOIN " . $tl . " AS tl ON tl." . $fto . " = te." . $idN
                            . " WHERE tl." . $ffrom . " = ?"
                            . ($orderBy ? " ORDER BY te." . $orderBy : "");
                 $SQL_result = static::$SQL->get(array($SQL_query, $this->_id));
