@@ -313,7 +313,6 @@ class Thumbnail
     {
         if ($this->imgSrc) {
             $this->_dest = $dest;
-            $this->_createFile = (bool)$this->_dest;
             $this->calculateRelativeParams();
             $this->calculateGeometry();
             $this->checkOutputFormat();
