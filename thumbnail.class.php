@@ -401,7 +401,7 @@ class Thumbnail
         $tn->hFrame = ($hFrame != -1 ? $hFrame : $wFrame);
         $tn->mode = $mode;
         $tn->allowEnlarge = $allow_enlarge;
-        $tn->create_file = $create_file;
+        $tn->createFile = $create_file;
         $tn->quality = $quality;
         $tn->background = $background;
         $tn->transparencyThreshold = $transparency_threshold;
@@ -651,7 +651,7 @@ class Thumbnail
      */         
     private function checkOutputFormat()
     {
-        $pathinfoDest = pathinfo($this->_dest);
+        $pathinfoDest = pathinfo($this->_dest ? $this->_dest : $this->_src);
         $this->extDest = $pathinfoDest['extension'];
         $this->filenameDest = $pathinfoDest['filename'];
         $this->mimeDest = \SOME\Graphics::extension_to_mime_type($this->extDest);
