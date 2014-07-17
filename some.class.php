@@ -1155,7 +1155,7 @@ abstract class SOME extends \ArrayObject
      * @param \SOME\Pages $Pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
      *                    После обработки запроса свойства $Pages устанавливаются в соответствии с полученным результатом.
      */         
-    final static public function getSet()
+    public static function getSet()
     {
         // Распознаем аргументы
         static::getSet_parseParams(func_get_args(), $Pages, $params);
