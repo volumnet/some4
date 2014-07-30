@@ -113,6 +113,58 @@ final class File
         $list = \array_values(\array_filter($list, $callback));
         return $list;
     }
+
+
+    /**
+     * Разрешает путь относительно псевдокаталогов ".." и "."
+     * 
+     * @param string $path - путь, содержащий псевдокаталоги
+     * @return string путь без псевдокаталогов
+     */
+    public static function resolvepath($path)
+    {
+        $path = str_replace('\\', '/', $path);
+        $temp = explode('/', $path);
+        $arr = array();
+        for ($i = 0; $i < count($temp); $i++) {
+            if (($temp[$i] == '..') && $arr && trim($arr[count($arr) - 1]) && ($arr[count($arr) - 1] != '..')) {
+                array_pop($arr);
+                continue;
+            }
+            if ($temp[$i] != '.') {
+                $arr[] = $temp[$i];
+            }
+        }
+        return implode('/', $arr);
+    }
+
+
+    /**
+     * Возвращает относительный путь одного каталога относительно другого
+     * @param string $src Исходный путь
+     * @param string $dest Путь назначения
+     * @return string Относительный путь
+     */
+    public static function relpath($src, $dest)
+    {
+        $src = self::resolvepath(str_replace('\\', '/', $src));
+        $dest = self::resolvepath(str_replace('\\', '/', $dest));
+        $srcArray = array_values(array_filter(explode('/', trim($src, '/'))));
+        $destArray = array_values(array_filter(explode('/', trim($dest, '/'))));
+        
+        for ($match = 0; $match < count($srcArray); $match++) {
+            if ($srcArray[$match] != $destArray[$match]) {
+                break;
+            }
+        }
+        $relArray = array();
+        if ($c = count($srcArray) - $match) {
+            $relArray = array_fill(0, $c, '..');
+        }
+        $relArray = array_merge($relArray, array_slice($destArray, $match));
+        $relPath = self::resolvepath(implode('/', $relArray));
+        return $relPath;
+    }
     
     
     /**
