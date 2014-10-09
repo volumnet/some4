@@ -255,7 +255,12 @@ final class Text
      */          
     public static function beautify($string)
     {
-        return preg_replace('/[^\\-\\w]/i', '', mb_ereg_replace(' ', '_', mb_strtolower(\SOME\Text::translit($string, false))));
+        $string = \SOME\Text::translit($string, false);
+        $string = iconv(mb_internal_encoding(), 'cp1251//TRANSLIT', $string);
+        $string = strtolower($string);
+        $string = preg_replace('/ /i', '_', $string);
+        $string = preg_replace('/[^\\-\\w]/i', '', $string);
+        return $string;
     } 
     
     
