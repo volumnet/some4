@@ -417,8 +417,12 @@ class Thumbnail
      */     
     private function __set_frame($var, $val)
     {
-        if ((is_numeric($val) || is_infinite($val)) && $val > 0) {
-            $this->{'_' . $var} = (int)$val;
+        if (is_numeric($val) && ($val > 0)) {
+            if (is_infinite($val)) {
+                $this->{'_' . $var} = $val;
+            } else {
+                $this->{'_' . $var} = (int)$val;
+            }
         }
         if ($this->_wFrame == INF || $this->_hFrame == INF) {
             // Если нет ограничивающей рамки, запрещаем растягивание изображения
