@@ -218,7 +218,11 @@ final class Text
     public static function serializeXML($node)
     {
         if (is_object($node)) {
-            $node = array_merge(get_class_vars(get_class($node)), get_object_vars($node));
+            if ($node instanceof \SOME\SOME) {
+                $node = $node->getArrayCopy();
+            } else {
+                $node = array_merge(get_class_vars(get_class($node)), get_object_vars($node));
+            }
         }
         $text = '';
         if (is_array($node)) {
