@@ -90,6 +90,7 @@ class Graphics
      */         
     public static function extension_to_image_type($ext)
     {
+        $ext = mb_strtolower($ext);
         if (isset(self::$types[$ext])) {
             return self::$types[$ext];
         } 
@@ -105,6 +106,7 @@ class Graphics
      */         
     public static function extension_to_mime_type($ext)
     {
+        $ext = mb_strtolower($ext);
         if (isset(self::$types[$ext])) {
             return image_type_to_mime_type(self::$types[$ext]);
         } 
@@ -120,6 +122,7 @@ class Graphics
      */         
     public static function extension_to_mime_subtype($ext)
     {
+        $ext = mb_strtolower($ext);
         if (isset(self::$types[$ext])) {
             return self::image_type_to_mime_subtype(self::$types[$ext]);
         } 
@@ -135,6 +138,7 @@ class Graphics
      */         
     public static function extension_to_input_function($ext)
     {
+        $ext = mb_strtolower($ext);
         if (isset(self::$types[$ext])) {
             return self::image_type_to_input_function(self::$types[$ext]);
         } 
@@ -150,6 +154,7 @@ class Graphics
      */         
     public static function extension_to_output_function($ext)
     {
+        $ext = mb_strtolower($ext);
         if (isset(self::$types[$ext])) {
             return self::image_type_to_output_function(self::$types[$ext]);
         } 
