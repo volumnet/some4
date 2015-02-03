@@ -36,7 +36,7 @@ class ZipArchive extends \ZipArchive
         if (is_file($filename)) {
             parent::addFile($filename, $localname, $start, $length);
         } elseif (is_dir($filename)) {
-            $filename = trim($filename, '\\/');
+            $filename = rtrim($filename, '\\/');
             if (!$localname) {
                 $localname = \basename($filename);
             }
