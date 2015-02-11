@@ -872,19 +872,21 @@ abstract class SOME extends \ArrayObject
      */
     public function rollback()
     {
-        if ($this->updates) {
-            foreach ($this->updates as $key => $val) {
-                $ref = static::getReferenceByFK($key);
-                if ($ref) {
-                    unset($this->referenced[$ref]);
-                    $parent = array_search($ref, static::$parents);
-                    if ($parent) {
-                        unset($this->_parents[$parent]);
-                    }
-                }
-            }
-            $this->updates = $this->cognized = array();
-        }
+        static::init();
+        // 2015-02-11, AVS: сделал rollback подобно reload'у из-за утечек памяти
+        // if ($this->updates) {
+        //     foreach ($this->updates as $key => $val) {
+        //         $ref = static::getReferenceByFK($key);
+        //         if ($ref) {
+        //             unset($this->referenced[$ref]);
+        //             $parent = array_search($ref, static::$parents);
+        //             if ($parent) {
+        //                 unset($this->_parents[$parent]);
+        //             }
+        //         }
+        //     }
+        // }
+        $this->updates = $this->referenced = $this->linked = $this->cognized = $this->_children = $this->_parents = array();
     }
 
 
