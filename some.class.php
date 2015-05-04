@@ -2660,7 +2660,8 @@ abstract class SOME extends \ArrayObject
             } else {
                 $classname = $reference['classname'];
                 $remote_ref = $classname::getReferenceByFK($reference['FK']);
-                if ($classname::$references[$remote_ref]['classname'] != \get_called_class()) {
+                // 2015-05-04, AVS: добавили !is_subclass_of, чтобы обеспечить наследуемость
+                if (($classname::$references[$remote_ref]['classname'] != \get_called_class()) && !is_subclass_of(\get_called_class(), $classname::$references[$remote_ref]['classname'])) {
                     throw new Exception(sprintf(self::EXCEPTION_INIT_INVALIDCHILDREN, \get_called_class(), $classname, $reference['FK']));
                 }
             }
