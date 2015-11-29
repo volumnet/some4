@@ -689,7 +689,8 @@ abstract class SOME extends \ArrayObject
                 !$this->_id ? ($this->_id = $val) : null;
                 break;
             case self::FIELD_REGULAR:
-                if ($val !== $this->$var) {
+                // 2015-11-29, AVS: поменял на self::__get($var), т.к. __get может быть переопределен и тогда сравнение будет неверным
+                if ($val !== self::__get($var)) {
                     $this->updates[$var] = $val;
                     $ref = static::getReferenceByFK($var);
                     if ($ref) {
