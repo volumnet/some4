@@ -2506,12 +2506,13 @@ abstract class SOME extends \ArrayObject
                                 }
                                 if (!in_array($alias, $usedAliases)) {
                                     // 2015-11-22, AVS: заменил `" . $alias . "___LINK` на `" . $alias . "`, т.к. не схватывает имя
-                                    $params['from'][] = "`" . $dbprefix . $link['tablename'] . "` AS `" . $alias . "` ON `" . $alias . "`.`" . $link['field_from'] . "` = `" . $oldAlias . "`.`" . $c::_idN() . "`";
+                                    // 2015-12-20, AVS: заменил обратно, т.к. возникает одинаковое название с целевой страницей ссылки (например, cms_materials_pages_assoc AS pages JOIN cms_pages AS pages)
+                                    $params['from'][] = "`" . $dbprefix . $link['tablename'] . "` AS `" . $alias . "___LINK` ON `" . $alias . "___LINK`.`" . $link['field_from'] . "` = `" . $oldAlias . "`.`" . $c::_idN() . "`";
                                     $usedAliases[] = $alias . '';
                                     if (isset($c::$links[$refTree[$i]]['classname'])) {
                                         $refclass = $link['classname'];
                                         $usedAliases[] = $alias;
-                                        $params['from'][] = "`" . $refclass::_tablename() . "` AS `" . $alias . "` ON `" . $alias . "`.`" . $refclass::_idN() . "` = `" . $alias . "`.`" . $link['field_to'] . "`";
+                                        $params['from'][] = "`" . $refclass::_tablename() . "` AS `" . $alias . "` ON `" . $alias . "`.`" . $refclass::_idN() . "` = `" . $alias . "___LINK`.`" . $link['field_to'] . "`";
                                     }
                                 }
                             }
