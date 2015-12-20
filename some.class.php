@@ -1187,7 +1187,7 @@ abstract class SOME extends \ArrayObject
         $SQL_query = " SELECT SQL_CALC_FOUND_ROWS " . implode(", ", $sql['select']) . " FROM " . implode(" LEFT JOIN ", $sql['from']) 
                    . ($sql['where'] ? " WHERE " . implode(" AND ", $sql['where']) : "") 
                    . ($sql['groupBy'] ? " GROUP BY " . $sql['groupBy'] : "") . ($sql['orderBy'] ? " ORDER BY " . $sql['orderBy'] : "");
-        //echo $SQL_query; print_r ($SQL_bind); exit;
+        // echo $SQL_query; print_r ($SQL_bind); exit;
         return static::getSQLSet($SQL_bind ? array($SQL_query, $SQL_bind) : $SQL_query, $Pages);
     }
     
