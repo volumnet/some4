@@ -14,10 +14,12 @@
  */
 namespace SOME;
 
+use SQLite3;
+
 /**
  * Подключаем класс исключения
  */
-require_once (__DIR__ . '/exception.class.php');
+require_once __DIR__ . '/exception.class.php';
 
 /**
  * "Обертка" интерфейса базы данных
@@ -151,7 +153,13 @@ class DB
      * @param bool $safeMode Индикатор безопасного режима
      */
     public function __construct(
-        $DSN, $user = null, $password = null, $encoding = null, $error_handler = null, $query_handler = null, $safeMode = false
+        $DSN,
+        $user = null,
+        $password = null,
+        $encoding = null,
+        $error_handler = null,
+        $query_handler = null,
+        $safeMode = false
     ) {
         $this->dsn      = $DSN;
         $this->user     = $user;
@@ -239,7 +247,7 @@ class DB
      */
     public function ping()
     {
-         try {
+        try {
             //$this->connection->query("SELECT 1");
         } catch (PDOException $e) {
             $this->__construct($this->dsn, $this->user, $this->password, $this->encoding, $this->error_handler, $this->query_handler, $this->safeMode);
@@ -504,7 +512,7 @@ class DB
     public function real_escape_string($string)
     {
         if (in_array($this->dbtype, array('sqlite', 'sqlite2'))) {
-            return sqlite_escape_string($string);
+            return SQLite3::escapeString($string);
         } else {
             return addslashes($string);
         }
@@ -647,8 +655,7 @@ class DB
     private function query_doQuery($SQL_query, array $SQL_bind = null)
     {
         if ($this->safeMode) {
-            if (
-                strstr($SQL_query, "INSERT ") || strstr($SQL_query, "UPDATE ") || strstr($SQL_query, "DELETE ") || strstr($SQL_query, "FILE ") ||
+            if (strstr($SQL_query, "INSERT ") || strstr($SQL_query, "UPDATE ") || strstr($SQL_query, "DELETE ") || strstr($SQL_query, "FILE ") ||
                 strstr($SQL_query, "CREATE ") || strstr($SQL_query, "ALTER ") || strstr($SQL_query, "INDEX ") || strstr($SQL_query, "DROP ") ||
                     strstr($SQL_query, "REPLACE ")
             ) {
@@ -717,7 +724,9 @@ class DB
     private function export_getFieldsValues(array $query)
     {
         $THIS = $this;
-        $fields = array_map(function($x) use ($THIS) { return $THIS->real_escape_string($x); }, array_keys($query[0]));
+        $fields = array_map(function ($x) use ($THIS) {
+            return $THIS->real_escape_string($x);
+        }, array_keys($query[0]));
         $values = array();
         for ($i = 0; $i < count($query); $i++) {
             $cells = array();
@@ -776,10 +785,19 @@ class DB
                 }
                 $temp[] = $row;
             }
-
         }
         $SQL_query = ($replace && !is_array($replace) ? "REPLACE" : "INSERT") . " INTO `" . $table . "`"
-                   . " (" . implode(", ", array_map(function($x) { return "`" . $x . "`"; }, $fields)) . ") VALUES \n" . implode(",\n", $values);
+                   . " (";
+        $SQL_query .= implode(
+            ", ",
+            array_map(
+                function ($x) {
+                    return "`" . $x . "`";
+                },
+                $fields
+            )
+        );
+        $SQL_query .= ") VALUES \n" . implode(",\n", $values);
         if (isset($temp) && $temp) {
             $SQL_query .= " ON DUPLICATE KEY UPDATE " . implode(", ", $temp);
         }
