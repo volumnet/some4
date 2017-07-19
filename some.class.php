@@ -2137,24 +2137,30 @@ abstract class SOME extends \ArrayObject
     final private static function onupdate_getSQL($event_class, array $ids, $ondelete)
     {
         $S = array("__SOME__." . (static::$objectCascadeUpdate ? "*" : static::_idN()));
-        $W = $F = $U = array();
+        $F = array(static::_tablename() . " AS __SOME__");
+        $W = $U = array();
         foreach (static::getCachesByClassname($event_class) as $FC => $cache) {
-            static::$objectCascadeUpdate ? ($S[$FC] = static::onupdate_getSQL_whatByCache($FC)) : false;
+            if (static::$objectCascadeUpdate) {
+                $S[$FC] = static::onupdate_getSQL_whatByCache($FC);
+            }
             $U[$FC] = static::onupdate_getSQL_updateByCache($FC);
-            $F = static::onupdate_getSQL_fromByCache($FC);
+            $F = array_merge($F, static::onupdate_getSQL_fromByCache($FC));
             $W[] = static::onupdate_getSQL_whereByCache($FC, \get_called_class(), $ids);
         }
         if ($ondelete) {
             foreach (static::getReferencesByClassname($event_class, false) as $ref => $reference) {
-                static::$objectCascadeUpdate ? ($S[$reference['FK']] = static::onupdate_getSQL_whatByRef($ref)) : false;
-                $U[$reference['FK']] = static::onupdate_getSQL_updateByRef($FC, $ids);
-                $F = array_merge($F, static::onupdate_getSQL_fromByRef($FC));
-                $W[] = static::onupdate_getSQL_whereByRef($FC, $ids);
+                if (static::$objectCascadeUpdate) {
+                    $S[$reference['FK']] = static::onupdate_getSQL_whatByRef($ref);
+                }
+                $U[$reference['FK']] = static::onupdate_getSQL_updateByRef($ref);
+                $F = array_merge($F, static::onupdate_getSQL_fromByRef($ref));
+                $W[] = static::onupdate_getSQL_whereByRef($ref, $event_class, $ids);
             }
         }
         if ($S && $F && $W && $U) {
             $SQL_query = "SELECT " . implode(", ", $S) . " FROM " . implode(" ", $F) . " WHERE " . implode(" OR ", $W);
             $SQL_update = "UPDATE " . implode(" ", $F) . " SET " . implode(", ", $U) . " WHERE " . implode(" OR ", $W);
+            // print_r (array($SQL_query, $SQL_update)); exit;
             return array($SQL_query, $SQL_update);
         }
         return false;
@@ -2191,12 +2197,12 @@ abstract class SOME extends \ArrayObject
      * Получает по внешнему ключу выражение FROM запросов, для использования в методе static::onupdate_getSQL
      *
      * @param string $FC Наименование внешнего ключа
-     * @return string Объявление таблицы для использования в FROM
+     * @return array<string> Массив объявлений таблиц для использования в FROM
      */
     final private static function onupdate_getSQL_fromByCache($FC)
     {
         $cache = static::$caches[$FC];
-        $SQL_from = array(static::_tablename() . " AS __SOME__");
+        $SQL_from = array();
         foreach ($cache['affected'] as $ref) {
             $reference = static::$references[$ref];
             $cls = $reference['classname'];
@@ -2269,17 +2275,18 @@ abstract class SOME extends \ArrayObject
     /**
      * Получает по ссылке выражение FROM запросов, для использования в методе static::onupdate_getSQL
      *
-     * @param string $ref Наименование ссылки
-     * @return string Объявление таблицы для использования в FROM
+     * @param string $refKey Наименование ссылки
+     * @return array<string> Массив объявлений таблиц для использования в FROM
      */
-    final private static function onupdate_getSQL_fromByRef($ref)
+    final private static function onupdate_getSQL_fromByRef($refKey)
     {
-        $reference = static::$references[$ref];
-        $cls = $reference['classname'];
-        $tbl = $cls::_tablename();
-        $refFK = $ref . "." . $cls::_idN();
+        $SQL_from = array();
+        $reference = static::$references[$refKey];
+        $refCls = $reference['classname'];
+        $tbl = $refCls::_tablename();
+        $refFK = $refKey . "." . $refCls::_idN();
         $someFK = "__SOME__." . $reference['FK'];
-        $SQL_from[$ref] = "LEFT JOIN " . $tbl . " AS " . $ref . " ON " . $refFK . " = " . $someFK;
+        $SQL_from[$refKey] = "LEFT JOIN " . $tbl . " AS " . $refKey . " ON " . $refFK . " = " . $someFK;
         return $SQL_from;
     }
 
@@ -2287,20 +2294,20 @@ abstract class SOME extends \ArrayObject
     /**
      * Получает по внешнему ключу часть условия WHERE запросов, для использования в методе static::onupdate_getSQL
      *
-     * @param string $ref Наименование ссылки
-     * @param string $event_class Наименование класса, изменение/удаление объекта которого повлекло изменение данного класса
-     * @param array $ids Массив первичных ключей изменяемых/удаляемых объектов класса $event_class
+     * @param string $refKey Наименование ссылки
+     * @param string $eventClass Наименование класса, изменение/удаление объекта которого повлекло изменение данного класса
+     * @param array $ids Массив первичных ключей изменяемых/удаляемых объектов класса $eventClass
      * @return string Выражение для использования в WHERE
      */
-    final private static function onupdate_getSQL_whereByRef($ref, $event_class, array $ids)
+    final private static function onupdate_getSQL_whereByRef($refKey, $eventClass, array $ids)
     {
-        $reference = static::$references[$ref];
-        $cls = $reference['classname'];
-        $refFK = $ref . "." . $cls::_idN();
+        $reference = static::$references[$refKey];
+        $refCls = $reference['classname'];
+        $refFK = $refKey . "." . $refCls::_idN();
         $someFK = "__SOME__." . $reference['FK'];
         $W = "(" . $someFK . " != " . $refFK;
-        if ($cls == $event_class) {
-            $W .= " AND (" . $ref . "." . $reference::_idN() . " IN (" . implode(", ", $ids) . ") OR " . $ref . "." . $reference::_idN() . " IS NULL)";
+        if ($refCls == $eventClass) {
+            $W .= " AND (" . $refKey . "." . $refCls::_idN() . " IN (" . implode(", ", $ids) . ") OR " . $refKey . "." . $refCls::_idN() . " IS NULL)";
         }
         $W .= ")";
         return $W;
