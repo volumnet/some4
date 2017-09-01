@@ -758,7 +758,8 @@ abstract class SOME extends \ArrayObject
     public function __clone()
     {
         $this->_id = null;
-        $this->updates = $this->properties;
+        // 2017-09-01, AVS: было $this->updates = $this->properties: при клонировании несохраненные данные терялись
+        $this->updates = array_merge($this->properties, $this->updates);
         $this->properties = array();
     }
 
@@ -2065,8 +2066,9 @@ abstract class SOME extends \ArrayObject
     /**
      * Принимает все изменения как синхронизированные параметры без записи в базу
      */
-    final private function trust()
+    public function trust()
     {
+        // 2017-09-01, AVS: поменял с final private на public, вдруг понадобится
         $this->properties = array_merge($this->properties, $this->updates);
         $this->updates = array();
         $this->_children = array();
