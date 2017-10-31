@@ -1,0 +1,27 @@
+{
+    "name": "volumnet/some4",
+    "description": "SOME Framework",
+    "version": "4.0.1",
+    "require": {
+        "php": ">=5.3",
+    },
+    "authors": [
+        {
+            "name": "Alex V. Surnin",
+            "email": "info@volumnet.ru"
+        }
+    ],
+    "autoload": {
+        "classmap": ["/"] 
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/volumnet/some4"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/volumnet/parser"
+        }
+    ]
+}
