@@ -3,7 +3,7 @@
     "description": "SOME Framework",
     "version": "4.0.1",
     "require": {
-        "php": ">=5.3",
+        "php": ">=5.3"
     },
     "authors": [
         {
