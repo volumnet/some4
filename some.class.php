@@ -1643,7 +1643,7 @@ abstract class SOME extends \ArrayObject
      * @param string $FK Наименование поля, являющегося внешним ключом
      * @return string|false Именованная ссылка из массива static::$references, либо false в случае отсутствия
      */
-    final protected static function getReferenceByFK($FK)
+    final public static function getReferenceByFK($FK)
     {
         $temp = array_filter(static::$references, function ($x) use ($FK) {
             return $x['FK'] == $FK;
