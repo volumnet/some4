@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit colors="true" bootstrap="./bootstrap.php">
+  <testsuites>
+    <testsuite>
+    </testsuite>
+  </testsuites>
+  <filter>
+    <whitelist>
+      <directory suffix=".php">..</directory>
+    </whitelist>
+  </filter>
+  <logging>
+    <log type="coverage-html" target="coverage" />
+  </logging>
+</phpunit>

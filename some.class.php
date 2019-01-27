@@ -765,6 +765,19 @@ abstract class SOME extends \ArrayObject
 
 
     /**
+     * Клонировать объект с сохранением ID# и свойств
+     */
+    public function deepClone()
+    {
+        $new = clone $this;
+        $new->_id = $this->_id;
+        $new->updates = $this->updates;
+        $new->properties = $this->properties;
+        return $new;
+    }
+
+
+    /**
      * Интерфейс получения массива данных из объекта
      *
      * Позволяет получить свойства объекта в виде массива.
@@ -2046,15 +2059,19 @@ abstract class SOME extends \ArrayObject
                 }
             }
         }
-        $F = $W = array();
         foreach ($affectedCaches as $FC => $cache) {
+            $F = $W = array();
             foreach ($cache['affected'] as $refName) {
                 $reference = static::$references[$refName];
                 $classname = $reference['classname'];
-                $F[] = $classname::_tablename() . " AS " . $refName;
+                $F[] = $classname::_tablename() . " AS " . $refName . ($F ? " ON 1" : "");
                 $W[] = "(" . $refName . "." . $classname::_idN() . " = " . static::$SQL->quote($this->{$reference['FK']}) . ")";
             }
-            $SQL_query = "SELECT (" . $cache['sql'] . ") FROM " . implode(" LEFT JOIN ", $F) . " WHERE " . implode(" AND ", $W);
+            $cacheSQL = $cache['sql'];
+            $cacheSQL = preg_replace_callback('/`?__SOME__`?\.`?(\w+)`?/umi', function ($matches) {
+                return static::$SQL->quote($this->{$matches[1]});
+            }, $cacheSQL);
+            $SQL_query = "SELECT (" . $cacheSQL . ") FROM " . implode(" LEFT JOIN ", $F) . " WHERE " . implode(" AND ", $W);
             $c = static::$SQL->getvalue($SQL_query);
             if (($c === null) || ($c === false)) {
                 $c = static::$SQL->getvalue("SELECT DEFAULT(" . $FC . ") FROM " . static::_tablename() . " LIMIT 1");
