@@ -1126,10 +1126,9 @@ abstract class SOME extends \ArrayObject
     /**
      * Удаляет объект и его окружение согласно установленным связям
      *
-     * Удалять несколько объектов не получится, т.к. объекты должны быть переданы по ссылке
      * @param \SOME\SOME Объект(ы) для удаления
      */
-    public static function delete(\SOME\SOME &$object)
+    public static function delete(SOME $object)
     {
         $classname = \get_class($object);
         if ($object->_id) {
