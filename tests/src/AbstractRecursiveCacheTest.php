@@ -19,6 +19,25 @@ class AbstractRecursiveCacheTest extends BaseDBTest
 
 
     /**
+     * Проверяет, является ли переменная индексированным массивом
+     * (допускается пустая строка в качестве ключа)
+     * @param mixed $array Переменная для проверки
+     * @return bool
+     */
+    public function isIndexedArray($array)
+    {
+        if (!is_array($array)) {
+            return false;
+        }
+        $keys = array_keys($array);
+        $numericKeys = array_filter($keys, function ($x) {
+            return is_numeric($x) || ($x === '');
+        });
+        return (count($numericKeys) == count($keys));
+    }
+
+
+    /**
      * Проверяет свойство $cache
      */
     public function testCache()
@@ -214,6 +233,22 @@ class AbstractRecursiveCacheTest extends BaseDBTest
 
 
     /**
+     * Тест получения кэша набора сущностей по ID#
+     */
+    public function testGetCacheSet()
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getArraySet(['aaa' => 15, 'bbb' => 18, 'ccc' => 20]);
+        $result = array_map(function ($x) {
+            return $x['urn'];
+        }, $result);
+
+        $this->assertEquals(['aaa' => 'catalog', 'bbb' => 'category111', 'ccc' => 'category113'], $result);
+    }
+
+
+    /**
      * Провайдер данных для функции testGetParentId
      */
     public function getParentIdDataProvider()
@@ -286,6 +321,32 @@ class AbstractRecursiveCacheTest extends BaseDBTest
             }, $result);
         } else {
             $result = $result->id;
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения кэша родительской сущности
+     * @param SOME|int|array<SOME|int> $data Дочерняя сущность
+     *                                       или ID# дочерней сущности
+     *                                       или их массив
+     * @param bool $assoc Возвращать массив с ассоциацией по ID#
+     * @param mixed $expected Ожидаемый результат
+     * @dataProvider getParentIdDataProvider
+     */
+    public function testGetParentCache($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getParentCache($data, $assoc);
+        if ($this->isIndexedArray($result)) {
+            $result = array_map(function ($x) {
+                return $x['id'];
+            }, $result);
+        } elseif ($result) {
+            $result = $result['id'];
         }
 
         $this->assertEquals($expected, $result);
@@ -585,6 +646,362 @@ class AbstractRecursiveCacheTest extends BaseDBTest
 
 
     /**
+     * Тест получения кэша родительских сущностей
+     * @param SOME|int|array<SOME|int> $data Дочерняя сущность
+     *                                       или ID# дочерней сущности
+     *                                       или их массив
+     * @param bool $assoc Возвращать массив с ассоциацией по ID#
+     * @param mixed $expected Ожидаемый результат
+     * @dataProvider getParentsIdsDataProvider
+     */
+    public function testGetParentsCache($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getParentsCache($data, $assoc);
+        if ($this->isIndexedArray($result)) {
+            $result = array_map(function ($x) {
+                if ($this->isIndexedArray($x)) {
+                    return array_map(function ($y) {
+                        return $y['id'];
+                    }, $x);
+                } else {
+                    return $x['id'];
+                }
+            }, $result);
+        } elseif ($result) {
+            $result = $result['id'];
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Провайдер данных для функции testGetSelfAndParentsIds
+     */
+    public function getSelfAndParentsIdsDataProvider()
+    {
+        return [
+            [
+                18,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18]
+            ],
+            [
+                18,
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18]
+            ],
+            [
+                18,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [1, 15, 16, 17, 18]
+            ],
+            [
+                18,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [1, 15, 16, 17, 18]
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['1' => 1, '2' => 2]
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['1' => 1, '2' => 2]
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [1, 2]
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [1, 2]
+            ],
+            [
+                1,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['1' => 1]
+            ],
+            [
+                1,
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['1' => 1]
+            ],
+            [
+                1,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [1]
+            ],
+            [
+                1,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [1]
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                []
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_INNER,
+                []
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                []
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_NONE,
+                []
+            ],
+            [
+                new Page(18),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18]
+            ],
+            [
+                new Page(18),
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18]
+            ],
+            [
+                new Page(18),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [1, 15, 16, 17, 18]
+            ],
+            [
+                new Page(18),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [1, 15, 16, 17, 18]
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['1' => 1, '2' => 2]
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['1' => 1, '2' => 2]
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [1, 2]
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [1, 2]
+            ],
+            [
+                new Page(1),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['1' => 1]
+            ],
+            [
+                new Page(1),
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['1' => 1]
+            ],
+            [
+                new Page(1),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [1]
+            ],
+            [
+                new Page(1),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [1]
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                []
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_INNER,
+                []
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                []
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_NONE,
+                []
+            ],
+            [
+                [18, 2, 1, 0],
+                AbstractRecursiveCache::ASSOC_BOTH,
+                [
+                    '18' => ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18],
+                    '2' => ['1' => 1, '2' => 2],
+                    '1' => ['1' => 1],
+                    '0' => [],
+                ]
+            ],
+            [
+                [18, 2, 1, 0],
+                AbstractRecursiveCache::ASSOC_INNER,
+                [
+                    '1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18, '2' => 2
+                ]
+            ],
+            [
+                [18, 2, 1, 0],
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [
+                    '18' => [1, 15, 16, 17, 18],
+                    '2' => [1, 2],
+                    '1' => [1],
+                    '0' => [],
+                ]
+            ],
+            [
+                [18, 2, 1, 0],
+                AbstractRecursiveCache::ASSOC_NONE,
+                [
+                    1, 15, 16, 17, 18, 2
+                ]
+            ],
+            [
+                [new Page(18), new Page(2), new Page(1), new Page()],
+                AbstractRecursiveCache::ASSOC_BOTH,
+                [
+                    '18' => ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18],
+                    '2' => ['1' => 1, '2' => 2],
+                    '1' => ['1' => 1],
+                    '' => [],
+                ]
+            ],
+            [
+                [new Page(18), new Page(2), new Page(1), new Page()],
+                AbstractRecursiveCache::ASSOC_INNER,
+                [
+                    '1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18, '2' => 2
+                ]
+            ],
+            [
+                [new Page(18), new Page(2), new Page(1), new Page()],
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [
+                    '18' => [1, 15, 16, 17, 18],
+                    '2' => [1, 2],
+                    '1' => [1],
+                    '' => [],
+                ]
+            ],
+            [
+                [new Page(18), new Page(2), new Page(1), new Page()],
+                AbstractRecursiveCache::ASSOC_NONE,
+                [
+                    1, 15, 16, 17, 18, 2
+                ]
+            ],
+        ];
+    }
+
+
+    /**
+     * Тест получения ID# собственной и родительских сущностей
+     * @param SOME|int|array<SOME|int> $data Дочерняя сущность
+     *                                       или ID# дочерней сущности
+     *                                       или их массив
+     * @param int $assoc Возвращать массив с ассоциацией по ID# (битовая маска)
+     *                   0 - нет
+     *                   1 - на уровне дочерних ID#
+     *                   2 - на уровне родительских ID#
+     * @param mixed $expected Ожидаемый результат
+     * @dataProvider getSelfAndParentsIdsDataProvider
+     */
+    public function testGetSelfAndParentsIds($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getSelfAndParentsIds($data, $assoc);
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения собственной и родительских сущностей
+     * @param SOME|int|array<SOME|int> $data Дочерняя сущность
+     *                                       или ID# дочерней сущности
+     *                                       или их массив
+     * @param bool $assoc Возвращать массив с ассоциацией по ID#
+     * @param mixed $expected Ожидаемый результат
+     * @dataProvider getSelfAndParentsIdsDataProvider
+     */
+    public function testGetSelfAndParents($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getSelfAndParents($data, $assoc);
+        if (is_array($result)) {
+            $result = array_map(function ($x) {
+                if (is_array($x)) {
+                    return array_map(function ($y) {
+                        return $y->id;
+                    }, $x);
+                } else {
+                    return $x->id;
+                }
+            }, $result);
+        } else {
+            $result = $result->id;
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения кэшей собственной и родительских сущностей
+     * @param SOME|int|array<SOME|int> $data Дочерняя сущность
+     *                                       или ID# дочерней сущности
+     *                                       или их массив
+     * @param bool $assoc Возвращать массив с ассоциацией по ID#
+     * @param mixed $expected Ожидаемый результат
+     * @dataProvider getSelfAndParentsIdsDataProvider
+     */
+    public function testGetSelfAndParentsCache($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getSelfAndParentsCache($data, $assoc);
+        if ($this->isIndexedArray($result)) {
+            $result = array_map(function ($x) {
+                if ($this->isIndexedArray($x)) {
+                    return array_map(function ($y) {
+                        return $y['id'];
+                    }, $x);
+                } else {
+                    return $x['id'];
+                }
+            }, $result);
+        } elseif ($result) {
+            $result = $result['id'];
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
      * Провайдер данных для функции testGetChildrenIds
      */
     public function getChildrenIdsDataProvider()
@@ -816,6 +1233,38 @@ class AbstractRecursiveCacheTest extends BaseDBTest
             }, $result);
         } else {
             $result = $result->id;
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения кэша дочерних сущностей
+     * @param SOME|int|array<SOME|int> $data Родительская сущность
+     *                                       или ID# родительской сущности
+     *                                       или их массив
+     * @param int $assoc Возвращать массив с ассоциацией по ID#
+     *                   (константа из static::ASSOC_...)
+     * @dataProvider getChildrenIdsDataProvider
+     */
+    public function testGetChildrenCache($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getChildrenCache($data, $assoc);
+        if ($this->isIndexedArray($result)) {
+            $result = array_map(function ($x) {
+                if ($this->isIndexedArray($x)) {
+                    return array_map(function ($y) {
+                        return $y['id'];
+                    }, $x);
+                } else {
+                    return $x['id'];
+                }
+            }, $result);
+        } elseif ($result) {
+            $result = $result['id'];
         }
 
         $this->assertEquals($expected, $result);
@@ -1282,6 +1731,524 @@ class AbstractRecursiveCacheTest extends BaseDBTest
             }, $result);
         } else {
             $result = $result->id;
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения кэшей дочерних сущностей всех уровней
+     * @param SOME|int|array<SOME|int> $data Родительская сущность
+     *                                       или ID# родительской сущности
+     *                                       или их массив
+     * @param int $assoc Возвращать массив с ассоциацией по ID#
+     *                   (константа из static::ASSOC_...)
+     * @dataProvider getAllChildrenIdsDataProvider
+     */
+    public function testGetAllChildrenCache($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getAllChildrenCache($data, $assoc);
+        if ($this->isIndexedArray($result)) {
+            $result = array_map(function ($x) {
+                if ($this->isIndexedArray($x)) {
+                    return array_map(function ($y) {
+                        return $y['id'];
+                    }, $x);
+                } else {
+                    return $x['id'];
+                }
+            }, $result);
+        } elseif ($result) {
+            $result = $result['id'];
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Провайдер данных для функции testGetSelfAndChildrenIds
+     */
+    public function getSelfAndChildrenIdsDataProvider()
+    {
+        return [
+            [
+                17,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                17,
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                17,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [17, 18, 19, 20],
+            ],
+            [
+                17,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [17, 18, 19, 20],
+            ],
+            [
+                16,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                16,
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                16,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [16, 17, 21, 22, 18, 19, 20],
+            ],
+            [
+                16,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [16, 17, 21, 22, 18, 19, 20],
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['2' => 2],
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['2' => 2],
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [2],
+            ],
+            [
+                2,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [2],
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_BOTH,
+                [
+                    '1' => 1,
+
+                    '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                    '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                    '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                    '32' => 32, '33' => 33,
+
+                    '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                    '16' => 16, '23' => 23, '24' => 24,
+
+                    '17' => 17, '21' => 21, '22' => 22,
+
+                    '18' => 18, '19' => 19, '20' => 20,
+                ],
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_INNER,
+                [
+                    '1' => 1,
+
+                    '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                    '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                    '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                    '32' => 32, '33' => 33,
+
+                    '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                    '16' => 16, '23' => 23, '24' => 24,
+
+                    '17' => 17, '21' => 21, '22' => 22,
+
+                    '18' => 18, '19' => 19, '20' => 20,
+                ],
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [
+                    1,
+                    2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 27, 29, 30, 31, 32, 33,
+                    4, 5, 6, 26, 28, 16, 23, 24,
+                    17, 21, 22,
+                    18, 19, 20,
+                ],
+            ],
+            [
+                0,
+                AbstractRecursiveCache::ASSOC_NONE,
+                [
+                    1,
+                    2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 27, 29, 30, 31, 32, 33,
+                    4, 5, 6, 26, 28, 16, 23, 24,
+                    17, 21, 22,
+                    18, 19, 20,
+                ],
+            ],
+            [
+                new Page(17),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                new Page(17),
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                new Page(17),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [17, 18, 19, 20],
+            ],
+            [
+                new Page(17),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [17, 18, 19, 20],
+            ],
+            [
+                new Page(16),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                new Page(16),
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
+            ],
+            [
+                new Page(16),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [16, 17, 21, 22, 18, 19, 20],
+            ],
+            [
+                new Page(16),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [16, 17, 21, 22, 18, 19, 20],
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                ['2' => 2],
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_INNER,
+                ['2' => 2],
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [2],
+            ],
+            [
+                new Page(2),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [2],
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_BOTH,
+                [
+                    '1' => 1,
+
+                    '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                    '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                    '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                    '32' => 32, '33' => 33,
+
+                    '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                    '16' => 16, '23' => 23, '24' => 24,
+
+                    '17' => 17, '21' => 21, '22' => 22,
+
+                    '18' => 18, '19' => 19, '20' => 20,
+                ],
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_INNER,
+                [
+                    '1' => 1,
+
+                    '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                    '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                    '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                    '32' => 32, '33' => 33,
+
+                    '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                    '16' => 16, '23' => 23, '24' => 24,
+
+                    '17' => 17, '21' => 21, '22' => 22,
+
+                    '18' => 18, '19' => 19, '20' => 20,
+                ],
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [
+                    1,
+                    2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 27, 29, 30, 31, 32, 33,
+                    4, 5, 6, 26, 28, 16, 23, 24,
+                    17, 21, 22,
+                    18, 19, 20,
+                ],
+            ],
+            [
+                new Page(),
+                AbstractRecursiveCache::ASSOC_NONE,
+                [
+                    1,
+                    2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 27, 29, 30, 31, 32, 33,
+                    4, 5, 6, 26, 28, 16, 23, 24,
+                    17, 21, 22,
+                    18, 19, 20,
+                ],
+            ],
+            [
+                [17, 16, 2, 0],
+                AbstractRecursiveCache::ASSOC_BOTH,
+                [
+                    '17' => ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
+                    '16' => ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
+                    '2' => ['2' => 2],
+                    '0' => [
+                        '1' => 1,
+
+                        '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                        '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                        '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                        '32' => 32, '33' => 33,
+
+                        '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                        '16' => 16, '23' => 23, '24' => 24,
+
+                        '17' => 17, '21' => 21, '22' => 22,
+
+                        '18' => 18, '19' => 19, '20' => 20,
+                    ],
+                ]
+            ],
+            [
+                [17, 16, 2, 0],
+                AbstractRecursiveCache::ASSOC_INNER,
+                [
+                    '17' => 17,
+                    '18' => 18, '19' => 19, '20' => 20,
+                    '21' => 21, '22' => 22,
+                    '1' => 1,
+
+                    '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                    '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                    '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                    '32' => 32, '33' => 33,
+
+                    '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                    '16' => 16, '23' => 23, '24' => 24,
+                ]
+            ],
+            [
+                [17, 16, 2, 0],
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [
+                    '17' => [17, 18, 19, 20],
+                    '16' => [16, 17, 21, 22, 18, 19, 20],
+                    '2' => [2],
+                    '0' => [
+                        1,
+
+                        2, 3, 7, 8, 9, 10,
+                        11, 12, 13, 14, 15,
+                        25, 27, 29, 30, 31,
+                        32, 33,
+
+                        4, 5, 6, 26, 28,
+                        16, 23, 24,
+
+                        17, 21, 22,
+
+                        18, 19, 20,
+                    ],
+                ]
+            ],
+            [
+                [17, 16, 2, 0],
+                AbstractRecursiveCache::ASSOC_NONE,
+                [
+                    17, 18, 19, 20,
+                    16, 21, 22,
+                    2,
+                    1, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 27, 29, 30, 31, 32, 33, 4, 5, 6, 26, 28, 23, 24,
+                ]
+            ],
+            [
+                [new Page(17), new Page(16), new Page(2), new Page()],
+                AbstractRecursiveCache::ASSOC_BOTH,
+                [
+                    '17' => ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
+                    '16' => ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
+                    '2' => ['2' => 2],
+                    '' => [
+                        '1' => 1,
+
+                        '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                        '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                        '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                        '32' => 32, '33' => 33,
+
+                        '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                        '16' => 16, '23' => 23, '24' => 24,
+
+                        '17' => 17, '21' => 21, '22' => 22,
+
+                        '18' => 18, '19' => 19, '20' => 20,
+                    ],
+                ]
+            ],
+            [
+                [new Page(17), new Page(16), new Page(2), new Page()],
+                AbstractRecursiveCache::ASSOC_INNER,
+                [
+                    '17' => 17,
+                    '18' => 18, '19' => 19, '20' => 20,
+                    '21' => 21, '22' => 22,
+                    '1' => 1,
+
+                    '2' => 2, '3' => 3, '7' => 7, '8' => 8, '9' => 9, '10' => 10,
+                    '11' => 11, '12' => 12, '13' => 13, '14' => 14, '15' => 15,
+                    '25' => 25, '27' => 27, '29' => 29, '30' => 30, '31' => 31,
+                    '32' => 32, '33' => 33,
+
+                    '4' => 4, '5' => 5, '6' => 6, '26' => 26, '28' => 28,
+                    '16' => 16, '23' => 23, '24' => 24,
+                ]
+            ],
+            [
+                [new Page(17), new Page(16), new Page(2), new Page()],
+                AbstractRecursiveCache::ASSOC_OUTER,
+                [
+                    '17' => [17, 18, 19, 20],
+                    '16' => [16, 17, 21, 22, 18, 19, 20],
+                    '2' => [2],
+                    '' => [
+                        1,
+
+                        2, 3, 7, 8, 9, 10,
+                        11, 12, 13, 14, 15,
+                        25, 27, 29, 30, 31,
+                        32, 33,
+
+                        4, 5, 6, 26, 28,
+                        16, 23, 24,
+
+                        17, 21, 22,
+
+                        18, 19, 20,
+                    ],
+                ]
+            ],
+            [
+                [new Page(17), new Page(16), new Page(2), new Page()],
+                AbstractRecursiveCache::ASSOC_NONE,
+                [
+                    17, 18, 19, 20,
+                    16, 21, 22,
+                    2,
+                    1, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 25, 27, 29, 30, 31, 32, 33, 4, 5, 6, 26, 28, 23, 24,
+                ]
+            ],
+        ];
+    }
+
+
+    /**
+     * Тест получения ID# собственных и дочерних сущностей всех уровней
+     * @param SOME|int|array<SOME|int> $data Родительская сущность
+     *                                       или ID# родительской сущности
+     *                                       или их массив
+     * @param int $assoc Возвращать массив с ассоциацией по ID#
+     *                   (константа из static::ASSOC_...)
+     * @param mixed $expected Ожидаемый результат
+     * @dataProvider getSelfAndChildrenIdsDataProvider
+     */
+    public function testGetSelfAndChildrenIds($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getSelfAndChildrenIds($data, $assoc);
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения собственных и дочерних сущностей всех уровней
+     * @param SOME|int|array<SOME|int> $data Родительская сущность
+     *                                       или ID# родительской сущности
+     *                                       или их массив
+     * @param int $assoc Возвращать массив с ассоциацией по ID#
+     *                   (константа из static::ASSOC_...)
+     * @dataProvider getSelfAndChildrenIdsDataProvider
+     */
+    public function testGetSelfAndAllChildren($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getSelfAndChildren($data, $assoc);
+        if (is_array($result)) {
+            $result = array_map(function ($x) {
+                if (is_array($x)) {
+                    return array_map(function ($y) {
+                        return $y->id;
+                    }, $x);
+                } else {
+                    return $x->id;
+                }
+            }, $result);
+        } else {
+            $result = $result->id;
+        }
+
+        $this->assertEquals($expected, $result);
+    }
+
+
+    /**
+     * Тест получения кэшей собственных и дочерних сущностей всех уровней
+     * @param SOME|int|array<SOME|int> $data Родительская сущность
+     *                                       или ID# родительской сущности
+     *                                       или их массив
+     * @param int $assoc Возвращать массив с ассоциацией по ID#
+     *                   (константа из static::ASSOC_...)
+     * @dataProvider getSelfAndChildrenIdsDataProvider
+     */
+    public function testGetSelfAndAllChildrenCache($data, $assoc, $expected)
+    {
+        $cache = ConcreteRecursiveCache::i();
+
+        $result = $cache->getSelfAndChildrenCache($data, $assoc);
+        if ($this->isIndexedArray($result)) {
+            $result = array_map(function ($x) {
+                if ($this->isIndexedArray($x)) {
+                    return array_map(function ($y) {
+                        return $y['id'];
+                    }, $x);
+                } else {
+                    return $x['id'];
+                }
+            }, $result);
+        } elseif ($result) {
+            $result = $result['id'];
         }
 
         $this->assertEquals($expected, $result);
