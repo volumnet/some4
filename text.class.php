@@ -323,4 +323,22 @@ final class Text
         }
         return $X;
     }
+
+
+    /**
+     * Форматирует цену (отделяет тысячи, убирает нулевую дробь)
+     * @param float $price Цена
+     * @return string
+     */
+    public static function formatPrice($price)
+    {
+        $remainder = (float)$price - (float)(int)$price;
+        $result = number_format(
+            (float)$price,
+            ($remainder > 0) ? 2 : 0,
+            ',',
+            ' '
+        );
+        return $result;
+    }
 }
