@@ -1,5 +1,5 @@
 -- 
--- Table structure: attachments
+-- Table structure: attachments 
 -- 
 DROP TABLE IF EXISTS attachments;
 CREATE TABLE `attachments` (
