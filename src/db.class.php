@@ -8,12 +8,18 @@
  * @package SOME
  * @subpackage Database
  * @author Александр В. Сурнин <avs@volumnet.ru>
- * @copyright © 2019, ООО «Объемные Сети»
+ * @copyright © 2013, ООО «Объемные Сети»
+ * @version 4.2
  * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
 namespace SOME;
 
 use SQLite3;
+
+/**
+ * Подключаем класс исключения
+ */
+require_once __DIR__ . '/exception.class.php';
 
 /**
  * "Обертка" интерфейса базы данных

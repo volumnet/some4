@@ -65,7 +65,6 @@ namespace SOME;
  */
 abstract class SOME extends \ArrayObject
 {
-    // <editor-fold defaultstate="collapsed" desc="Константы класса">
     /**
      * Тип свойства — первичный ключ
      */
@@ -256,10 +255,7 @@ abstract class SOME extends \ArrayObject
      */
     const EXCEPTION_INIT_NOPRIMARYKEY = 'Cannot initialize class "%s": no primary key found.';
 
-    // </editor-fold>
 
-    // <editor-fold defaultstate="collapsed" desc="Свойства класса">
-        // <editor-fold defaultstate="collapsed" desc="Защищенные свойства класса">
     /**
      * Основная таблица сущности
      * @var string наименование таблицы в базе данных без учета префикса
@@ -434,9 +430,6 @@ abstract class SOME extends \ArrayObject
      * @var <type>
      */
     protected static $objectCascadeDelete = false;
-        // </editor-fold>
-        // <editor-fold defaultstate="collapsed" desc="Приватные свойства класса">
-            // <editor-fold defaultstate="collapsed" desc="Приватные динамические свойства класса">
     /**
      * Первичный ключ объекта
      *
@@ -588,9 +581,7 @@ abstract class SOME extends \ArrayObject
      * @var array Массив вида array(\SOME\SOME родительский элемент, ...)
      */
     protected $_parents = array();
-            // </editor-fold>
 
-            // <editor-fold defaultstate="collapsed" desc="Приватные статические свойства класса">
     /**
      * Внутренняя схема устройства классов
      *
@@ -618,13 +609,7 @@ abstract class SOME extends \ArrayObject
         self::FIELD_COGNIZABLE => 'cognized', self::FIELD_CHILDREN => '_children', self::FIELD_PARENTS => '_parents',
         self::FIELD_META => 'meta'
     );
-            // </editor-fold>
-        // </editor-fold>
-    // </editor-fold>
 
-    // <editor-fold defaultstate="collapsed" desc="Методы класса">
-        // <editor-fold defaultstate="collapsed" desc="Публичные методы класса">
-            // <editor-fold defaultstate="collapsed" desc="Magic-methods и функции интерфейса ArrayObject">
     /**
      * Конструктор класса
      *
@@ -854,9 +839,7 @@ abstract class SOME extends \ArrayObject
     {
         return $this->__get($var);
     }
-            // </editor-fold>
 
-            // <editor-fold defaultstate="collapsed" desc="Публичные динамические методы">
     /**
      * Сохраняет данные в таблицу базы данных
      *
@@ -1076,9 +1059,7 @@ abstract class SOME extends \ArrayObject
         return $save_ok;
     }
 
-            // </editor-fold>
 
-            // <editor-fold defaultstate="collapsed" desc="Публичные статические методы">
     /**
      * Инициализирует класс или систему SOME в целом, либо задает новые значения
      *
@@ -1597,29 +1578,6 @@ abstract class SOME extends \ArrayObject
 
 
     /**
-     * Метод автозагрузки для классов в пространстве имен SOME
-     *
-     * Метод удовлетворяет требованиям, предъявляемым к функции-кандидату на автозагрузчик
-     * @param string classname имя класса с указанием пространств имен
-     */
-    final public static function autoload($classname)
-    {
-        $ns_array = explode('\\', trim($classname, '\\'));
-        $class_alias = array_pop($ns_array);
-        $ns = implode('\\', $ns_array);
-        if ($ns_array && $ns_array[0] == 'SOME') {
-        }
-        if (is_file(__DIR__ . '/' . strtolower($class_alias) . '.class.php')) {
-            @include_once __DIR__ . '/' . strtolower($class_alias) . '.class.php';
-        } elseif (is_file(__DIR__ . '/' . strtolower($class_alias) . '.interface.php')) {
-            @include_once __DIR__ . '/' . strtolower($class_alias) . '.interface.php';
-        }
-    }
-            // </editor-fold>
-        // </editor-fold>
-
-        // <editor-fold defaultstate="collapsed" desc="Защищенные методы класса">
-    /**
      * Возвращает наименование сопряженного класса по именованной связке
      *
      * Подразумевается, что будет возвращен класс, имеющий связку с такой же таблицей, что и данный класс,
@@ -1775,10 +1733,7 @@ abstract class SOME extends \ArrayObject
         static::$SQL->query($SQL_query);
         return true;
     }
-        // </editor-fold>
 
-        // <editor-fold defaultstate="collapsed" desc="Приватные методы класса">
-            // <editor-fold defaultstate="collapsed" desc="Приватные динамические методы класса">
     /**
      * Инициализирует объект массивом данных
      *
@@ -2089,10 +2044,7 @@ abstract class SOME extends \ArrayObject
         $this->updates = array();
         $this->_children = array();
     }
-            // </editor-fold>
 
-            // <editor-fold defaultstate="collapsed" desc="Приватные статические методы класса">
-                // <editor-fold defaultstate="collapsed" desc="Семейство onupdate">
     /**
      * Событие, наступающее при изменении объекта/группы объектов данного класса
      *
@@ -2330,9 +2282,7 @@ abstract class SOME extends \ArrayObject
         $W .= ")";
         return $W;
     }
-                // </editor-fold>
 
-                // <editor-fold defaultstate="collapsed" desc="Семейство ondelete">
     /**
      * Событие, наступающее при удалении объекта/группы объектов данного класса
      *
@@ -2609,9 +2559,7 @@ abstract class SOME extends \ArrayObject
             }
         }
     }
-                // </editor-fold>
 
-                // <editor-fold defaultstate="collapsed" desc="Семейство init">
     /**
      * Устанавливает объект подключения к базе данных и префикс таблиц для конкретного класса, либо в целом для SOME
      *
@@ -2854,7 +2802,6 @@ abstract class SOME extends \ArrayObject
         }
         return $ok;
     }
-                // </editor-fold>
 
     /**
      * Возвращает тип свойства.
@@ -2893,7 +2840,4 @@ abstract class SOME extends \ArrayObject
         $prop2 = preg_replace('/^(.*?)_ids$/i', '$1', preg_replace('/^all_(.*?)$/i', '$1', $prop));
         return $prop2;
     }
-            // </editor-fold>
-        // </editor-fold>
-    // </editor-fold>
 }
