@@ -848,6 +848,8 @@ abstract class SOME extends \ArrayObject
      */
     public function commit()
     {
+        $new = !$this->_id;
+        EventProcessor::emit('beforecommit', $this, ['new' => $new]);
         if (static::$defaultOrderBy && static::$aiPriority) {
             $priorityN = static::$defaultOrderBy;
             if (!$this->_id && !$this->$priorityN) {
@@ -871,6 +873,7 @@ abstract class SOME extends \ArrayObject
         }
         $this->updates = array();
         $this->_children = array();
+        EventProcessor::emit('commit', $this, ['new' => $new]);
     }
 
 
@@ -1111,6 +1114,7 @@ abstract class SOME extends \ArrayObject
      */
     public static function delete(SOME $object)
     {
+        EventProcessor::emit('beforedelete', $object);
         $classname = \get_class($object);
         if ($object->_id) {
             $classname::ondelete(array($object->_id));
@@ -1121,6 +1125,7 @@ abstract class SOME extends \ArrayObject
             $SQL_bind = array($object->_id);
             $classname::$SQL->query(array($SQL_query, $SQL_bind));
         }
+        EventProcessor::emit('delete', $object);
         $object = null;
     }
 
