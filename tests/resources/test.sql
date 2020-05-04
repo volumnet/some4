@@ -1,5 +1,5 @@
 -- 
--- Table structure: attachments 
+-- Table structure: attachments
 -- 
 DROP TABLE IF EXISTS attachments;
 CREATE TABLE `attachments` (
@@ -2463,6 +2463,29 @@ INSERT INTO `cms_pages_tree_cache` (`parent_id`, `child_id`, `__level`) VALUES
 
 -- *************************************************************
 -- 
+-- Table structure: cms_redirects
+-- 
+DROP TABLE IF EXISTS cms_redirects;
+CREATE TABLE `cms_redirects` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID#',
+  `rx` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'RegExp',
+  `url_from` varchar(255) NOT NULL DEFAULT '' COMMENT 'URL from',
+  `url_to` varchar(255) NOT NULL DEFAULT '' COMMENT 'URL to',
+  `priority` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Priority',
+  PRIMARY KEY (`id`),
+  KEY `url_from` (`url_from`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 COMMENT='Redirects';
+
+-- 
+-- Table data: cms_redirects
+-- 
+INSERT INTO `cms_redirects` (`id`, `rx`, `url_from`, `url_to`, `priority`) VALUES 
+('1', '0', '/sitemaps.xml', '/sitemap.xml', '0'),
+('2', '0', '/www.', '/', '0');
+
+
+-- *************************************************************
+-- 
 -- Table structure: cms_shop_blocks_cart
 -- 
 DROP TABLE IF EXISTS cms_shop_blocks_cart;
@@ -2768,12 +2791,16 @@ CREATE TABLE `cms_shop_orders` (
   `user_agent` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'User Agent',
   `status_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Status ID#',
   `paid` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'Payment status',
+  `payment_interface_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Payment interface ID#',
+  `payment_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'Payment ID#',
+  `payment_url` varchar(255) NOT NULL DEFAULT '' COMMENT 'Payment URL',
   PRIMARY KEY (`id`),
   KEY `uid` (`uid`),
   KEY `pid` (`pid`),
   KEY `page_id` (`page_id`),
   KEY `status_id` (`status_id`),
-  KEY `paid` (`paid`)
+  KEY `paid` (`paid`),
+  KEY `payment_id` (`payment_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Orders';
 
 -- *************************************************************
@@ -2785,7 +2812,7 @@ CREATE TABLE `cms_shop_orders_goods` (
   `order_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Order ID#',
   `material_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Material ID#',
   `name` varchar(64) NOT NULL DEFAULT '' COMMENT 'Name',
-  `meta` varchar(64) NOT NULL DEFAULT '' COMMENT 'Meta data',
+  `meta` varchar(255) NOT NULL DEFAULT '' COMMENT 'Meta data',
   `realprice` decimal(8,2) NOT NULL DEFAULT '0.00' COMMENT 'Real price',
   `amount` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Amount',
   `priority` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Priority',
@@ -2826,6 +2853,9 @@ CREATE TABLE `cms_shop_orders_statuses` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID#',
   `urn` varchar(255) NOT NULL DEFAULT '' COMMENT 'URN',
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Name',
+  `do_notify` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'Notify user',
+  `notification_title` text COMMENT 'User notification title',
+  `notification` text COMMENT 'User notification',
   `priority` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Priority',
   PRIMARY KEY (`id`),
   KEY `priority` (`priority`)
@@ -2834,10 +2864,37 @@ CREATE TABLE `cms_shop_orders_statuses` (
 -- 
 -- Table data: cms_shop_orders_statuses
 -- 
-INSERT INTO `cms_shop_orders_statuses` (`id`, `urn`, `name`, `priority`) VALUES 
-('1', 'progress', 'В обработке', '1'),
-('2', 'completed', 'Обработан', '2'),
-('3', 'canceled', 'Отменен', '3');
+INSERT INTO `cms_shop_orders_statuses` (`id`, `urn`, `name`, `do_notify`, `notification_title`, `notification`, `priority`) VALUES 
+('1', 'progress', 'В обработке', '0', 'Ваш заказ №{{ID}} переведен в статус \"В обработке\"', '<p>Доброго времени суток!</p>
+
+<p>Ваш заказ №{{ID}} переведен в статус &quot;В обработке&quot;</p>
+
+<p>--</p>
+
+<p>
+  С уважением,<br />
+  Администрация сайта <a href=\"http://lab\">lab</a>
+</p>', '1'),
+('2', 'completed', 'Обработан', '0', 'Ваш заказ №{{ID}} обработан', '<p>Доброго времени суток!</p>
+
+<p>Ваш заказ №{{ID}} обработан</p>
+
+<p>--</p>
+
+<p>
+  С уважением,<br />
+  Администрация сайта <a href=\"http://lab\">lab</a>
+</p>', '2'),
+('3', 'canceled', 'Отменен', '0', 'Ваш заказ №{{ID}} отменен', '<p>Доброго времени суток!</p>
+
+<p>Ваш заказ №{{ID}} отменен</p>
+
+<p>--</p>
+
+<p>
+  С уважением,<br />
+  Администрация сайта <a href=\"http://lab\">lab</a>
+</p>', '3');
 
 
 -- *************************************************************
@@ -2971,7 +3028,7 @@ CREATE TABLE `cms_snippets` (
   `locked` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'Locked',
   PRIMARY KEY (`id`),
   KEY `pid` (`pid`)
-) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8 COMMENT='Snippets';
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8 COMMENT='Snippets';
 
 -- 
 -- Table data: cms_snippets
@@ -2985,356 +3042,37 @@ INSERT INTO `cms_snippets` (`id`, `pid`, `urn`, `name`, `description`, `locked`)
  */
 namespace RAAS\\CMS;
 
-$interface = new MaterialInterface($Block, $Page, $_GET, $_POST, $_COOKIE, $_SESSION, $_SERVER, $_FILES);
+$interface = new MaterialInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
 return $interface->process();
 ', '1'),
 ('2', '1', '__raas_form_interface', 'Стандартный интерфейс формы', '<?php
+/**
+ * Стандартный интерфейс формы
+ * @param Block_Form $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS;
 
-use RAAS\\Attachment;
-use RAAS\\Application;
-use \\Mustache_Engine;
-
-$notify = function (Feedback $Item, Material $Material = null) {
-    $temp = array_values(array_filter(array_map(\'trim\', preg_split(\'/( |;|,)/\', $Item->parent->email))));
-    $emails = $sms_emails = $sms_phones = array();
-    foreach ($temp as $row) {
-        if (($row[0] == \'[\') && ($row[strlen($row) - 1] == \']\')) {
-            if (filter_var(substr($row, 1, -1), FILTER_VALIDATE_EMAIL)) {
-                $sms_emails[] = substr($row, 1, -1);
-            } elseif (preg_match(\'/(\\\\+)?\\\\d+/umi\', substr($row, 1, -1))) {
-                $sms_phones[] = substr($row, 1, -1);
-            }
-        } else {
-            $emails[] = $row;
-        }
-    }
-    if ($Item->parent->Interface->id) {
-        $template = $Item->parent->Interface->description;
-    }
-
-    ob_start();
-    eval(\'?\' . \'>\' . $template);
-    $message = ob_get_contents();
-    ob_end_clean();
-
-    ob_start();
-    $SMS = true;
-    eval(\'?\' . \'>\' . $template);
-    $message_sms = ob_get_contents();
-    ob_end_clean();
-
-    $subject = date(DATETIMEFORMAT) . \' \' . sprintf(FEEDBACK_STANDARD_HEADER, $Item->parent->name, $Item->page->name);
-    if ($emails) {
-        Application::i()->sendmail($emails, $subject, $message, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\']);
-    }
-    if ($sms_emails) {
-        Application::i()->sendmail($sms_emails, $subject, $message_sms, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\'], false);
-    }
-    if ($sms_phones) {
-        $urlTemplate = Package::i()->registryGet(\'sms_gate\');
-        $m = new Mustache_Engine();
-        foreach ($sms_phones as $phone) {
-            $url = $m->render($urlTemplate, array(\'PHONE\' => urlencode($phone), \'TEXT\' => urlencode($message_sms)));
-            $result = file_get_contents($url);
-        }
-    }
-};
-
-$OUT = array();
-$Form = new Form(isset($config[\'form\']) ? (int)$config[\'form\'] : 0);
-if ($Form->id) {
-    $localError = array();
-    if (($Form->signature && isset($_POST[\'form_signature\']) && $_POST[\'form_signature\'] == md5(\'form\' . (int)$Form->id . (int)$Block->id)) || (!$Form->signature && ($_SERVER[\'REQUEST_METHOD\'] == \'POST\'))) {
-        $Item = new Feedback();
-        $Item->pid = (int)$Form->id;
-        if ($Form->Material_Type->id) {
-            $Material = new Material();
-            $Material->pid = (int)$Form->Material_Type->id;
-            $Material->vis = 0;
-        }
-
-        // Проверка полей на корректность
-        foreach ($Form->fields as $row) {
-            switch ($row->datatype) {
-                case \'file\':
-                case \'image\':
-                    $val = isset($_FILES[$row->urn][\'tmp_name\']) ? $_FILES[$row->urn][\'tmp_name\'] : null;
-                    if ($val && $row->multiple) {
-                        $val = (array)$val;
-                        $val = array_shift($val);
-                    }
-                    if (!isset($val) || !$row->isFilled($val)) {
-                        if ($row->required && !$row->countValues()) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_REQUIRED, $row->name);
-                        }
-                    } elseif (!$row->multiple) {
-                        if (!$row->validate($val)) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_INVALID, $row->name);
-                        }
-                    }
-                    $allowedExtensions = preg_split(\'/\\\\W+/umis\', $row->source);
-                    $allowedExtensions = array_map(\'mb_strtolower\', array_filter($allowedExtensions, \'trim\'));
-                    if ($allowedExtensions) {
-                        if ($row->multiple) {
-                            foreach ((array)$_FILES[$row->urn][\'tmp_name\'] as $i => $val) {
-                                if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\'][$i])) {
-                                    $ext = pathinfo(
-                                        $_FILES[$row->urn][\'name\'][$i],
-                                        PATHINFO_EXTENSION
-                                    );
-                                    $ext = mb_strtolower($ext);
-                                    if (!in_array($ext, $allowedExtensions)) {
-                                        $localError[$row->urn] = sprintf(
-                                            INVALID_FILE_EXTENSION,
-                                            implode(\', \', $allowedExtensions)
-                                        );
-                                        break;
-                                    }
-                                }
-                            }
-                        } else {
-                            if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\'])) {
-                                $ext = pathinfo(
-                                    $_FILES[$row->urn][\'name\'],
-                                    PATHINFO_EXTENSION
-                                );
-                                $ext = mb_strtolower($ext);
-                                if (!in_array($ext, $allowedExtensions)) {
-                                    $localError[$row->urn] = sprintf(
-                                        INVALID_FILE_EXTENSION,
-                                        implode(\', \', $allowedExtensions)
-                                    );
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    $val = isset($_POST[$row->urn]) ? $_POST[$row->urn] : null;
-                    if ($val && $row->multiple) {
-                        $val = (array)$val;
-                        $val = array_shift($val);
-                    }
-                    if (!isset($val) || !$row->isFilled($val)) {
-                        if ($row->required) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_REQUIRED, $row->name);
-                        }
-                    } elseif (!$row->multiple) {
-                        if (($row->datatype == \'password\') && ($_POST[$row->urn] != $_POST[$row->urn . \'@confirm\'])) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_PASSWORD_DOESNT_MATCH_CONFIRM, $row->name);
-                        } elseif (!$row->validate($val)) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_INVALID, $row->name);
-                        }
-                    }
-                    break;
-            }
-        }
-
-        // Проверка на антиспам
-        if ($Form->antispam && $Form->antispam_field_name) {
-            switch ($Form->antispam) {
-                case \'captcha\':
-                    if (!isset($_POST[$Form->antispam_field_name], $_SESSION[\'captcha_keystring\']) || ($_POST[$Form->antispam_field_name] != $_SESSION[\'captcha_keystring\'])) {
-                        $localError[$Form->antispam_field_name] = ERR_CAPTCHA_FIELD_INVALID;
-                    }
-                    break;
-                case \'hidden\':
-                    if (isset($_POST[$Form->antispam_field_name]) && $_POST[$Form->antispam_field_name]) {
-                        $localError[$Form->antispam_field_name] = ERR_CAPTCHA_FIELD_INVALID;
-                    }
-                    break;
-            }
-        }
-
-        if (!$localError) {
-            if ((\\RAAS\\Controller_Frontend::i()->user instanceof User) && \\RAAS\\Controller_Frontend::i()->user->id) {
-                $Item->uid = (int)Controller_Frontend::i()->user->id;
-            } else {
-                $Item->uid = 0;
-            }
-            // Для AJAX\'а
-            $Referer = Page::importByURL($_SERVER[\'HTTP_REFERER\']);
-            $RefererMaterialUrl = explode(\'/\', trim(parse_url($_SERVER[\'HTTP_REFERER\'], PHP_URL_PATH), \'/\'));
-            $RefererMaterial = Material::importByURN($RefererMaterialUrl[count($RefererMaterialUrl) - 1]);
-            $Item->page_id = (int)$Referer->id ?: (int)$Page->id;
-            if ($RefererMaterial) {
-                $Item->material_id = (int)$RefererMaterial->id;
-            } elseif ($Page->Material->id) {
-                $Item->material_id = (int)$Page->Material->id;
-            }
-            $Item->ip = (string)$_SERVER[\'REMOTE_ADDR\'];
-            $Item->user_agent = (string)$_SERVER[\'HTTP_USER_AGENT\'];
-            $Objects = array($Item);
-            if ($Form->Material_Type->id) {
-                if (!$Form->Material_Type->global_type) {
-                    $Material->cats = array((int)$Referer->id ?: (int)$Page->id);
-                }
-                $Objects[] = $Material;
-            }
-
-            foreach ($Objects as $Object) {
-                // Заполняем основные данные создаваемого материала
-                if ($Object instanceof Material) {
-                    if (isset($Item->fields[\'_name_\'])) {
-                        $Object->name = $Item->fields[\'_name_\']->getValue();
-                    } else {
-                        $Object->name = $Form->Material_Type->name . \': \' . date(DATETIMEFORMAT);
-                    }
-                    if (isset($Item->fields[\'_description_\'])) {
-                        $Object->description = $Item->fields[\'_description_\']->getValue();
-                    }
-                }
-                $Object->commit();
-
-                // Автоматически подставляем недостающие поля даты/времени у материала
-                if ($Object instanceof Material) {
-                    foreach ($Object->fields as $fname => $temp) {
-                        if (!isset($Item->fields[$fname])) {
-                            switch ($temp->datatype) {
-                                case \'datetime\':
-                                case \'datetime-local\':
-                                    $temp->addValue(date(\'Y-m-d H:i:s\'));
-                                    break;
-                                case \'date\':
-                                    $temp->addValue(date(\'Y-m-d\'));
-                                    break;
-                                case \'time\':
-                                    $temp->addValue(date(\'H:i:s\'));
-                                    break;
-                            }
-                        }
-                    }
-                }
-
-                foreach ($Item->fields as $fname => $temp) {
-                    if (isset($Object->fields[$fname])) {
-                        $row = $Object->fields[$fname];
-                        switch ($row->datatype) {
-                            case \'file\':
-                            case \'image\':
-                                $row->deleteValues();
-                                if ($row->multiple) {
-                                    foreach ($_FILES[$row->urn][\'tmp_name\'] as $key => $val) {
-                                        $row2 = array(
-                                            \'vis\' => isset($_POST[$row->urn . \'@vis\'][$key]) ? (int)$_POST[$row->urn . \'@vis\'][$key] : 1,
-                                            \'name\' => (string)$_POST[$row->urn . \'@name\'][$key],
-                                            \'description\' => (string)$_POST[$row->urn . \'@description\'][$key],
-                                            \'attachment\' => (int)$_POST[$row->urn . \'@attachment\'][$key]
-                                        );
-                                        if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\'][$key]) && $row->validate($_FILES[$row->urn][\'tmp_name\'][$key])) {
-                                            $att = new Attachment((int)$row2[\'attachment\']);
-                                            $att->upload = $_FILES[$row->urn][\'tmp_name\'][$key];
-                                            $att->filename = $_FILES[$row->urn][\'name\'][$key];
-                                            $att->mime = $_FILES[$row->urn][\'type\'][$key];
-                                            $att->parent = $Object;
-                                            if ($row->datatype == \'image\') {
-                                                $att->image = 1;
-                                                if ($temp = (int)Package::i()->registryGet(\'maxsize\')) {
-                                                    $att->maxWidth = $att->maxHeight = $temp;
-                                                }
-                                                if ($temp = (int)Package::i()->registryGet(\'tnsize\')) {
-                                                    $att->tnsize = $temp;
-                                                }
-                                            }
-                                            $att->copy = true;
-                                            $att->commit();
-                                            $row2[\'attachment\'] = (int)$att->id;
-                                            $row->addValue(json_encode($row2));
-                                        } elseif ($row2[\'attachment\']) {
-                                            $row->addValue(json_encode($row2));
-                                        }
-                                        unset($att, $row2);
-                                    }
-                                } else {
-                                    $row2 = array(
-                                        \'vis\' => isset($_POST[$row->urn . \'@vis\']) ? (int)$_POST[$row->urn . \'@vis\'] : 1,
-                                        \'name\' => (string)$_POST[$row->urn . \'@name\'],
-                                        \'description\' => (string)$_POST[$row->urn . \'@description\'],
-                                        \'attachment\' => (int)$_POST[$row->urn . \'@attachment\']
-                                    );
-
-                                    if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\']) && $row->validate($_FILES[$row->urn][\'tmp_name\'])) {
-                                        $att = new Attachment((int)$row2[\'attachment\']);
-                                        $att->upload = $_FILES[$row->urn][\'tmp_name\'];
-                                        $att->filename = $_FILES[$row->urn][\'name\'];
-                                        $att->mime = $_FILES[$row->urn][\'type\'];
-                                        $att->parent = $Object;
-                                        if ($row->datatype == \'image\') {
-                                            $att->image = 1;
-                                            if ($temp = (int)Package::i()->registryGet(\'maxsize\')) {
-                                                $att->maxWidth = $att->maxHeight = $temp;
-                                            }
-                                            if ($temp = (int)Package::i()->registryGet(\'tnsize\')) {
-                                                $att->tnsize = $temp;
-                                            }
-                                        }
-                                        $att->copy = true;
-                                        $att->commit();
-                                        $row2[\'attachment\'] = (int)$att->id;
-                                        $row->addValue(json_encode($row2));
-                                    } elseif ($_POST[$row->urn . \'@attachment\']) {
-                                        $row2[\'attachment\'] = (int)$_POST[$row->urn . \'@attachment\'];
-                                        $row->addValue(json_encode($row2));
-                                    }
-                                    unset($att, $row2);
-                                }
-                                break;
-                            default:
-                                $row->deleteValues();
-                                if (isset($_POST[$row->urn])) {
-                                    foreach ((array)$_POST[$row->urn] as $val) {
-                                        // 2019-01-22, AVS: закрываем XSS-уязвимость
-                                        $row->addValue(strip_tags($val));
-                                    }
-                                }
-                                break;
-                        }
-                        if (in_array($row->datatype, array(\'file\', \'image\'))) {
-                            $row->clearLostAttachments();
-                        }
-                    }
-                }
-
-                // Заполняем данные пользователя в полях материала
-                if ($Object instanceof Material) {
-                    if (isset($Object->fields[\'ip\'])) {
-                        $Object->fields[\'ip\']->deleteValues();
-                        $Object->fields[\'ip\']->addValue((string)$_SERVER[\'REMOTE_ADDR\']);
-                    }
-                    if (isset($Object->fields[\'user_agent\'])) {
-                        $Object->fields[\'user_agent\']->deleteValues();
-                        $Object->fields[\'user_agent\']->addValue((string)$_SERVER[\'HTTP_USER_AGENT\']);
-                    }
-                }
-            }
-            if ($Form->email) {
-                $notify($Item, $Form->Material_Type->id ? $Material : null);
-            }
-            if (!$Form->create_feedback) {
-                Feedback::delete($Item);
-            }
-            $OUT[\'success\'][(int)$Block->id] = true;
-        }
-        $OUT[\'DATA\'] = $_POST;
-    } else {
-        $OUT[\'DATA\'] = array();
-        foreach ($Form->fields as $key => $row) {
-            if ($row->defval) {
-                $OUT[\'DATA\'][$key] = $row->defval;
-            }
-        }
-    }
-    $OUT[\'localError\'] = $localError;
-    $OUT[\'Item\'] = $Item;
-    if ($Form->Material_Type->id) {
-        $OUT[\'Material\'] = $Material;
-    }
-}
-$OUT[\'Form\'] = $Form;
-
-return $OUT;
+$interface = new FormInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('3', '1', '__raas_menu_interface', 'Стандартный интерфейс меню', '<?php
 /**
@@ -3344,7 +3082,16 @@ return $OUT;
  */
 namespace RAAS\\CMS;
 
-$interface = new MenuInterface($Block, $Page, $_GET, $_POST, $_COOKIE, $_SESSION, $_SERVER, $_FILES);
+$interface = new MenuInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
 return $interface->process();
 ', '1'),
 ('4', '1', '__raas_search_interface', 'Стандартный интерфейс поиска', '<?php
@@ -3470,12 +3217,16 @@ $emailField = function (Form_Field $field) {
 };
 ?>
 <?php if ($SMS) {
-    echo date(DATETIMEFORMAT) . \' \' . sprintf(FEEDBACK_STANDARD_HEADER, $Item->parent->name, $Item->page->name) . \"\\n\";
+    echo date(DATETIMEFORMAT) . \' \' . sprintf(FEEDBACK_STANDARD_HEADER, $Item->parent->name, $Item->page->name, $Item->domain) . \"\\n\";
+    echo FEEDBACK_ID . \': \' . (int)$Item->id . \"\\n\";
     foreach ($Item->fields as $field) {
         echo $smsField($field);
     }
 } else { ?>
     <div>
+      <div>
+        <?php echo FEEDBACK_ID . \': \' . (int)$Item->id?>
+      </div>
       <?php
       foreach ($Item->fields as $field) {
           echo $emailField($field);
@@ -3546,7 +3297,17 @@ $emailField = function (Form_Field $field) {
  */
 namespace RAAS\\CMS;
 
-$interface = new CacheInterface($Block, $Page, $_GET, $_POST, $_COOKIE, $_SESSION, $_SERVER, $_FILES, $OUT);
+$interface = new CacheInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES,
+    $OUT
+);
 return $interface->process();
 ', '1'),
 ('7', '1', '__raas_watermark_interface', 'Стандартный интерфейс водяных знаков', '<?php
@@ -4407,332 +4168,42 @@ if ($Set) {
 <?php } ?>
 ', '0'),
 ('24', '1', '__raas_shop_cart_interface', 'Стандартный интерфейс корзины', '<?php
+/**
+ * Стандартный интерфейс корзины
+ * @param Block_Cart $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS\\Shop;
 
-use \\RAAS\\CMS\\Material;
-use \\RAAS\\Redirector;
-use \\RAAS\\CMS\\DATETIMEFORMAT;
-use \\RAAS\\CMS\\Material_Field;
-use \\RAAS\\CMS\\Package;
-use \\Mustache_Engine;
-use RAAS\\Attachment;
-
-$convertMeta = function ($x) {
-    return $x;
-};
-
-$notify = function (Order $Item) {
-    $temp = array_values(array_filter(array_map(\'trim\', preg_split(\'/( |;|,)/\', $Item->parent->Form->email))));
-    $emails = $userEmails = $sms_emails = $sms_phones = array();
-    foreach ($temp as $row) {
-        if (($row[0] == \'[\') && ($row[strlen($row) - 1] == \']\')) {
-            if (filter_var(substr($row, 1, -1), FILTER_VALIDATE_EMAIL)) {
-                $sms_emails[] = substr($row, 1, -1);
-            } elseif (preg_match(\'/(\\\\+)?\\\\d+/umi\', substr($row, 1, -1))) {
-                $sms_phones[] = substr($row, 1, -1);
-            }
-        } else {
-            $emails[] = $row;
-        }
-    }
-    foreach ($Item->fields as $key => $val) {
-        if ((($val->datatype == \'email\') || ($key == \'email\')) && $Item->$key) {
-            $userEmails = array_merge($userEmails, array_values(array_filter(array_map(\'trim\', preg_split(\'/(;|,)/\', $Item->$key)))));
-        }
-    }
-    if ($Item->parent->Form->Interface->id) {
-        $template = $Item->parent->Form->Interface->description;
-    } else {
-        $template = $Item->parent->Form->description;
-    }
-
-    ob_start();
-    $forUser = false;
-    eval(\'?\' . \'>\' . $template);
-    $message = ob_get_contents();
-    ob_end_clean();
-
-    ob_start();
-    $forUser = true;
-    eval(\'?\' . \'>\' . $template);
-    $userMessage = ob_get_contents();
-    ob_end_clean();
-
-    ob_start();
-    $SMS = true;
-    eval(\'?\' . \'>\' . $template);
-    $message_sms = ob_get_contents();
-    ob_end_clean();
-
-
-    $subject = date(DATETIMEFORMAT) . \' \' . sprintf(ORDER_STANDARD_HEADER, $Item->parent->name, $Item->page->name);
-    $userSubject = date(DATETIMEFORMAT) . \' \' . sprintf(ORDER_STANDARD_HEADER_USER, $Item->id, $_SERVER[\'HTTP_HOST\']);
-    if ($emails) {
-        \\RAAS\\Application::i()->sendmail($emails, $subject, $message, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\']);
-    }
-    if ($userEmails) {
-        \\RAAS\\Application::i()->sendmail($userEmails, $userSubject, $userMessage, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\']);
-    }
-    if ($sms_emails) {
-        \\RAAS\\Application::i()->sendmail($sms_emails, $subject, $message_sms, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\'], false);
-    }
-    if ($sms_phones) {
-        $urlTemplate = Package::i()->registryGet(\'sms_gate\');
-        $m = new Mustache_Engine();
-        foreach ($sms_phones as $phone) {
-            $url = $m->render($urlTemplate, array(\'PHONE\' => urlencode($phone), \'TEXT\' => urlencode($message_sms)));
-            $result = file_get_contents($url);
-        }
-    }
-};
-
-$OUT = array();
-$Cart_Type = new Cart_Type((int)$config[\'cart_type\']);
-$Cart = new Cart($Cart_Type, \\RAAS\\Controller_Frontend::i()->user);
-switch (isset($_GET[\'action\']) ? $_GET[\'action\'] : \'\') {
-    case \'set\':
-        $Item = new Material((int)(isset($_GET[\'id\']) ? $_GET[\'id\'] : \'\'));
-        $amount = isset($_GET[\'amount\']) ? $_GET[\'amount\'] : 0;
-        $meta = isset($_GET[\'meta\']) ? $_GET[\'meta\'] : \'\';
-        if ($Item->id) {
-            $Cart->set($Item, $amount, $meta);
-        }
-        new Redirector($_GET[\'back\'] ? \'history:back\' : \\SOME\\HTTP::queryString(\'action=&id=&meta=&amount=\'));
-        break;
-    case \'add\':
-        $Item = new Material((int)(isset($_GET[\'id\']) ? $_GET[\'id\'] : \'\'));
-        $amount = isset($_GET[\'amount\']) ? $_GET[\'amount\'] : 1;
-        $meta = isset($_GET[\'meta\']) ? $_GET[\'meta\'] : \'\';
-        if ($Item->id && $amount) {
-            $Cart->add($Item, $amount, $meta);
-        }
-        new Redirector($_GET[\'back\'] ? \'history:back\' : \\SOME\\HTTP::queryString(\'action=&id=&meta=&amount=\'));
-        break;
-    case \'reduce\':
-        $Item = new Material((int)(isset($_GET[\'id\']) ? $_GET[\'id\'] : \'\'));
-        $amount = isset($_GET[\'amount\']) ? $_GET[\'amount\'] : 1;
-        $meta = isset($_GET[\'meta\']) ? $_GET[\'meta\'] : \'\';
-        if ($Item->id && $amount) {
-            $Cart->reduce($Item, $amount, $meta);
-        }
-        new Redirector($_GET[\'back\'] ? \'history:back\' : \\SOME\\HTTP::queryString(\'action=&id=&meta=&amount=\'));
-        break;
-    case \'delete\':
-        $Item = new Material((int)(isset($_GET[\'id\']) ? $_GET[\'id\'] : \'\'));
-        $meta = isset($_GET[\'meta\']) ? $_GET[\'meta\'] : \'\';
-        if ($Item->id) {
-            $Cart->set($Item, 0, $meta);
-        }
-        new Redirector($_GET[\'back\'] ? \'history:back\' : \\SOME\\HTTP::queryString(\'action=&id=&meta=&amount=\'));
-        break;
-    case \'clear\':
-        $Cart->clear();
-        new Redirector($_GET[\'back\'] ? \'history:back\' : \\SOME\\HTTP::queryString(\'action=&id=&meta=&amount=\'));
-        break;
-    default:
-        $Form = $Cart_Type->Form;
-        if (isset($_POST[\'amount\'])) {
-            foreach ($_POST[\'amount\'] as $key => $val) {
-                list($id, $meta) = explode(\'_\', $key);
-                $Item = new Material($id);
-                $Cart->set($Item, (int)$val, $meta);
-            }
-        }
-        if ($Form->id && $Cart->items) {
-            $localError = array();
-            if (($Form->signature && isset($_POST[\'form_signature\']) && $_POST[\'form_signature\'] == md5(\'form\' . (int)$Form->id . (int)$Block->id)) || (!$Form->signature && ($_SERVER[\'REQUEST_METHOD\'] == \'POST\'))) {
-                $Item = new Order();
-                $Item->pid = (int)$Cart_Type->id;
-                foreach ($Form->fields as $row) {
-                    switch ($row->datatype) {
-                        case \'file\':
-                        case \'image\':
-                            if (!isset($_FILES[$row->urn][\'tmp_name\']) || !$row->isFilled($_FILES[$row->urn][\'tmp_name\'])) {
-                                if ($row->required && !$row->countValues()) {
-                                    $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_REQUIRED, $row->name);
-                                }
-                            } elseif (isset($_FILES[$row->urn][\'tmp_name\']) && $row->isFilled($_FILES[$row->urn][\'tmp_name\'])) {
-                                if (!$row->validate($_FILES[$row->urn][\'tmp_name\'])) {
-                                    $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_INVALID, $row->name);
-                                }
-                            }
-                            break;
-                        default:
-                            if (!isset($_POST[$row->urn]) || !$row->isFilled($_POST[$row->urn])) {
-                                if ($row->required) {
-                                    $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_REQUIRED, $row->name);
-                                }
-                            } elseif (isset($_POST[$row->urn]) && $row->isFilled($_POST[$row->urn])) {
-                                if (($row->datatype == \'password\') && ($_POST[$row->urn] != $_POST[$row->urn . \'@confirm\'])) {
-                                    $localError[$row->urn] = sprintf(ERR_CUSTOM_PASSWORD_DOESNT_MATCH_CONFIRM, $row->name);
-                                } elseif (!$row->validate($_POST[$row->urn])) {
-                                    $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_INVALID, $row->name);
-                                }
-                            }
-                            break;
-                    }
-                }
-                if ($Form->antispam && $Form->antispam_field_name) {
-                    switch ($Form->antispam) {
-                        case \'captcha\':
-                            if (!isset($_POST[$Form->antispam_field_name], $_SESSION[\'captcha_keystring\']) || ($_POST[$Form->antispam_field_name] != $_SESSION[\'captcha_keystring\'])) {
-                                $localError[$row->urn] = ERR_CAPTCHA_FIELD_INVALID;
-                            }
-                            break;
-                        case \'hidden\':
-                            if (isset($_POST[$Form->antispam_field_name]) && $_POST[$Form->antispam_field_name]) {
-                                $localError[$row->urn] = ERR_CAPTCHA_FIELD_INVALID;
-                            }
-                            break;
-                    }
-                }
-                if (!$localError) {
-                    if ((\\RAAS\\Controller_Frontend::i()->user instanceof \\RAAS\\CMS\\User) && \\RAAS\\Controller_Frontend::i()->user->id) {
-                        $Item->uid = (int)\\RAAS\\Controller_Frontend::i()->user->id;
-                    } else {
-                        $Item->uid = 0;
-                    }
-                    // Для AJAX\'а
-                    //$Referer = \\RAAS\\CMS\\Page::importByURL($_SERVER[\'HTTP_REFERER\']);
-                    //$Item->page_id = (int)$Referer->id;
-                    $Item->page_id = (int)$Page->id;
-                    $Item->ip = (string)$_SERVER[\'REMOTE_ADDR\'];
-                    $Item->user_agent = (string)$_SERVER[\'HTTP_USER_AGENT\'];
-
-                    if ($Item instanceof Order) {
-                        $temp = array();
-                        foreach ($Cart->items as $row) {
-                            if ($row->amount) {
-                                $m = new Material($row->id);
-                                $price = $Cart->getPrice($m);
-                                $temp[] = array(
-                                    \'material_id\' => $row->id,
-                                    \'name\' => $row->name,
-                                    \'meta\' => $convertMeta($row->meta),
-                                    \'realprice\' => number_format($row->realprice, 2, \'.\', \'\'),
-                                    \'amount\' => (int)$row->amount
-                                );
-                            }
-                        }
-                        $Item->meta_items = $temp;
-                    }
-                    $Item->commit();
-                    foreach ($Item->fields as $fname => $temp) {
-                        if (isset($Item->fields[$fname])) {
-                            $row = $Item->fields[$fname];
-                            switch ($row->datatype) {
-                                case \'file\':
-                                case \'image\':
-                                    $row->deleteValues();
-                                    if ($row->multiple) {
-                                        foreach ($_FILES[$row->urn][\'tmp_name\'] as $key => $val) {
-                                            $row2 = array(
-                                                \'vis\' => (int)$_POST[$row->urn . \'@vis\'][$key],
-                                                \'name\' => (string)$_POST[$row->urn . \'@name\'][$key],
-                                                \'description\' => (string)$_POST[$row->urn . \'@description\'][$key],
-                                                \'attachment\' => (int)$_POST[$row->urn . \'@attachment\'][$key]
-                                            );
-                                            if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\'][$key]) && $row->validate($_FILES[$row->urn][\'tmp_name\'][$key])) {
-                                                $att = new Attachment((int)$row2[\'attachment\']);
-                                                $att->upload = $_FILES[$row->urn][\'tmp_name\'][$key];
-                                                $att->filename = $_FILES[$row->urn][\'name\'][$key];
-                                                $att->mime = $_FILES[$row->urn][\'type\'][$key];
-                                                $att->parent = $Item;
-                                                if ($row->datatype == \'image\') {
-                                                    $att->image = 1;
-                                                    if ($temp = (int)$this->package->registryGet(\'maxsize\')) {
-                                                        $att->maxWidth = $att->maxHeight = $temp;
-                                                    }
-                                                    if ($temp = (int)$this->package->registryGet(\'tnsize\')) {
-                                                        $att->tnsize = $temp;
-                                                    }
-                                                }
-                                                $att->commit();
-                                                $row2[\'attachment\'] = (int)$att->id;
-                                                $row->addValue(json_encode($row2));
-                                            } elseif ($row2[\'attachment\']) {
-                                                $row->addValue(json_encode($row2));
-                                            }
-                                            unset($att, $row2);
-                                        }
-                                    } else {
-                                        $row2 = array(
-                                            \'vis\' => (int)$_POST[$row->urn . \'@vis\'],
-                                            \'name\' => (string)$_POST[$row->urn . \'@name\'],
-                                            \'description\' => (string)$_POST[$row->urn . \'@description\'],
-                                            \'attachment\' => (int)$_POST[$row->urn . \'@attachment\']
-                                        );
-                                        if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\']) && $row->validate($_FILES[$row->urn][\'tmp_name\'])) {
-                                            $att = new Attachment((int)$row2[\'attachment\']);
-                                            $att->upload = $_FILES[$row->urn][\'tmp_name\'];
-                                            $att->filename = $_FILES[$row->urn][\'name\'];
-                                            $att->mime = $_FILES[$row->urn][\'type\'];
-                                            $att->parent = $Item;
-                                            if ($row->datatype == \'image\') {
-                                                $att->image = 1;
-                                                if ($temp = (int)$this->package->registryGet(\'maxsize\')) {
-                                                    $att->maxWidth = $att->maxHeight = $temp;
-                                                }
-                                                if ($temp = (int)$this->package->registryGet(\'tnsize\')) {
-                                                    $att->tnsize = $temp;
-                                                }
-                                            }
-                                            $att->commit();
-                                            $row2[\'attachment\'] = (int)$att->id;
-                                            $row->addValue(json_encode($row2));
-                                        } elseif ($_POST[$row->urn . \'@attachment\']) {
-                                            $row2[\'attachment\'] = (int)$_POST[$row->urn . \'@attachment\'];
-                                            $row->addValue(json_encode($row2));
-                                        }
-                                        unset($att, $row2);
-                                    }
-                                    break;
-                                default:
-                                    $row->deleteValues();
-                                    if (isset($_POST[$row->urn])) {
-                                        foreach ((array)$_POST[$row->urn] as $val) {
-                                            $row->addValue($val);
-                                        }
-                                    }
-                                    break;
-                            }
-                            if (in_array($row->datatype, array(\'file\', \'image\'))) {
-                                $row->clearLostAttachments();
-                            }
-                        }
-                    }
-                    $Cart->clear();
-                    $notify($Item);
-                    if ($_POST[\'epay\'] != 1) {
-                        $OUT[\'success\'][(int)$Block->id] = true;
-                    }
-                }
-                $OUT[\'DATA\'] = $_POST;
-            } else {
-                $OUT[\'DATA\'] = array();
-            }
-            $OUT[\'localError\'] = $localError;
-            $OUT[\'Item\'] = $Item;
-        }
-        $OUT[\'Form\'] = $Form;
-        break;
-}
-if (isset($_GET[\'back\'])) {
-    new Redirector(\'history:back\');
-}
-
-$OUT[\'Cart\'] = $Cart;
-$OUT[\'Cart_Type\'] = $Cart_Type;
-$OUT[\'convertMeta\'] = $convertMeta;
-if ($Block->EPay_Interface->id) {
-    eval(\'?\' . \'>\' . $Block->EPay_Interface->description);
-}
-return $OUT;
+$interface = new CartInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('25', '1', '__raas_shop_order_notify', 'Стандартное уведомление о заказе', '<?php
+/**
+ * Стандартное уведомление о заказе
+ * @param bool $SMS Уведомление отправляется по SMS
+ * @param Order $Item Уведомление формы обратной связи
+ * @param bool $forUser Отправка для пользователя
+ */
 namespace RAAS\\CMS\\Shop;
 
-$smsField = function ($field) {
+use RAAS\\CMS\\Form_Field;
+
+/**
+ * Получает представление поля для отправки по SMS
+ * @param Form_Field $field Поле для получения представления
+ * @return string
+ */
+$smsField = function (Form_Field $field) {
     $values = $field->getValues(true);
     $arr = array();
     foreach ($values as $key => $val) {
@@ -4766,7 +4237,12 @@ $smsField = function ($field) {
     return $field->name . \': \' . implode(\', \', $arr) . \"\\n\";
 };
 
-$emailField = function ($field) {
+/**
+ * Получает представление поля для отправки по электронной почте
+ * @param Form_Field $field Поле для получения представления
+ * @return string
+ */
+$emailField = function (Form_Field $field) {
     $values = $field->getValues(true);
     $arr = array();
     foreach ($values as $key => $val) {
@@ -4816,9 +4292,13 @@ $emailField = function ($field) {
 };
 ?>
 <?php if ($SMS) {
-    echo date(DATETIMEFORMAT) . \' \' . sprintf(ORDER_STANDARD_HEADER_USER, $Item->id, $_SERVER[\'HTTP_HOST\']) . \"\\n\";
-    foreach ($Item->fields as $field) {
-        echo $smsField($field);
+    if ($forUser) {
+        echo sprintf(ORDER_SUCCESSFULLY_SENT, $Item->id);
+    } else {
+        echo date(DATETIMEFORMAT) . \' \' . sprintf(ORDER_STANDARD_HEADER_USER, $Item->id, $_SERVER[\'HTTP_HOST\']) . \"\\n\";
+        foreach ($Item->fields as $field) {
+            echo $smsField($field);
+        }
     }
 } else { ?>
     <div>
@@ -4856,14 +4336,14 @@ $emailField = function ($field) {
                   <?php } ?>
                 </td>
                 <td><?php echo htmlspecialchars($row->__get(\'meta\'))?>&nbsp;</td>
-                <td style=\"text-align: right\"><?php echo number_format($row->realprice, 2, \'.\', \' \')?></td>
+                <td style=\"text-align: right; white-space: nowrap;\"><?php echo number_format($row->realprice, 2, \'.\', \' \')?></td>
                 <td><?php echo (int)$row->amount?></td>
-                <td style=\"text-align: right\"><?php echo number_format($row->amount * $row->realprice, 2, \'.\', \' \')?></td>
+                <td style=\"text-align: right; white-space: nowrap;\"><?php echo number_format($row->amount * $row->realprice, 2, \'.\', \' \')?></td>
               </tr>
           <?php $sum += $row->amount * $row->realprice; } ?>
           <tr>
             <th colspan=\"4\" style=\"text-align: right\"><?php echo TOTAL_SUM?>:</th>
-            <th style=\"text-align: right\"><?php echo number_format($sum, 2, \'.\', \' \')?></th>
+            <th style=\"text-align: right; white-space: nowrap;\"><?php echo number_format($sum, 2, \'.\', \' \')?></th>
           </tr>
         </tbody>
       </table>
@@ -4888,8 +4368,7 @@ $emailField = function ($field) {
         </p>
     <?php } ?>
 <?php } ?>
-', '1');
-INSERT INTO `cms_snippets` (`id`, `pid`, `urn`, `name`, `description`, `locked`) VALUES 
+', '1'),
 ('26', '1', '__raas_shop_imageloader_interface', 'Стандартный интерфейс загрузчика изображений', '<?php
 namespace RAAS\\CMS\\Shop;
 
@@ -5163,720 +4642,66 @@ if ($_SERVER[\'REQUEST_METHOD\'] == \'POST\') {
 }
 ', '1'),
 ('27', '1', '__raas_shop_priceloader_interface', 'Стандартный интерфейс загрузчика прайсов', '<?php
+/**
+ * Сниппет интерфейса загрузчика прайсов
+ *
+ * @param PriceLoader $Loader Загрузчик прайсов
+ * @param Page $Page Страница, в которую загружаем
+ * @param int $rows Сколько строк отступать
+ * @param int $cols Сколько колонок отступать
+ *
+ * Параметры для загрузки:
+ * @param [
+ *            \'tmp_name\' => string путь к файлу,
+ *            \'name\' => string Имя файла
+ *        ]|null $file загружаемый файл
+ * @param bool $test Тестовый режим
+ * @param int $clear Очищать старые материалы и/или страницы
+ *                   (константа из PriceLoader::DELETE_PREVIOUS_MATERIALS_...)
+ *
+ * Параметры для выгрузки:
+ * @param \'csv\'|\'xls\'|\'xlsx\' $type Формат, в котором выгружаем
+ * @param string $encoding Кодировка для формата CSV,
+ *                         в которой выгружаем (совместимо с iconv)
+ */
 namespace RAAS\\CMS\\Shop;
 
-use \\Exception;
+use RAAS\\Application;
 use \\RAAS\\CMS\\Page;
-use \\RAAS\\CMS\\Material;
-use \\RAAS\\CMS\\Package;
-use \\RAAS\\CMS\\Sub_Main as Package_Sub_Main;
-use \\RAAS\\CMS\\Material_Field;
-use \\RAAS\\CMS\\Page_Field;
-use \\RAAS\\Application;
-use \\RAAS\\Attachment;
-use \\PHPExcel;
-use \\PHPExcel_Cell;
-use \\PHPExcel_IOFactory;
-use \\PHPExcel_Style_NumberFormat;
-use \\PHPExcel_Cell_DataType;
-use SOME\\SOME;
 
-$st = microtime(true);
-require_once Application::i()->includeDir . \'/phpexcel/Classes/PHPExcel.php\';
+$interface = new PriceloaderInterface($Loader);
 if ($_SERVER[\'REQUEST_METHOD\'] == \'POST\') {
-    ini_set(\'max_execution_time\', 3600);
-    // Загрузка прайса
-    $affectedPages = array();
-    $affectedMaterials = array();
-    if (!$file && !$clear) {
-        return array(\'localError\' => array(array(\'name\' => \'MISSING\', \'value\' => \'file\', \'description\' => Module::i()->view->_(\'UPLOAD_FILE_REQUIRED\'))));
-    }
-    if ($file) {
-        if (!in_array(strtolower(pathinfo($file[\'name\'], PATHINFO_EXTENSION)), array(\'xls\', \'xlsx\', \'csv\'))) {
-            return array(\'localError\' => array(array(\'name\' => \'INVALID\', \'value\' => \'file\', \'description\' => Module::i()->view->_(\'ALLOWED_FORMATS_CSV_XLS_XLSX\'))));
-        }
-        $type = strtolower(pathinfo($file[\'name\'], PATHINFO_EXTENSION));
-        switch ($type) {
-            case \'xls\':
-            case \'xlsx\':
-                switch ($type) {
-                    case \'xls\':
-                        $readerName = \'Excel5\';
-                        break;
-                    case \'xlsx\':
-                        $readerName = \'Excel2007\';
-                        break;
-                }
-                $objReader = PHPExcel_IOFactory::createReader($readerName);
-                try {
-                    $x = $objReader->load($file[\'tmp_name\']);
-                    $DATA = array();
-                    foreach ($x->getAllSheets() as $s) {
-                        $DATA = array_merge($DATA, $s->toArray());
-                    }
-                } catch (Exception $e) {
-                    return array(\'localError\' => array(array(\'name\' => \'INVALID\', \'value\' => \'file\', \'description\' => Module::i()->view->_(\'ERR_CANNOT_READ_FILE\'))));
-                }
-                break;
-            case \'csv\':
-                $text = file_get_contents($file[\'tmp_name\']);
-                $encoding = mb_detect_encoding($text, \'UTF-8, Windows-1251\');
-                if ($encoding != \'UTF-8\') {
-                    $text = iconv($encoding, \'UTF-8\', $text);
-                }
-                $csv = new \\SOME\\CSV(trim($text));
-                $DATA = $csv->data;
-                unset($csv);
-                break;
-        }
-        $DATA = array_map(function ($x) use ($cols) {
-            return array_slice($x, $cols);
-        }, $DATA);
-        $DATA = array_slice($DATA, $rows);
-        $DATA = array_filter($DATA, function ($x) {
-            return count(array_filter($x, \'trim\'));
-        }); // Фильтруем пустые строки
-        $DATA = array_values($DATA);
-        if (!$DATA || ((count($DATA) == 1) && (count(array_filter($DATA[0])) == 1))) {
-            return array(\'localError\' => array(array(\'name\' => \'INVALID\', \'value\' => \'file\', \'description\' => Module::i()->view->_(\'ERR_EMPTY_FILE\'))));
-        }
-        $log = $raw_data = array();
-
-        // Получим номер колонки с уникальным полем
-        $uniqueColumn = null;
-        if ($Loader->ufid) {
-            foreach ($Loader->columns as $i => $col) {
-                if ($col->fid == $Loader->ufid) {
-                    $uniqueColumn = $i;
-                    break;
-                }
-            }
-        }
-        $backtrace = array();
-        $context = $Page;
-        $virtualLevel = null; // При запрете создавать новые категории, сюда устанавливается уровень не найденной категории (чтобы игнорировать дочерние)
-
-
-        // Поиск товара по уникальному полю
-        $getItemByUniqueField = function ($text) use ($Loader) {
-            if (trim($text) && $Loader->ufid) {
-                $SQL_query = \" SELECT tM.* FROM \" . Material::_tablename() . \" AS tM \";
-                if ($Loader->Unique_Field->id) {
-                    $SQL_query .= \" JOIN \" . Material::_dbprefix() . \"cms_data AS tD ON tD.pid = tM.id AND tD.fid = \" . (int)$Loader->Unique_Field->id
-                               .  \" WHERE TRIM(tD.value)\";
-                } elseif ($Loader->ufid) {
-                    $SQL_query .= \" WHERE TRIM(tM.\" . $Loader->ufid . \")\";
-                }
-                $SQL_query .= \" = \'\" . Material::_SQL()->real_escape_string(trim($text)) . \"\' ORDER BY tM.id\";
-                $SQL_result = Material::getSQLSet($SQL_query);
-                return $SQL_result;
-            }
-            return array();
-        };
-
-
-        // Поиск товара по всем полям
-        $getItemByEntireRow = function (array $row = array()) use ($Loader) {
-            $SQL_from = array(Material::_tablename() . \" AS tM\");
-            $SQL_where = array();
-            for ($i = 0; $i < max(count($row), count($Loader->columns)); $i++) {
-                if (!is_array($row[$i]) && trim($row[$i])) {
-                    $tmp_where = \'\';
-                    if ($Loader->columns[$i]->Field->id) {
-                        $SQL_from[] = Material::_dbprefix() . \"cms_data AS tD\" . (int)$Loader->columns[$i]->Field->id
-                                    . \" ON tD\" . (int)$Loader->columns[$i]->Field->id . \".pid = tM.id \"
-                                    . \" AND tD\" . (int)$Loader->columns[$i]->Field->id . \".fid = \" . (int)$Loader->columns[$i]->Field->id;
-                        $tmp_where = \" TRIM(tD\" . (int)$Loader->columns[$i]->Field->id . \".value) \";
-                    } elseif ($Loader->columns[$i]->fid) {
-                        $tmp_where = \" TRIM(tM.\" . $Loader->columns[$i]->fid . \") \";
-                    }
-                    if ($tmp_where) {
-                        $tmp_where .= \" = \'\" . Material::_SQL()->real_escape_string(trim($row[$i])) . \"\'\";
-                    }
-                    $SQL_where[] = $tmp_where;
-                }
-            }
-            if ($SQL_where) {
-                $SQL_query = \"SELECT tM.* FROM \" . implode(\" JOIN \", $SQL_from) . \" WHERE \" . implode(\" AND \", $SQL_where) . \" ORDER BY tM.id\";
-                $SQL_result = Material::getSQLSet($SQL_query);
-                if ($SQL_result) {
-                    return $SQL_result;
-                }
-            }
-            return array();
-        };
-
-
-        // Возвращает последнюю категорию из backtrace
-        $lastCat = function () use (&$backtrace, &$Page) {
-            if ($backtrace) {
-                $temp = array_reverse($backtrace);
-                $temp = array_values($temp);
-                return $temp[0];
-            }
-            return $Page;
-        };
-
-
-        // Возвращает последний уровень из backtrace
-        $lastLevel = function () use (&$backtrace) {
-            if ($backtrace) {
-                $temp = array_reverse($backtrace, true);
-                $temp = array_keys($temp);
-                return $temp[0];
-            }
-            return null;
-        };
-
-
-        // Усечение backtrace
-        $cropBacktrace = function ($level) use (&$backtrace) {
-            $keys = array_keys($backtrace);
-            foreach ($keys as $key) {
-                if ($key >= $level) {
-                    unset($backtrace[$key]);
-                }
-            }
-        };
-
-        for ($i = 0; $i < count($DATA); $i++) {
-            $dataRow = $DATA[$i];
-            if (count(array_filter($DATA[$i], \'trim\')) > 1) {
-                // Товар
-                $dataRow = array_slice($dataRow, 0, count($Loader->columns));
-                for ($j = 0; $j < count($dataRow); $j++) {
-                    $dataRow[$j] = trim($dataRow[$j]);
-                    if ($f = $Loader->columns[$j]->Callback) {
-                        $dataRow[$j] = $f($dataRow[$j]);
-                    }
-                    if ((!$uniqueColumn || ($j != $uniqueColumn)) && !$Loader->columns[$j]->Field->id && $Loader->columns[$j]->fid) {
-                        if (in_array($Loader->columns[$j]->fid, array(\'vis\', \'priority\'))) {
-                            $dataRow[$j] = (int)$dataRow[$j];
-                        }
-                    } elseif (is_array($dataRow[$j])) {
-                        foreach ($dataRow[$j] as $k => $val) {
-                            if ($val instanceof SOME) {
-                                $dataRow[$j][$k] = (int)$val->id;
-                            } elseif (!is_object($val) && !is_array($val)) {
-                                if ($val = $Loader->Material_Type->fields[$Loader->columns[$j]->Field->urn]->fromRich(trim($val))) {
-                                    $dataRow[$j][$k] = $val;
-                                }
-                            }
-                        }
-                    } else {
-                        $dataRow[$j] = $Loader->Material_Type->fields[$Loader->columns[$j]->Field->urn]->fromRich(trim($dataRow[$j]));
-                    }
-                }
-                $itemSet = null;
-                // 2015-06-01, AVS: добавили понятие $new (тж. 11 строками ниже)
-                $new = false;
-                $itemSet = array();
-                if ($uniqueColumn !== null) {
-                    if (trim($dataRow[$uniqueColumn])) {
-                        $itemSet = $getItemByUniqueField(trim($dataRow[$uniqueColumn]));
-                    }
-                } else {
-                    $itemSet = $getItemByEntireRow($dataRow);
-                }
-                if (!$itemSet && $Loader->create_materials) {
-                    $row = new Material();
-                    $row->pid = $Loader->Material_Type->id;
-                    $row->vis = 1;
-                    $itemSet = array($row);
-                    $new = true;
-                }
-                foreach ($itemSet as $Item) {
-                    // Сначала проходим нативные поля
-                    for ($j = 0; $j < count($dataRow); $j++) {
-                        if ((!$uniqueColumn || ($j != $uniqueColumn)) && !$Loader->columns[$j]->Field->id && $Loader->columns[$j]->fid) {
-                            if (in_array($Loader->columns[$j]->fid, array(\'vis\', \'priority\'))) {
-                                $Item->{$Loader->columns[$j]->fid} = $dataRow[$j];
-                            } elseif (trim($dataRow[$j]) || !in_array($Loader->columns[$j]->fid, array(\'name\', \'urn\'))) {
-                                $Item->{$Loader->columns[$j]->fid} = $dataRow[$j];
-                            }
-                        } elseif ($new && ($j == $uniqueColumn)) { // 2015-11-20, AVS: добавили URN по артикулу
-                            if (trim($dataRow[$j])) {
-                                $Item->urn = \\SOME\\Text::beautify(trim($dataRow[$j]));
-                            }
-                        }
-                    }
-                    $id = $Item->id;
-                    if (!$test) {
-                        $affectedFields = array();
-                        $Item->commit();
-                        if ($Item->id && !$Loader->Material_Type->global_type && $context->id && ($new || ($context->id != $Page->id)) && !in_array($context->id, $Item->pages_ids)) {
-                            Material::_SQL()->add(Material::_dbprefix() . \"cms_materials_pages_assoc\", array(\'id\' => (int)$Item->id, \'pid\' => (int)$context->id));
-                        }
-                        // Проходим доп. поля
-                        for ($j = 0; $j < count($dataRow); $j++) {
-                            // 2015-06-01, AVS: добавляем поддержку множественных значений:
-                            if (is_array($dataRow[$j])) {
-                                $Item->fields[$Loader->columns[$j]->Field->urn]->deleteValues();
-                                foreach ($dataRow[$j] as $val) {
-                                    if ($val !== null) {
-                                        $Item->fields[$Loader->columns[$j]->Field->urn]->addValue($val);
-                                        $affectedFields[] = $Loader->columns[$j]->Field->urn;
-                                    }
-                                }
-                            } else {
-                                // 2015-06-01, AVS: добавляем || $new , чтобы у новых товаров артикул тоже заполнялся
-                                // 2016-02-01, AVS: закомментировали trim($dataRow[$j]), т.к. пустые значения тоже должны вставляться
-                                if (/*trim($dataRow[$j]) && */(!$uniqueColumn || ($j != $uniqueColumn) || $new) && $Loader->columns[$j]->Field->id) {
-                                    $field = $Item->fields[$Loader->columns[$j]->Field->urn];
-                                    $val = $dataRow[$j];
-                                    $oldVal = $field->getValues();
-                                    if (in_array($field->datatype, array(\'file\', \'image\'))) {
-                                        if ($val) {
-                                            foreach ($oldVal as $att) {
-                                                Attachment::delete($att);
-                                            }
-                                            $field->deleteValues();
-                                            $field->addValue($val);
-                                            $affectedFields[] = $Loader->columns[$j]->Field->urn;
-                                        }
-                                    } elseif ($val != $oldVal) {
-                                        $field->deleteValues();
-                                        $field->addValue($val);
-                                        $affectedFields[] = $Loader->columns[$j]->Field->urn;
-                                    }
-                                }
-                            }
-                        }
-                        foreach ($Item->fields as $field) {
-                            if ($field->defval && !in_array($field->urn, $affectedFields)) {
-                                $field->addValue($field->defval);
-                            }
-                        }
-                    }
-                    $affectedMaterials[] = (int)$Item->id;
-                    $log[] = array(
-                        \'time\' => (microtime(true) - $st),
-                        \'text\' => sprintf(
-                            Module::i()->view->_(\'LOG_MATERIAL_\' . ($id ? \'UPDATED\' : \'CREATED\')),
-                            Package_Sub_Main::i()->url . \'&action=edit_material&id=\' . (int)$Item->id,
-                            $Item->name
-                        ),
-                        \'row\' => $i,
-                        \'realrow\' => $i + $rows,
-                    );
-                    $Item->rollback();
-                    unset($Item);
-                }
-                unset($itemSet);
-            } elseif (count(array_filter($DATA[$i], \'trim\')) == 1) {
-                // Категория
-                list($step, $name) = each(array_filter($DATA[$i], \'trim\'));
-                if ($Loader->catalog_offset) {
-                    $step = 0;
-                    if (preg_match(\'/^\\\\s+/i\', $name, $regs)) {
-                        $step = strlen($regs[0]);
-                    }
-                }
-                $name = trim($name);
-                if (!$virtualLevel || ($step <= $virtualLevel)) {
-                    if ($step > 0) {
-                        $cropBacktrace($step);
-                    } else {
-                        $backtrace = array();
-                    }
-                    $context = $lastCat();
-
-                    $SQL_result = Page::getSet(array(\'where\' => array(\"pid = \" . (int)$context->id, \"name = \'\" . Page::_SQL()->real_escape_string($name) . \"\'\")));
-                    if ($SQL_result || $Loader->create_pages) {
-                        if ($SQL_result) {
-                            $context = $SQL_result[0];
-                            $id = $context->id;
-                        } elseif ($Loader->create_pages) {
-                            $arr = array(
-                                \'pid\' => (int)$context->id,
-                                \'vis\' => 1,
-                                \'name\' => $name,
-                                \'sitemaps_priority\' => $context->sitemaps_priority ?: \'0.5\',
-                                \'inherit_sitemaps_priority\' => $context->inherit_sitemaps_priority,
-                                \'nat\' => $context->nat,
-                                \'lang\' => $context->inherit_lang ? $context->lang : Package::i()->view->language
-                            );
-                            foreach (array(\'title\', \'keywords\', \'description\') as $key) {
-                                $arr[\'meta_\' . $key] = $context->{\'inherit_meta_\' . $key} ? $context->{\'meta_\' . $key} : \'\';
-                                $arr[\'inherit_meta_\' . $key] = $context->{\'inherit_meta_\' . $key};
-                            }
-                            foreach (array(\'changefreq\', \'cache\', \'template\') as $key) {
-                                $arr[$key] = $context->$key;
-                                $arr[\'inherit_\' . $key] = $context->{\'inherit_\' . $key};
-                            }
-                            $context = new Page($arr);
-                            $id = 0;
-                            if (!$test) {
-                                $context->commit();
-                                $context->rollback();
-                            }
-                        }
-                        $affectedPages[] = (int)$context->id;
-                        $backtrace[$step] = $context;
-                        $virtualLevel = null;
-                        $log[] = array(
-                            \'time\' => (microtime(true) - $st),
-                            \'text\' => sprintf(
-                                Module::i()->view->_(\'LOG_PAGE_\' . ($id ? \'SELECTED\' : \'CREATED\')),
-                                Package_Sub_Main::i()->url . \'&action=edit_page&id=\' . (int)$context->id,
-                                $context->name
-                            ),
-                            \'row\' => $i,
-                            \'realrow\' => $i + $rows,
-                        );
-                    } else {
-                        $virtualLevel = $step;
-                        $log[] = array(\'time\' => (microtime(true) - $st), \'text\' => sprintf(Module::i()->view->_(\'LOG_PAGE_NOT_SELECTED\'), $name), \'row\' => $i, \'realrow\' => $i + $rows);
-                    }
-                }
-            }
-            $raw_data[] = $dataRow;
-        }
-    }
-
-    if ($clear) {
-        if (count($Page->parents) > count($Loader->Page->parents)) {
-            $deleteRoot = $Page;
-        } else {
-            $deleteRoot = $Loader->Page;
-        }
-        if (($clear == PriceLoader::DELETE_PREVIOUS_MATERIALS_MATERIALS_ONLY) || ($clear == PriceLoader::DELETE_PREVIOUS_MATERIALS_MATERIALS_AND_PAGES)) {
-            // Очищаем материалы
-
-            // Ищем задействованные типы
-            $mtypes = array_merge(array((int)$Loader->Material_Type->id), (array)$Loader->Material_Type->all_children_ids);
-            $mtypes = array_map(\'intval\', $mtypes);
-
-            // Ищем материалы для удаления
-            $affectedMaterials = array_map(\'intval\', $affectedMaterials);
-            $SQL_query = \"SELECT tM.id FROM \" . Material::_tablename() . \" AS tM \";
-            if (!$Loader->Material_Type->global_type) {
-                $SQL_query .= \" LEFT JOIN \" . Material::_dbprefix() . \"cms_materials_pages_assoc AS tMPA ON (tMPA.id = tM.id)\";
-            }
-            $SQL_query .= \" WHERE tM.pid IN (\" . implode(\", \", $mtypes ?: array(0)) . \") AND tM.id NOT IN (\" . implode(\", \", $affectedMaterials ?: array(0)) . \")\";
-            if (!$Loader->Material_Type->global_type) {
-                $SQL_query .= \" AND (tMPA.pid IN (\" . implode(\", \", array_merge(array($deleteRoot->id), (array)$deleteRoot->all_children_ids)) . \") OR tMPA.pid IS NULL)\";
-            }
-            $materialsToClear = Material::_SQL()->getcol($SQL_query);
-
-            // Ищем поля картинок и файлов (с attachment\'ами)
-            $SQL_query = \"SELECT tF.id FROM \" . Material_Field::_tablename() . \" AS tF
-                           WHERE tF.classname = \'RAAS\\\\\\\\CMS\\\\\\\\Material_Type\' AND tF.pid IN (\" . implode(\", \", $mtypes ?: array(0)) . \") AND datatype IN (\'image\', \'file\')\";
-            $fieldsToClear = Material::_SQL()->getcol($SQL_query);
-
-            // Ищем attachment\'ы для удаления
-            $attachmentsToClear = array();
-            $SQL_query = \"SELECT value FROM \" . Material::_dbprefix() . \"cms_data
-                           WHERE pid IN (\" . implode(\", \", $materialsToClear ?: array(0)) . \") AND fid IN (\" . implode(\", \", $fieldsToClear ?: array(0)) . \")\";
-            $SQL_result = Material::_SQL()->getcol($SQL_query);
-            foreach ($SQL_result as $val) {
-                if (preg_match(\'/\"attachment\":(\\\\d+)/i\', $val, $regs)) {
-                    $attachmentsToClear[] = (int)$regs[1];
-                }
-            }
-            $SQL_query = \"SELECT realname FROM \" . Attachment::_tablename() . \" WHERE id IN (\" . implode(\", \", $attachmentsToClear ?: array(0)) . \")\";
-            $filesToClear = Material::_SQL()->getcol($SQL_query);
-
-            if (!$test) {
-                // Очищаем материалы
-                $SQL_query = \"DELETE FROM \" . Material::_tablename() . \" WHERE id IN (\" . implode(\", \", $materialsToClear ?: array(0)) . \")\";
-                Material::_SQL()->query($SQL_query);
-
-                // Очищаем привязку к страницам
-                $SQL_query = \"DELETE FROM \" . Material::_dbprefix() . \"cms_materials_pages_assoc WHERE id IN (\" . implode(\", \", $materialsToClear ?: array(0)) . \")\";
-                Material::_SQL()->query($SQL_query);
-
-                // Очищаем данные
-                $SQL_query = \"DELETE tD
-                                FROM \" . Material::_dbprefix() . \"cms_data AS tD JOIN \" . Material_Field::_tablename() . \" AS tF ON tF.id = tD.fid
-                               WHERE (tF.classname = \'RAAS\\\\\\\\CMS\\\\\\\\Material_Type\') AND (tF.pid > 0) AND (tD.pid IN (\" . implode(\", \", $materialsToClear ?: array(0)) . \"))\";
-                Material::_SQL()->query($SQL_query);
-
-                // Чистим файлы
-                foreach ($filesToClear as $val) {
-                    $val = realpath(Package::i()->filesDir) . \'/\' . str_replace(\'.\', \'*.\', $val);
-                    $arr = glob($val);
-                    foreach ($arr as $row) {
-                        unlink($row);
-                    }
-                }
-
-                // Чистим сами attachment\'ы
-                $SQL_query = \"DELETE FROM \" . Attachment::_tablename() . \" WHERE id IN (\" . implode(\", \", $attachmentsToClear ?: array(0)) . \")\";
-                Material::_SQL()->query($SQL_query);
-            } else {
-                foreach ($materialsToClear as $val) {
-                    $row = new Material($val);
-                    $log[] = array(
-                        \'time\' => (microtime(true) - $st),
-                        \'text\' => sprintf(Module::i()->view->_(\'LOG_DELETE_MATERIALS\'), Package_Sub_Main::i()->url . \'&action=edit_material&id=\' . $row->id, $row->name)
-                    );
-                }
-                foreach ($fieldsToClear as $val) {
-                    $row = new Material_Field($val);
-                    $log[] = array(\'time\' => (microtime(true) - $st), \'text\' => sprintf(Module::i()->view->_(\'LOG_DELETE_FIELDS\'), $row->name));
-                }
-                foreach ($attachmentsToClear as $val) {
-                    $row = new Attachment($val);
-                    $log[] = array(
-                        \'time\' => (microtime(true) - $st),
-                        \'text\' => sprintf(Module::i()->view->_(\'LOG_DELETE_ATTACHMENTS\'), \'/\' . Package::i()->filesURL . \'/\' . $row->realname, $row->realname)
-                    );
-                }
-            }
-        }
-        if ($clear == PriceLoader::DELETE_PREVIOUS_MATERIALS_MATERIALS_AND_PAGES) {
-            // Очищаем страницы
-
-            // Ищем страницы для удаления
-            $affectedPages = array_map(\'intval\', $affectedPages);
-            $pagesToClear = array_diff($deleteRoot->all_children_ids, $affectedPages);
-
-            // Ищем поля картинок и файлов (с attachment\'ами)
-            $SQL_query = \"SELECT tF.id FROM \" . Page_Field::_tablename() . \" AS tF
-                           WHERE tF.classname = \'RAAS\\\\\\\\CMS\\\\\\\\Material_Type\' AND tF.pid = 0 AND datatype IN (\'image\', \'file\')\";
-            $fieldsToClear = Page::_SQL()->getcol($SQL_query);
-
-            // Ищем attachment\'ы для удаления
-            $attachmentsToClear = array();
-            $SQL_query = \"SELECT value FROM \" . Page::_dbprefix() . \"cms_data
-                           WHERE pid IN (\" . implode(\", \", $pagesToClear ?: array(0)) . \") AND fid IN (\" . implode(\", \", $fieldsToClear ?: array(0)) . \")\";
-            $SQL_result = Page::_SQL()->getcol($SQL_query);
-            foreach ($SQL_result as $val) {
-                if (preg_match(\'/\"attachment\":(\\\\d+)/i\', $val, $regs)) {
-                    $attachmentsToClear[] = (int)$regs[1];
-                }
-            }
-            $SQL_query = \"SELECT realname FROM \" . Attachment::_tablename() . \" WHERE id IN (\" . implode(\", \", $attachmentsToClear ?: array(0)) . \")\";
-            $filesToClear = Material::_SQL()->getcol($SQL_query);
-
-            if (!$test) {
-                // Очищаем страницы
-                $SQL_query = \"DELETE FROM \" . Page::_tablename() . \" WHERE id IN (\" . implode(\", \", $pagesToClear ?: array(0)) . \")\";
-                Page::_SQL()->query($SQL_query);
-
-                // Очищаем привязку к страницам
-                $SQL_query = \"DELETE FROM \" . Material::_dbprefix() . \"cms_materials_pages_assoc WHERE pid IN (\" . implode(\", \", $pagesToClear ?: array(0)) . \")\";
-                Material::_SQL()->query($SQL_query);
-
-                // Очищаем данные
-                $SQL_query = \"DELETE tD
-                                FROM \" . Page::_dbprefix() . \"cms_data AS tD JOIN \" . Page_Field::_tablename() . \" AS tF ON tF.id = tD.fid
-                               WHERE (tF.classname = \'RAAS\\\\\\\\CMS\\\\\\\\Material_Type\') AND (tF.pid = 0) AND (tD.pid IN (\" . implode(\", \", $pagesToClear ?: array(0)) . \"))\";
-                Page::_SQL()->query($SQL_query);
-
-                // Чистим файлы
-                foreach ($filesToClear as $val) {
-                    $val = realpath(Package::i()->filesDir) . \'/\' . str_replace(\'.\', \'*.\', $val);
-                    $arr = glob($val);
-                    foreach ($arr as $row) {
-                        unlink($row);
-                    }
-                }
-
-                // Чистим сами attachment\'ы
-                $SQL_query = \"DELETE FROM \" . Attachment::_tablename() . \" WHERE id IN (\" . implode(\", \", $attachmentsToClear ?: array(0)) . \")\";
-                Page::_SQL()->query($SQL_query);
-            } else {
-                foreach ($pagesToClear as $val) {
-                    $row = new Page($val);
-                    $log[] = array(
-                        \'time\' => (microtime(true) - $st),
-                        \'text\' => sprintf(Module::i()->view->_(\'LOG_DELETE_PAGES\'), Package_Sub_Main::i()->url . \'&action=edit_page&id=\' . $row->id, $row->name)
-                    );
-                }
-                foreach ($fieldsToClear as $val) {
-                    $row = new Page_Field($val);
-                    $log[] = array(\'time\' => (microtime(true) - $st), \'text\' => sprintf(Module::i()->view->_(\'LOG_DELETE_FIELDS\'), $row->name));
-                }
-                foreach ($attachmentsToClear as $val) {
-                    $row = new Attachment($val);
-                    $log[] = array(
-                        \'time\' => (microtime(true) - $st),
-                        \'text\' => sprintf(Module::i()->view->_(\'LOG_DELETE_ATTACHMENTS\'), \'/\' . Package::i()->filesURL . \'/\' . $row->realname, $row->realname)
-                    );
-                }
-            }
-        }
-        $log[] = array(
-            \'time\' => (microtime(true) - $st),
-            \'text\' => sprintf(
-                Module::i()->view->_(\'LOG_OLD_MATERIALS_CLEARED\'),
-                $Loader->Material_Type->name,
-                Package_Sub_Main::i()->url . \'&id=\' . (int)$Page->id,
-                $Page->name
-            )
-        );
-    }
-    return array(\'log\' => $log, \'raw_data\' => $raw_data, \'ok\' => true);
+    $type = strtolower(pathinfo($file[\'name\'], PATHINFO_EXTENSION));
+    return $interface->upload(
+        $file[\'tmp_name\'],
+        $type,
+        $Page,
+        $test,
+        $clear,
+        $rows,
+        $cols
+    );
 } else {
-    ini_set(\'max_execution_time\', 900);
-    // Выгрузка прайса
-    $downloadPrice = function (Page $Page = null, $level = 0) use ($Loader, &$downloadPrice, $cols, $rows) {
-        static $mtypes;
-        if (!$mtypes) {
-            $mtypes = array_merge(array((int)$Loader->Material_Type->id), (array)$Loader->Material_Type->all_children_ids);
-        }
-
-        $DATA = array();
-        if (!$Page) {
-            $Page = $Loader->Page;
-        }
-        if ($level) {
-            if ($Loader->catalog_offset) {
-                $temp = array(str_repeat(\' \', $Loader->catalog_offset * $level) . trim($Page->name));
-            } else {
-                $temp = array_fill(0, $level, \'\');
-                $temp[$level - 1] = $Page->name;
-            }
-            $DATA[] = $temp;
-        }
-
-
-        $SQL_query = \"SELECT tM.* FROM \" . Material::_tablename() . \" AS tM \";
-        if (!$Loader->Material_Type->global_type) {
-            $SQL_query .= \" JOIN \" . Material::_dbprefix() . \"cms_materials_pages_assoc AS tMPA ON tMPA.id = tM.id\";
-        }
-        $SQL_query .= \" WHERE tM.pid IN (\" . implode(\", \", $mtypes ?: array(0)) . \") \";
-        if (!$Loader->Material_Type->global_type) {
-            $SQL_query .= \" AND tMPA.pid = \" . (int)$Page->id;
-        }
-        $SQL_query .= \" GROUP BY tM.id\";
-        $SQL_result = Material::_SQL()->get($SQL_query);
-        if (($rows > 0) && !$level) {
-            $temp = array();
-            foreach ($Loader->columns as $col) {
-                $x = \'\';
-                if ($col->Field->id) {
-                    $x = $col->Field->name;
-                } elseif ($col->fid == \'name\') {
-                    $x = Module::i()->view->_(\'NAME\');
-                } elseif ($col->fid == \'urn\') {
-                    $x = Module::i()->view->_(\'URN\');
-                } elseif ($col->fid == \'vis\') {
-                    $x = Package::i()->view->_(\'VISIBILITY\');
-                } elseif ($col->fid == \'description\') {
-                    $x = Module::i()->view->_(\'DESCRIPTION\');
-                }
-                $temp[] = trim($x);
-            }
-            $DATA[] = $temp;
-        }
-        foreach ($SQL_result as $row2) {
-            $row = new Material($row2);
-            $temp = array();
-            foreach ($Loader->columns as $col) {
-                $x = null;
-                if ($col->Field->id) {
-                    if ($col->Field->multiple) {
-                        $x = $row->fields[$col->Field->urn]->getValues(true);
-                        $x = array_map(function ($y) use ($col) {
-                            return $col->Field->doRich($y);
-                        }, $x);
-                    } else {
-                        $x = $row->fields[$col->Field->urn]->doRich();
-                    }
-                } elseif ($col->fid) {
-                    $x = $row->{$col->fid};
-                } else {
-                    $temp[] = \'\';
-                    continue;
-                }
-                if ($f = $col->CallbackDownload) {
-                    $x = $f($x, $row);
-                }
-                if (is_array($x)) {
-                    $x = implode(\', \', $x);
-                }
-                $temp[] = trim($x);
-            }
-            $DATA[] = $temp;
-            $row->rollback();
-            unset($row);
-        }
-        foreach ($Page->children as $row) {
-            $DATA = array_merge($DATA, $downloadPrice($row, $level + 1));
-        }
-        return $DATA;
-    };
-
-    if (!$Page->id) {
-        $Page = $Loader->Page;
-    }
-    if (!$type) {
-        $type = \'csv\';
-    }
-    $DATA = $downloadPrice($Page);
-    if ($cols > 0) {
-        $DATA = array_map(function ($row) use ($cols) {
-            return array_merge(array_fill(0, (int)$cols, \'\'), (array)$row);
-        }, $DATA);
-    }
-    if ($rows > 1) {
-        $DATA = array_merge(array_fill(0, (int)($rows - 1), array(\'\')), $DATA);
-    }
-    while (ob_get_level()) {
-        ob_end_clean();
-    }
-    $filename = date(\'Y-m-d\') . \' - \' . $Page->name;
-    switch ($type) {
-        case \'xls\':
-        case \'xlsx\':
-            $filename .= \'.\' . $type;
-            $x = new PHPExcel();
-            $x->setActiveSheetIndex(0)->setTitle(mb_substr($Page->name, 0, 30));
-            $maxcol = 0;
-            for ($i = 0; $i < count($DATA); $i++) {
-                $maxcol = max($maxcol, count($DATA[$i]));
-                for ($j = 0; $j < count($DATA[$i]); $j++) {
-                    $cell = $x->getActiveSheet()->getCellByColumnAndRow($j, $i + 1);
-                    $cell->setValueExplicit($DATA[$i][$j], PHPExcel_Cell_DataType::TYPE_STRING);
-                }
-            }
-            if ($rows) {
-                $range = PHPExcel_Cell::stringFromColumnIndex((int)$cols) . (int)$rows . \':\' . PHPExcel_Cell::stringFromColumnIndex($maxcol + (int)$cols) . (int)$rows;
-                $x->getActiveSheet()->getStyle($range)->getFont()->setBold(true);
-            }
-            switch ($type) {
-                case \'xlsx\':
-                    $writerName = \'Excel2007\';
-                    header(\'Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; name=\"\' . $filename . \'\"\');
-                    break;
-                default:
-                    $writerName = \'Excel5\';
-                    header(\'Content-Type: application/excel; name=\"\' . $filename . \'\"\');
-                    break;
-            }
-            $objWriter = PHPExcel_IOFactory::createWriter($x, $writerName);
-            $temp_file = tempnam(sys_get_temp_dir(), \'\');
-            $objWriter->save($temp_file);
-            $text = file_get_contents($temp_file);
-            break;
-        default:
-            $filename .= \'.csv\';
-            $csv = new \\SOME\\CSV($DATA);
-            unset($DATA);
-            $text = $csv->csv;
-            unset($csv);
-            if ($encoding) {
-                $text = iconv(\'UTF-8\', $encoding . \'//IGNORE\', $text);
-            }
-            header(\'Content-Type: text/csv; name=\"\' . $filename . \'\"\');
-            break;
-    }
-
-    header(\'Content-Disposition: attachment; filename=\"\' . $filename . \'\"\');
-    echo $text;
-    exit;
+    return $interface->download($Page, $rows, $cols, $type, $encoding);
 }
 ', '1'),
 ('28', '1', '__raas_shop_yml_interface', 'Стандартный интерфейс Яндекс.Маркета', '<?php
 /**
  * Сниппет интерфейса Яндекс.Маркета
+ * @param Block_YML $Block Текущий блок
+ * @param Page $Page Текущая страница
  */
 namespace RAAS\\CMS\\Shop;
 
-$interface = new YMLInterface($Block, $Page, $_GET, $_POST, $_COOKIE, $_SESSION, $_SERVER);
+$interface = new YMLInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER
+);
 $interface->process(true, 300);
 ', '1'),
 ('29', '1', '__raas_robokassa_interface', 'Интерфейс платежной системы \"ROBOKASSA\"', '<?php
@@ -5951,45 +4776,24 @@ if (in_array($_GET[\'action\'], array(\'result\', \'success\', \'fail\')) && $_R
 }
 ', '1'),
 ('30', '1', '__raas_my_orders_interface', 'Стандартный интерфейс истории заказов', '<?php
+/**
+ * Стандартный интерфейс сервиса \"Мои заказы\"
+ * @param Block_PHP $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS\\Shop;
 
-use \\RAAS\\Redirector;
-
-$u = \\RAAS\\Controller_Frontend::i()->user;
-if (!$u->id) {
-    new Redirector(\'/\');
-    exit;
-}
-
-$OUT = array();
-$Item = null;
-if ($_GET[\'id\']) {
-    $temp = new Order((int)$_GET[\'id\']);
-    if ($temp->uid = (int)$u->id) {
-        $Item = $temp;
-    }
-}
-
-if ($Item) {
-    switch ($_GET[\'action\']) {
-        case \'delete\':
-            if (!$Order->status_id && !$Order->paid && !$Order->vis) {
-                Order::delete($Item);
-            }
-            new Redirector($_GET[\'back\'] ? \'history:back\' : \\SOME\\HTTP::queryString(\'id=&action=\'));
-            break;
-        default:
-            $Page->oldName = $Page->name;
-            $Page->Item = $Item;
-            $Page->name = ORDER_NUMBER . \' \' . $Item->id . \' \' . FROM . \' \' . date(DATETIMEFORMAT, strtotime($Item->post_date));
-            $OUT[\'Item\'] = $Item;
-            break;
-    }
-} else {
-    $Set = Order::getSet(array(\'where\' => \"uid = \" . (int)$u->id, \'orderBy\' => \'id DESC\'));
-    $OUT[\'Set\'] = $Set;
-}
-return $OUT;
+$interface = new MyOrdersInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('31', '1', 'catalog_interface', 'Интерфейс каталога', '<?php
 namespace RAAS\\CMS;
@@ -6196,7 +5000,8 @@ if ($Page->Material && $Block->nat) {
     $OUT[\'doSearch\'] = $doSearch;
 }
 return $OUT;
-', '0'),
+', '0');
+INSERT INTO `cms_snippets` (`id`, `pid`, `urn`, `name`, `description`, `locked`) VALUES 
 ('32', '2', 'cart', 'Корзина', '<?php
 namespace RAAS\\CMS\\Shop;
 
@@ -6876,8 +5681,7 @@ if ($Item) {
       <?php } ?>
     </div>
 <?php } ?>
-', '0');
-INSERT INTO `cms_snippets` (`id`, `pid`, `urn`, `name`, `description`, `locked`) VALUES 
+', '0'),
 ('38', '2', 'catalog_filter', 'Фильтр каталога', '<?php
 namespace RAAS\\CMS;
 
@@ -7350,631 +6154,84 @@ jQuery(document).ready(function($) {
 </script>
 ', '0'),
 ('45', '1', '__raas_users_register_interface', 'Стандартный интерфейс регистрации', '<?php
+/**
+ * Стандартный интерфейс регистрации
+ * @param Block_Register $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS\\Users;
 
-use RAAS\\Controller_Frontend as RAASController_Frontend;
-use RAAS\\CMS\\Form;
-use RAAS\\Application;
-use RAAS\\CMS\\User;
-use RAAS\\CMS\\ULogin;
-use RAAS\\Attachment;
-use RAAS\\CMS\\Package;
-use SOME\\Text;
-
-$checkRedirect = function ($referer) {
-    if ($_POST[\'AJAX\']) {
-        return true;
-    } elseif ($referer) {
-        header(\'Location: \' . $referer);
-        exit;
-    } else {
-        header(\'Location: \' . $_SERVER[\'REQUEST_URI\']);
-        exit;
-    }
-};
-
-$generatePass = function ($length = 5) {
-    $text = \'\';
-    for ($i = 0; $i < $length; $i++) {
-        $x = rand(0, 61);
-        if ($x < 10) {
-            $c = (string)(int)$x;
-        } elseif ($x < 36) {
-            $c = chr((int)$x - 10 + 65);
-        } else {
-            $c = chr((int)$x - 36 + 97);
-        }
-        $text .= $c;
-    }
-    return $text;
-};
-
-
-$notify = function (User $User, Form $Form, array $config = array(), $ADMIN = false) use ($Page) {
-    $emails = $sms = array();
-    if (!$ADMIN) {
-        if ($User->email) {
-            $emails[] = $User->email;
-        }
-        if ($User->phone) {
-            $sms[] = Text::beautifyPhone($User->phone);
-        }
-    } else {
-        $temp = array_values(array_filter(array_map(\'trim\', preg_split(\'/( |;|,)/\', $Form->email))));
-        foreach ($temp as $row) {
-            if (($row[0] == \'[\') && ($row[strlen($row) - 1] == \']\')) {
-                $sms[] = substr($row, 1, -1);
-            } else {
-                $emails[] = $row;
-            }
-        }
-    }
-    if ($Form->Interface->id) {
-        $template = $Form->Interface->description;
-    }
-
-    $subject = date(DATETIMEFORMAT) . \' \' . sprintf(REGISTRATION_ON_SITE, $_SERVER[\'HTTP_HOST\']);
-    if ($emails) {
-        ob_start();
-        eval(\'?\' . \'>\' . $template);
-        $message = ob_get_contents();
-        ob_end_clean();
-        \\RAAS\\Application::i()->sendmail($emails, $subject, $message, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\']);
-    }
-    if ($sms) {
-        ob_start();
-        $SMS = true;
-        eval(\'?\' . \'>\' . $template);
-        $message_sms = ob_get_contents();
-        ob_end_clean();
-        \\RAAS\\Application::i()->sendmail($sms, $subject, $message_sms, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\'], false);
-    }
-};
-
-
-$OUT = array();
-$uid = (int)RAASController_Frontend::i()->user->id;
-$User = new User($uid);
-$Form = new Form(isset($config[\'form_id\']) ? (int)$config[\'form_id\'] : 0);
-foreach ($Form->fields as $fname => &$temp) {
-    if ($User->id && $temp->datatype == \'password\') {
-        $temp->required = false;
-    }
-}
-
-if ($User->id) {
-    $Page->h1 = $Page->meta_title = \'Редактирование профиля\';
-}
-
-if ($Form->id) {
-    $localError = array();
-    if ($config[\'allow_edit_social\'] && isset($_POST[\'token\'])) {
-        if (!isset($_SESSION[\'confirmedSocial\'])) {
-            $_SESSION[\'confirmedSocial\'] = array();
-        }
-        if ($Profile = ULogin::getProfile($_POST[\'token\'])) {
-            if ($_POST[\'AJAX\']) {
-                $_SESSION[\'confirmedSocial\'][] = $Profile->profile;
-                $_SESSION[\'confirmedSocial\'] = array_values(array_unique($_SESSION[\'confirmedSocial\']));
-                $OUT[\'social\'] = $Profile->profile;
-                $OUT[\'socialNetwork\'] = $Profile->socialNetwork;
-            } else {
-                $User->addSocial($Profile->profile);
-                header(\'Location: \' . $_SERVER[\'REQUEST_URI\']);
-                exit;
-            }
-        }
-    } elseif (($Form->signature && isset($_POST[\'form_signature\']) && $_POST[\'form_signature\'] == md5(\'form\' . (int)$Form->id . (int)$Block->id)) || (!$Form->signature && ($_SERVER[\'REQUEST_METHOD\'] == \'POST\'))) {
-        $Item = $User;
-        foreach ($Form->fields as $row) {
-            switch ($row->datatype) {
-                case \'file\':
-                case \'image\':
-                    $val = isset($_FILES[$row->urn][\'tmp_name\']) ? $_FILES[$row->urn][\'tmp_name\'] : null;
-                    if ($val && $row->multiple) {
-                        $val = (array)$val;
-                        $val = array_shift($val);
-                    }
-                    if (!isset($val) || !$row->isFilled($val)) {
-                        if ($row->required && !$row->countValues()) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_REQUIRED, $row->name);
-                        }
-                    } elseif (!$row->multiple) {
-                        if (!$row->validate($val)) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_INVALID, $row->name);
-                        }
-                    }
-                    $allowedExtensions = preg_split(\'/\\\\W+/umis\', $row->source);
-                    $allowedExtensions = array_map(\'mb_strtolower\', array_filter($allowedExtensions, \'trim\'));
-                    if ($allowedExtensions) {
-                        if ($row->multiple) {
-                            foreach ((array)$_FILES[$row->urn][\'tmp_name\'] as $i => $val) {
-                                if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\'][$i])) {
-                                    $ext = pathinfo(
-                                        $_FILES[$row->urn][\'name\'][$i],
-                                        PATHINFO_EXTENSION
-                                    );
-                                    $ext = mb_strtolower($ext);
-                                    if (!in_array($ext, $allowedExtensions)) {
-                                        $localError[$row->urn] = sprintf(
-                                            INVALID_FILE_EXTENSION,
-                                            implode(\', \', $allowedExtensions)
-                                        );
-                                        break;
-                                    }
-                                }
-                            }
-                        } else {
-                            if (is_uploaded_file($_FILES[$row->urn][\'tmp_name\'])) {
-                                $ext = pathinfo(
-                                    $_FILES[$row->urn][\'name\'],
-                                    PATHINFO_EXTENSION
-                                );
-                                $ext = mb_strtolower($ext);
-                                if (!in_array($ext, $allowedExtensions)) {
-                                    $localError[$row->urn] = sprintf(
-                                        INVALID_FILE_EXTENSION,
-                                        implode(\', \', $allowedExtensions)
-                                    );
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    $val = isset($_POST[$row->urn]) ? $_POST[$row->urn] : null;
-                    if ($val && $row->multiple) {
-                        $val = (array)$val;
-                        $val = array_shift($val);
-                    }
-                    if (!isset($val) || !$row->isFilled($val)) {
-                        if ($row->required && !($row->urn == \'agree\' && $User->id)) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_REQUIRED, $row->name);
-                        }
-                    } elseif (!$row->multiple) {
-                        if (($row->datatype == \'password\') && ($_POST[$row->urn] != $_POST[$row->urn . \'@confirm\'])) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_PASSWORD_DOESNT_MATCH_CONFIRM, $row->name);
-                        } elseif (!$row->validate($val)) {
-                            $localError[$row->urn] = sprintf(ERR_CUSTOM_FIELD_INVALID, $row->name);
-                        }
-                    }
-                    break;
-            }
-        }
-        if (!$User->id && $Form->antispam && $Form->antispam_field_name) {
-            switch ($Form->antispam) {
-                case \'captcha\':
-                    if (!isset($_POST[$Form->antispam_field_name], $_SESSION[\'captcha_keystring\']) || ($_POST[$Form->antispam_field_name] != $_SESSION[\'captcha_keystring\'])) {
-                        $localError[$row->urn] = ERR_CAPTCHA_FIELD_INVALID;
-                    }
-                    break;
-                case \'hidden\':
-                    if (isset($_POST[$Form->antispam_field_name]) && $_POST[$Form->antispam_field_name]) {
-                        $localError[$row->urn] = ERR_CAPTCHA_FIELD_INVALID;
-                    }
-                    break;
-            }
-        }
-        if (isset($_POST[\'login\']) && $_POST[\'login\'] && isset($Form->fields[\'login\'])) {
-            if ($User->checkLoginExists(trim($_POST[\'login\']))) {
-                $localError[\'login\'] = ERR_LOGIN_EXISTS;
-            }
-        }
-        if (isset($_POST[\'email\']) && $_POST[\'email\'] && isset($Form->fields[\'email\'])) {
-            if ($User->checkEmailExists(trim($_POST[\'email\']))) {
-                $localError[\'email\'] = ERR_EMAIL_EXISTS;
-            } elseif (!isset($Form->fields[\'email\'])) {
-                if ($User->checkLoginExists(trim($_POST[\'email\']))) {
-                    $localError[\'email\'] = ERR_LOGIN_EXISTS;
-                }
-            }
-        }
-        if (!$localError) {
-            $User->page_id = (int)$Page->id;
-            $User->page = $Page;
-            $User->ip = (string)$_SERVER[\'REMOTE_ADDR\'];
-            $User->user_agent = (string)$_SERVER[\'HTTP_USER_AGENT\'];
-            if ($new = !$User->id) {
-                $User->vis = (int)($config[\'activation_type\'] == Block_Register::ACTIVATION_TYPE_ALREADY_ACTIVATED);
-                $User->new = 1;
-            }
-
-
-            if (isset($Form->fields[\'email\'])) {
-                $val = $User->email = trim($_POST[\'email\']);
-                if ($val && $config[\'email_as_login\']) {
-                    $User->login = $val;
-                }
-            }
-            if (isset($Form->fields[\'login\']) && !$config[\'email_as_login\']) {
-                if ($val = trim($_POST[\'login\'])) {
-                    $User->login = $val;
-                }
-            }
-            if (isset($Form->fields[\'password\']) && ($val = trim($_POST[\'password\']))) {
-                $User->password = $val;
-                $User->password_md5 = Application::i()->md5It($val);
-            } elseif ($new) {
-                $val = $User->password = $generatePass();
-                $User->password_md5 = Application::i()->md5It($val);
-            }
-            if (isset($Form->fields[\'lang\']) && ($val = trim($_POST[\'lang\']))) {
-                $User->lang = $val;
-            } else {
-                $User->lang = $Page->lang;
-            }
-            if ($config[\'allow_edit_social\'] && isset($_POST[\'social\']) && isset($_SESSION[\'confirmedSocial\'])) {
-                $arr = array();
-                foreach ((array)$_POST[\'social\'] as $val) {
-                    if (($val = trim($val)) && in_array($val, $_SESSION[\'confirmedSocial\']) || in_array($val, $User->social)) {
-                        $arr[] = $val;
-                    }
-                }
-                unset($_SESSION[\'confirmedSocial\']);
-                $User->meta_social = $arr;
-            }
-            $User->commit();
-
-            foreach ($Form->fields as $fname => $temp) {
-                if (isset($User->fields[$fname])) {
-                    $row = $User->fields[$fname];
-                    switch ($row->datatype) {
-                        case \'file\':
-                        case \'image\':
-                            $row->deleteValues();
-                            if ($row->multiple) {
-                                foreach ($_FILES[$fname][\'tmp_name\'] as $key => $val) {
-                                    $row2 = array(
-                                        \'vis\' => (int)$_POST[$row->urn . \'@vis\'][$key],
-                                        \'name\' => (string)$_POST[$row->urn . \'@name\'][$key],
-                                        \'description\' => (string)$_POST[$row->urn . \'@description\'][$key],
-                                        \'attachment\' => (int)$_POST[$row->urn . \'@attachment\'][$key]
-                                    );
-                                    if (is_uploaded_file($_FILES[$fname][\'tmp_name\'][$key]) && $row->validate($_FILES[$fname][\'tmp_name\'][$key])) {
-                                        $att = new Attachment((int)$row2[\'attachment\']);
-                                        $att->upload = $_FILES[$fname][\'tmp_name\'][$key];
-                                        $att->filename = $_FILES[$fname][\'name\'][$key];
-                                        $att->mime = $_FILES[$fname][\'type\'][$key];
-                                        $att->parent = $Material;
-                                        if ($row->datatype == \'image\') {
-                                            $att->image = 1;
-                                            if ($temp = (int)Package::i()->registryGet(\'maxsize\')) {
-                                                $att->maxWidth = $att->maxHeight = $temp;
-                                            }
-                                            if ($temp = (int)Package::i()->registryGet(\'tnsize\')) {
-                                                $att->tnsize = $temp;
-                                            }
-                                        }
-                                        $att->commit();
-                                        $row2[\'attachment\'] = (int)$att->id;
-                                        $row->addValue(json_encode($row2));
-                                    } elseif ($row2[\'attachment\']) {
-                                        $row->addValue(json_encode($row2));
-                                    }
-                                    unset($att, $row2);
-                                }
-                            } else {
-                                $row2 = array(
-                                    \'vis\' => (int)$_POST[$row->urn . \'@vis\'],
-                                    \'name\' => (string)$_POST[$row->urn . \'@name\'],
-                                    \'description\' => (string)$_POST[$row->urn . \'@description\'],
-                                    \'attachment\' => (int)$_POST[$row->urn . \'@attachment\']
-                                );
-                                if (is_uploaded_file($_FILES[$fname][\'tmp_name\']) && $row->validate($_FILES[$fname][\'tmp_name\'])) {
-                                    $att = new Attachment((int)$row2[\'attachment\']);
-                                    $att->upload = $_FILES[$fname][\'tmp_name\'];
-                                    $att->filename = $_FILES[$fname][\'name\'];
-                                    $att->mime = $_FILES[$fname][\'type\'];
-                                    $att->parent = $Material;
-                                    if ($row->datatype == \'image\') {
-                                        $att->image = 1;
-                                        if ($temp = (int)Package::i()->registryGet(\'maxsize\')) {
-                                            $att->maxWidth = $att->maxHeight = $temp;
-                                        }
-                                        if ($temp = (int)Package::i()->registryGet(\'tnsize\')) {
-                                            $att->tnsize = $temp;
-                                        }
-                                    }
-                                    $att->commit();
-                                    $row2[\'attachment\'] = (int)$att->id;
-                                    $row->addValue(json_encode($row2));
-                                } elseif ($_POST[$row->urn . \'@attachment\']) {
-                                    $row2[\'attachment\'] = (int)$_POST[$row->urn . \'@attachment\'];
-                                    $row->addValue(json_encode($row2));
-                                }
-                                unset($att, $row2);
-                            }
-                            break;
-                        default:
-                            $row->deleteValues();
-                            if (isset($_POST[$fname])) {
-                                foreach ((array)$_POST[$fname] as $val) {
-                                    // 2019-01-22, AVS: закрываем XSS-уязвимость
-                                    $row->addValue(strip_tags($val));
-                                }
-                            }
-                            break;
-                    }
-                    if (in_array($row->datatype, array(\'file\', \'image\'))) {
-                        $row->clearLostAttachments();
-                    }
-                }
-            }
-
-            foreach ($User->fields as $fname => $temp) {
-                if (!isset($_POST[$fname])) {
-                    switch ($temp->datatype) {
-                        case \'datetime\':
-                        case \'datetime-local\':
-                            $temp->addValue(date(\'Y-m-d H:i:s\'));
-                            break;
-                        case \'date\':
-                            $temp->addValue(date(\'Y-m-d\'));
-                            break;
-                        case \'time\':
-                            $temp->addValue(date(\'H:i:s\'));
-                            break;
-                    }
-                }
-            }
-
-            if (isset($User->fields[\'ip\'])) {
-                $User->fields[\'ip\']->deleteValues();
-                $User->fields[\'ip\']->addValue((string)$_SERVER[\'REMOTE_ADDR\']);
-            }
-            if (isset($User->fields[\'user_agent\'])) {
-                $User->fields[\'user_agent\']->deleteValues();
-                $User->fields[\'user_agent\']->addValue((string)$_SERVER[\'HTTP_USER_AGENT\']);
-            }
-
-            if ($Form->email && ($new || $config[\'notify_about_edit\'])) {
-                $notify($User, $Form, $config, true);
-            }
-            if ($User->email && $new) {
-                $notify($User, $Form, $config, false);
-            }
-            if ($new) {
-                $OUT[\'success\'][(int)$Block->id] = true;
-            } else {
-                $OUT[\'success\'][(int)$Block->id] = $checkRedirect();
-            }
-        }
-        $OUT[\'DATA\'] = $_POST;
-    } else {
-        $OUT[\'DATA\'] = $User->getArrayCopy();
-        unset($OUT[\'DATA\'][\'password_md5\']);
-        foreach ($Form->fields as $fname => $temp) {
-            if ($User->id && isset($User->fields[$fname])) {
-                $OUT[\'DATA\'][$fname] = $User->fields[$fname]->getValues();
-            } elseif (!$User->id) {
-                $OUT[\'DATA\'][$fname] = $temp->default;
-            }
-        }
-        if ($config[\'allow_edit_social\']) {
-            $OUT[\'DATA\'][\'social\'] = $User->social;
-        }
-    }
-    $OUT[\'localError\'] = $localError;
-    $OUT[\'User\'] = $User;
-}
-$OUT[\'Form\'] = $Form;
-
-return $OUT;
+$interface = new RegisterInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('46', '1', '__raas_users_activation_interface', 'Стандартный интерфейс активации', '<?php
+/**
+ * Стандартный интерфейс активации учетной записи
+ * @param Block_Activation $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS\\Users;
 
-use \\RAAS\\Controller_Frontend as RAASController_Frontend;
-use \\RAAS\\CMS\\User;
-use \\RAAS\\CMS\\Auth;
-
-$OUT = array();
-$Item = $User = RAASController_Frontend::i()->user;
-$localError = array();
-if ($User->vis) {
-    $localError = ERR_ALREADY_ACTIVATED;
-} elseif (($tmp_user = User::importByActivationKey(isset($_GET[\'key\']) ? $_GET[\'key\'] : \'\'))) {
-    $User = $tmp_user;
-    $User->vis = 1;
-    $User->commit();
-    $a = new Auth($User);
-    $a->setSession();
-    $OUT[\'success\'] = true;
-} else {
-    $localError[] = CONFIRMATION_KEY_IS_INVALID;
-}
-$OUT[\'localError\'] = $localError;
-$OUT[\'User\'] = $User;
-
-return $OUT;
+$interface = new ActivationInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('47', '1', '__raas_users_login_interface', 'Стандартный интерфейс входа в систему', '<?php
+/**
+ * Стандартный интерфейс входа в систему
+ * @param Block_LogIn $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS\\Users;
 
-use \\RAAS\\Controller_Frontend as RAASController_Frontend;
-use \\RAAS\\CMS\\Auth;
-use \\RAAS\\CMS\\User as CMSUser;
-use \\RAAS\\CMS\\ULogin;
-
-$checkRedirect = function ($referer) {
-    if ($_POST[\'AJAX\']) {
-        return true;
-    } elseif ($referer) {
-        header(\'Location: \' . $referer);
-        exit;
-    } else {
-        header(\'Location: /\');
-        exit;
-    }
-};
-
-$OUT = array();
-$Item = $User = RAASController_Frontend::i()->user;
-$localError = array();
-$a = new Auth($User);
-if ($_GET[\'logout\']) {
-    $a->logout();
-    $OUT[\'success\'] = $checkRedirect();
-} elseif ($User->id) {
-    $OUT[\'success\'] = $checkRedirect();
-} else {
-    if ($_SERVER[\'REQUEST_METHOD\'] == \'POST\') {
-        if (isset($_POST[\'token\']) && $config[\'social_login_type\']) {
-            if ($temp = ULogin::getProfile($_POST[\'token\'])) {
-                if ($a->loginBySocialNetwork($temp->profile)) {
-                    $OUT[\'success\'] = $checkRedirect();
-                } else {
-                    if ($temp->email) {
-                        $SQL_result = CMSUser::getSet(array(\'where\' => \'email = \"\' . CMSUser::_SQL()->real_escape_string($temp->email) . \'\"\'));
-                        if ($SQL_result) {
-                            $User = $SQL_result[0];
-                            $User->meta_social = array_merge((array)$User->social, array($temp->profile));
-                            $User->commit();
-                            $a = new Auth($User);
-                            $a->setSession();
-                            $OUT[\'success\'] = $checkRedirect();
-                        }
-                    }
-                }
-                if ($config[\'social_login_type\'] == Block_LogIn::SOCIAL_LOGIN_QUICK_REGISTER) {
-                    $User = new CMSUser();
-                    $User->vis = 1;
-                    $User->meta_social = $temp->profile;
-                    if ($temp->email) {
-                        $User->email = $temp->email;
-                    }
-                    if ($temp->nickname) {
-                        $login = $temp->nickname;
-                    } elseif ($temp->profile) {
-                        $login = basename($temp->profile);
-                    }
-                    while ($User->checkLoginExists($login)) {
-                        $login = Application::i()->getNewURN($login);
-                    }
-                    $User->login = $login;
-                    $User->commit();
-                    foreach (array(\'last_name\', \'first_name\', \'full_name\', \'phone\') as $key) {
-                        if (isset($User->fields[$key]) && ($row = $User->fields[$key])) {
-                            $row->deleteValues();
-                            $row->addValue($temp->$key);
-                        }
-                    }
-                    $a = new Auth($User);
-                    $a->setSession();
-                    $OUT[\'success\'] = $checkRedirect();
-                } else {
-                    $localError[] = ERR_USER_WITH_THIS_SOCIAL_NETWORK_IS_NOT_FOUND;
-                }
-            } else {
-                $localError[] = ERR_CANT_CONNECT_TO_SOCIAL_NETWORK;
-            }
-        } else {
-            if (!isset($_POST[\'login\'])) {
-                $localError[\'password\'] = LOGIN_REQUIRED;
-            } elseif (!isset($_POST[\'password\'])) {
-                $localError[\'password\'] = PASSWORD_REQUIRED;
-            } else {
-                $savePassword = (($config[\'password_save_type\'] == Block_LogIn::SAVE_PASSWORD_SAVE_PASSWORD) && isset($_POST[\'save_password\']))
-                             || (($config[\'password_save_type\'] == Block_LogIn::SAVE_PASSWORD_FOREIGN_COMPUTER) && !isset($_POST[\'foreign_computer\']));
-                $val = $a->login(trim($_POST[\'login\']), $_POST[\'password\'], $savePassword);
-                if ($val === -1) {
-                    $localError[] = YOUR_ACCOUNT_IS_BLOCKED;
-                } elseif ($val) {
-                    $checkRedirect($_POST[\'HTTP_REFERER\'] ?: $_GET[\'HTTP_REFERER\']);
-                } else {
-                    $localError[] = INVALID_LOGIN_OR_PASSWORD;
-                }
-            }
-        }
-    }
-}
-$OUT[\'localError\'] = $localError;
-$OUT[\'User\'] = $User;
-
-return $OUT;
+$interface = new LogInInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('48', '1', '__raas_users_recovery_interface', 'Стандартный интерфейс восстановления пароля', '<?php
+/**
+ * Стандартный интерфейс восстановления пароля
+ * @param Block_Recovery $Block Текущий блок
+ * @param Page $Page Текущая страница
+ */
 namespace RAAS\\CMS\\Users;
 
-use \\RAAS\\Application;
-use \\RAAS\\Controller_Frontend as RAASController_Frontend;
-use \\RAAS\\CMS\\User;
-use \\RAAS\\CMS\\Snippet;
-use \\RAAS\\CMS\\Auth;
-
-$notify = function (User $User, array $config = array()) use ($Page) {
-    $emails = array();
-    if ($User->email) {
-        $emails[] = $User->email;
-    }
-    if ($config[\'notification_id\']) {
-        $S = new Snippet((int)$config[\'notification_id\']);
-        $template = $S->description;
-    }
-    $subject = date(DATETIMEFORMAT) . \' \' . sprintf(PASSWORD_RECOVERY_ON_SITE, $_SERVER[\'HTTP_HOST\']);
-    if ($emails) {
-        ob_start();
-        eval(\'?\' . \'>\' . $template);
-        $message = ob_get_contents();
-        ob_end_clean();
-        \\RAAS\\Application::i()->sendmail($emails, $subject, $message, ADMINISTRATION_OF_SITE . \' \' . $_SERVER[\'HTTP_HOST\'], \'info@\' . $_SERVER[\'HTTP_HOST\']);
-    }
-};
-
-$OUT = array();
-$Item = $User = RAASController_Frontend::i()->user;
-$localError = array();
-if ($_GET[\'key\'] || $User->id) {
-    $OUT[\'proceed\'] = true;
-    if (!$User->id && ($tmp_user = User::importByRecoveryKey($_GET[\'key\']))) {
-        $User = $tmp_user;
-        $a = new Auth($User);
-        if (!$User->vis) {
-            $localError[\'password\'] = YOUR_ACCOUNT_IS_BLOCKED;
-            $OUT[\'key_is_invalid\'] = true;
-        } else {
-            $a->setSession();
-        }
-    }
-    if ($User->id) {
-        if ($_SERVER[\'REQUEST_METHOD\'] == \'POST\') {
-            if (!isset($_POST[\'password\']) || !trim($_POST[\'password\'])) {
-                $localError[\'password\'] = PASSWORD_REQUIRED;
-            } elseif ($_POST[\'password\'] != $_POST[\'password@confirm\']) {
-                $localError[\'password\'] = PASSWORD_DOESNT_MATCH_CONFIRM;
-            } else {
-                $User->password_md5 = Application::i()->md5It($_POST[\'password\']);
-                $User->commit();
-                $OUT[\'success\'] = true;
-            }
-        }
-    } else {
-        $localError[] = CONFIRMATION_KEY_IS_INVALID;
-        $OUT[\'key_is_invalid\'] = true;
-    }
-} else {
-    if (isset($_POST[\'login\']) && trim($_POST[\'login\'])) {
-        if ($tmp_user = User::importByLoginOrEmail(trim($_POST[\'login\']))) {
-            if (!$tmp_user->vis) {
-                $localError[\'password\'] = YOUR_ACCOUNT_IS_BLOCKED;
-            } else {
-                if ($tmp_user->email) {
-                    $notify($tmp_user, $config);
-                    $OUT[\'success\'] = true;
-                } else {
-                    $localError[\'login\'] = NO_EMAIL_OF_THIS_USER;
-                }
-            }
-        } else {
-            $localError[\'login\'] = USER_WITH_THIS_LOGIN_IS_NOT_FOUND;
-        }
-    }
-}
-$OUT[\'localError\'] = $localError;
-$OUT[\'User\'] = $User;
-
-return $OUT;
+$interface = new RecoveryInterface(
+    $Block,
+    $Page,
+    $_GET,
+    $_POST,
+    $_COOKIE,
+    $_SESSION,
+    $_SERVER,
+    $_FILES
+);
+return $interface->process();
 ', '1'),
 ('49', '1', '__raas_users_register_notify', 'Стандартное уведомление о регистрации', '<?php
 namespace RAAS\\CMS;
@@ -8162,7 +6419,7 @@ $emailField = function ($field, $formField = null) {
 ?>
 ', '1'),
 ('50', '1', '__raas_users_recovery_notify', 'Стандартное уведомление о восстановлении пароля', '<?php
-namespace RAAS\\CMS\\Users;
+namespace RAAS\\CMS;
 
 $link = \'http\' . ($_SERVER[\'HTTPS\'] == \'on\' ? \'s\' : \'\') . \'://\' . $_SERVER[\'HTTP_HOST\'] . $Page->url . \'?key=\' . $User->recoveryKey;
 ?>
@@ -8629,6 +6886,27 @@ if ($Set) { ?>
       <script src=\"/js/goods-reviews.js?v=<?php echo date(\'Y-m-d\', filemtime(\'js/goods-reviews.js\'))?>\"></script>
     </div>
 <?php } ?>', '0');
+INSERT INTO `cms_snippets` (`id`, `pid`, `urn`, `name`, `description`, `locked`) VALUES 
+('57', '1', 'hidden_props', 'Скрытые свойства', '<?php
+/**
+ * Скрытые свойства
+ * @return array<string>
+ */
+return [
+    \'images\',
+    \'brief\',
+    \'videos\',
+    \'videos_url\',
+    \'files\',
+    \'onmain\',
+    \'article\',
+    \'price\',
+    \'price_old\',
+    \'available\',
+    \'min\',
+    \'step\'
+];
+', '0');
 
 
 -- *************************************************************
@@ -8877,11 +7155,11 @@ CREATE TABLE `cms_users_billing_transactions` (
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Name',
   `amount` decimal(8,2) NOT NULL DEFAULT '0.00' COMMENT 'Transaction amount',
   PRIMARY KEY (`id`),
-  KEY `author_id` (`author_id`),
   KEY `uid` (`uid`),
   KEY `billing_type_id` (`billing_type_id`),
   KEY `post_date` (`post_date`),
-  KEY `amount` (`amount`)
+  KEY `amount` (`amount`),
+  KEY `author_id` (`author_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Billing transactions';
 
 -- *************************************************************
@@ -9004,6 +7282,47 @@ INSERT INTO `cms_users_social` (`uid`, `url`) VALUES
 
 -- *************************************************************
 -- 
+-- Table structure: crontab
+-- 
+DROP TABLE IF EXISTS crontab;
+CREATE TABLE `crontab` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID#',
+  `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Name',
+  `vis` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'Is active',
+  `once` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'Process once',
+  `minutes` varchar(255) NOT NULL DEFAULT '' COMMENT 'Minutes',
+  `hours` varchar(255) NOT NULL DEFAULT '' COMMENT 'Hours',
+  `days` varchar(255) NOT NULL DEFAULT '' COMMENT 'Days',
+  `weekdays` varchar(255) NOT NULL DEFAULT '' COMMENT 'Weekdays',
+  `command_line` varchar(255) NOT NULL DEFAULT '' COMMENT 'Arbitrary command line',
+  `command_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'Command classname',
+  `args` text COMMENT 'Command arguments',
+  `start_time` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Processing start time',
+  `save_log` tinyint(1) unsigned NOT NULL DEFAULT '0' COMMENT 'Save log',
+  `email_log` varchar(255) NOT NULL DEFAULT '' COMMENT 'Email for sending log',
+  `priority` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Priority',
+  PRIMARY KEY (`id`),
+  KEY `priority` (`priority`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='Crontab';
+
+-- *************************************************************
+-- 
+-- Table structure: crontab_logs
+-- 
+DROP TABLE IF EXISTS crontab_logs;
+CREATE TABLE `crontab_logs` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'ID#',
+  `pid` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Crontab task ID#',
+  `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Backup date/time',
+  `attachment_id` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Attachment ID#',
+  PRIMARY KEY (`id`),
+  KEY `pid` (`pid`),
+  KEY `post_date` (`post_date`),
+  KEY `attachment_id` (`attachment_id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 COMMENT='Crontab logs';
+
+-- *************************************************************
+-- 
 -- Table structure: groups
 -- 
 DROP TABLE IF EXISTS groups;
@@ -9080,18 +7399,18 @@ CREATE TABLE `registry` (
 -- Table data: registry
 -- 
 INSERT INTO `registry` (`m`, `name`, `value`, `locked`) VALUES 
-('', 'installDate', '2018-04-05 11:33:29', '1'),
+('', 'installDate', '2020-05-05 00:03:46', '1'),
 ('', 'cookieLifetime', '14', '0'),
 ('', 'minPasswordLength', '3', '0'),
 ('', 'rowsPerPage', '20', '0'),
 ('cms', 'tnsize', '300', '0'),
 ('cms', 'maxsize', '1920', '0'),
 ('cms', 'cache', '0', '0'),
-('cms', 'installDate', '2019-08-21 23:13:13', '1'),
+('cms', 'installDate', '2020-05-05 00:03:49', '1'),
 ('cms', 'isActive', '1', '0'),
 ('cms.meta_checker', 'installDate', '2018-04-05 11:34:16', '1'),
 ('cms.meta_checker', 'isActive', '1', '0'),
-('cms.shop', 'installDate', '2019-08-21 23:13:18', '1'),
+('cms.shop', 'installDate', '2020-05-05 00:03:51', '1'),
 ('cms.shop', 'isActive', '1', '0'),
 ('cms.users', 'activation_notify', '<?php
 namespace RAAS\\CMS\\Users;
@@ -9143,8 +7462,67 @@ if (!$recoveryPage->id && $recoveryPages) {
 </p>
 ', '0'),
 ('cms.users', 'automatic_notification', '1', '0'),
-('cms.users', 'installDate', '2019-08-21 23:13:23', '1'),
-('cms.users', 'isActive', '1', '0');
+('cms.users', 'installDate', '2020-05-05 00:03:54', '1'),
+('cms.users', 'isActive', '1', '0'),
+('', 'baseVersion', '4.2.31', '0'),
+('cms', 'baseVersion', '4.2.52', '0'),
+('cms.shop', 'baseVersion', '4.2.33', '0'),
+('cms.users', 'baseVersion', '4.2.13', '0');
+
+
+-- *************************************************************
+-- 
+-- Table structure: uncompleted_forms
+-- 
+DROP TABLE IF EXISTS uncompleted_forms;
+CREATE TABLE `uncompleted_forms` (
+  `token` varchar(255) NOT NULL DEFAULT '' COMMENT 'Token',
+  `field` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field URN',
+  `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Post date/time',
+  `fii` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'Field index',
+  `value` varchar(255) NOT NULL DEFAULT '' COMMENT 'Value',
+  PRIMARY KEY (`token`,`field`,`fii`),
+  KEY `token` (`token`),
+  KEY `field` (`field`),
+  KEY `fii` (`fii`)
+) ENGINE=MyISAM DEFAULT CHARSET=cp1251 COMMENT='Uncompleted forms';
+
+-- 
+-- Table data: uncompleted_forms
+-- 
+INSERT INTO `uncompleted_forms` (`token`, `field`, `post_date`, `fii`, `value`) VALUES 
+('https://future-vision.ru/contacts/@feedback@64825d918c5722e52b597bf9301fe2a7@79.173.94.159@2017-09-17 15:24:57', 'email', '2017-09-17 15:29:58', '0', 'stvolovinru@gmail.com'),
+('https://future-vision.ru/contacts/@feedback@64825d918c5722e52b597bf9301fe2a7@79.173.94.159@2017-09-17 15:24:57', 'phone', '2017-09-17 15:29:52', '0', '(960)9323379'),
+('https://future-vision.ru/contacts/@feedback@64825d918c5722e52b597bf9301fe2a7@79.173.94.159@2017-09-17 15:24:57', '_name', '2017-09-17 15:30:35', '0', 'riben'),
+('https://future-vision.ru/calculator/@feedback@3e636ee6cee296172f39986c6a9b5da0@176.215.228.94@2017-09-18 19:59:53', 'phone', '2017-09-18 20:02:43', '0', '+79500698799'),
+('https://future-vision.ru/calculator/@feedback@3e636ee6cee296172f39986c6a9b5da0@176.215.228.94@2017-09-18 19:59:53', 'email', '2017-09-18 20:03:00', '0', 'denis-birjukov16@rambler.ru'),
+('https://future-vision.ru/calculator/@feedback@3e636ee6cee296172f39986c6a9b5da0@176.215.228.94@2017-09-18 19:59:53', '_description_', '2017-09-18 20:03:27', '0', 'уличный экран'),
+('https://future-vision.ru/calculator/@calculator@2fee2a3fbf560b5a3d93a7ffbc776b0e@188.164.138.138@2017-09-19 10:44:02', 'email', '2017-09-19 10:44:44', '0', 'taget@list.ru'),
+('https://future-vision.ru/calculator/@calculator@2fee2a3fbf560b5a3d93a7ffbc776b0e@188.164.138.138@2017-09-19 10:44:02', 'phone', '2017-09-19 10:44:50', '0', '+7 (905) 537-90-58'),
+('https://future-vision.ru/calculator/@calculator@2fee2a3fbf560b5a3d93a7ffbc776b0e@188.164.138.138@2017-09-19 10:44:02', 'agree', '2017-09-19 10:45:14', '0', '1'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'full_name', '2017-09-19 11:32:23', '0', 'У Яньшань'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'country', '2017-09-19 11:32:30', '0', 'Китай'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'company_name', '2017-09-19 11:32:02', '0', 'YAHAM'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'city', '2017-09-19 11:33:49', '0', 'Шэньчжэнь'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'phone', '2017-09-19 11:50:31', '0', '+8 (962) 715-95-34'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'email', '2017-09-19 11:35:46', '0', 'janey@yaham.com.cn'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'url', '2017-09-19 11:38:29', '0', 'Yanshan Wu'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'do_sales', '2017-09-19 11:38:58', '0', '1'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', '_description_', '2017-09-19 11:52:40', '0', ''),
+('https://future-vision.ru/@feedback@d3211d4b39f7bb19b9ac7d6647543541@109.195.97.168@2017-09-19 11:56:56', 'phone', '2017-09-19 11:57:02', '0', 'Тест'),
+('https://future-vision.ru/@feedback@d3211d4b39f7bb19b9ac7d6647543541@109.195.97.168@2017-09-19 11:56:56', 'email', '2017-09-19 11:57:08', '0', 'test@test.ru'),
+('https://future-vision.ru/dealers/@dealers@9eeeaf3e81bb53b845a77c33e8582aca@172.111.143.200@2017-09-19 11:31:37', 'fax', '2017-09-19 11:51:30', '0', ''),
+('https://future-vision.ru/@feedback@d3211d4b39f7bb19b9ac7d6647543541@109.195.97.168@2017-09-19 11:56:56', '_description_', '2017-09-19 11:57:13', '0', 'Тест'),
+('https://future-vision.ru/@feedback@d3211d4b39f7bb19b9ac7d6647543541@109.195.97.168@2017-09-19 11:58:00', 'phone', '2017-09-19 11:58:05', '0', 'test'),
+('https://future-vision.ru/@feedback@d3211d4b39f7bb19b9ac7d6647543541@109.195.97.168@2017-09-19 11:58:00', 'email', '2017-09-19 11:58:07', '0', 'test'),
+('https://future-vision.ru/@feedback@d3211d4b39f7bb19b9ac7d6647543541@109.195.97.168@2017-09-19 11:58:00', '_description_', '2017-09-19 11:58:13', '0', 'test'),
+('https://future-vision.ru/@order_call@dfabe96b9668dfbf1355440edd74a317@178.75.36.24@2017-09-19 12:16:51', 'phone', '2017-09-19 12:16:58', '0', '+7 999 000-00-00'),
+('https://future-vision.ru/?utm_campaign=Russia&utm_source=google&utm_medium=cpc&utm_term=%2Bled%20%2B%D1%8D%D0%BA%D1%80%D0%B0%D0%BD&utm_content=desc&utm_source=google&utm_campaign=sverd.obl&utm_medium=cpc&utm_term=poisk&utm_content=VCH&gclid=CjwKCAjwo4jOBR', 'phone', '2017-09-21 07:57:30', '0', '89029902402'),
+('https://future-vision.ru/catalog/ulichnyj_ehkrani/?utm_campaign=sverdlovskaya_obl&utm_source=google&utm_medium=cpc&utm_term=%2B%D1%81%D0%B2%D0%B5%D1%82%D0%BE%D0%B4%D0%B8%D0%BE%D0%B4%D0%BD%D1%8B%D0%B9%20%2B%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%20%2B%D0%BA%D1%83%D', 'phone', '2017-09-30 13:03:58', '0', '89122854600'),
+('https://future-vision.ru/catalog/ulichnyj_ehkrani/?utm_campaign=sverdlovskaya_obl&utm_source=google&utm_medium=cpc&utm_term=%2B%D1%81%D0%B2%D0%B5%D1%82%D0%BE%D0%B4%D0%B8%D0%BE%D0%B4%D0%BD%D1%8B%D0%B9%20%2B%D1%8D%D0%BA%D1%80%D0%B0%D0%BD%20%2B%D0%BA%D1%83%D', 'email', '2017-09-30 13:03:50', '0', 'Alina.komp@gmail.com'),
+('https://future-vision.ru/solutions/@feedback@164ec751cfafb6e9f28cbf0d39441abb@194.169.247.1@2017-09-28 10:56:55', 'agree', '2017-09-28 10:57:01', '0', '1'),
+('https://future-vision.ru/calculator/@calculator@23df012cd2e46f6761e46a84ce2bfd2c@185.3.34.160@2017-09-28 22:34:49', 'phone', '2017-09-28 22:36:11', '0', '+7 (920) 204-69-10'),
+('https://future-vision.ru/?utm_source=google&utm_medium=remarketing_vsepolizovateki_30_dnei&utm_campaign=allusers&utm_source=google&utm_medium=cpc&utm_campaign=remarketing|804964492&utm_content=tar|aud-328151109010|cid|804964492|aid|213623550426|gid|403972', 'phone', '2017-10-01 09:06:41', '0', '(981)844-82-29');
 
 
 -- *************************************************************
