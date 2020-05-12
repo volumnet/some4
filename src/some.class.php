@@ -783,6 +783,7 @@ abstract class SOME extends \ArrayObject
                         // nobreak;
                     default:
                         $arr = array_merge($arr, $this->$val);
+                        break;
                 }
             }
         }
@@ -1504,12 +1505,11 @@ abstract class SOME extends \ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$cognizableVars
-     * @param string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    final public static function _cognizableVars($key = null)
+    final public static function _cognizableVars()
     {
-        return $key ? static::$cognizableVars[$key] : static::$cognizableVars;
+        return static::$cognizableVars;
     }
 
 
@@ -1972,6 +1972,7 @@ abstract class SOME extends \ArrayObject
      */
     final private function __unset_children($var)
     {
+        $key = self::typeof($var);
         $var = self::clear_var($var);
         unset($this->{self::$varsByTypes[$key]}[$var]);
         unset($this->{self::$varsByTypes[$key]}['all_' . $var]);

@@ -7,6 +7,8 @@ namespace SOME;
 use RAAS\CMS\Block;
 use RAAS\CMS\Field;
 use RAAS\CMS\Page;
+use RAAS\CMS\Redirect;
+use RAAS\CMS\Snippet;
 use RAAS\CMS\User;
 
 /**
@@ -304,5 +306,733 @@ class SOMETest extends BaseDBTest
         unset($page->abc);
 
         $this->assertFalse(isset($page->abc));
+    }
+
+
+    /**
+     * Тест клонирования
+     */
+    public function testClone()
+    {
+        $page = new Page(3);
+        $result = clone $page;
+
+        $this->assertEmpty($result->id);
+        $this->assertEquals('Услуги', $result->name);
+
+        unset($result->name);
+
+        $this->assertEmpty($result->name);
+    }
+
+
+    /**
+     * Тест глубокого клонирования
+     */
+    public function testDeepClone()
+    {
+        $page = new Page(3);
+        $result = $page->deepClone();
+
+        $this->assertEquals(3, $result->id);
+        $this->assertEquals('Услуги', $result->name);
+
+        unset($result->name);
+
+        $this->assertEquals('Услуги', $result->name);
+    }
+
+
+    /**
+     * Тест копирования массива
+     */
+    public function testGetArrayCopy()
+    {
+        $page = new Page(3);
+        $result = $page->getArrayCopy();
+
+        $this->assertTrue(is_array($result));
+        $this->assertEquals(3, $result['id']);
+        $this->assertEquals('Услуги', $result['name']);
+    }
+
+
+    /**
+     * Тест установки, получения, удаления и проверки данных через интерфейс массива
+     */
+    public function testOffsetGetSetUnsetIsset()
+    {
+        $page = new Page(3);
+
+        $this->assertEquals('Услуги', $page['name']);
+        $this->assertFalse(isset($page['aaa']));
+
+        $page['name'] = 'Услуги 123';
+        $page['aaa'] = 123;
+
+        $this->assertEquals('Услуги 123', $page['name']);
+        $this->assertTrue(isset($page['aaa']));
+        $this->assertEquals(123, $page['aaa']);
+
+        unset($page['name']);
+
+        $this->assertEquals('Услуги', $page['name']);
+    }
+
+
+    /**
+     * Тест сохранения
+     */
+    public function testCommit()
+    {
+        $eventBefore = $eventAfter = [];
+        EventProcessor::on(
+            SOME::class . ':commit:beforecommit',
+            Page::class,
+            function ($page, $data) use (&$eventBefore) {
+                $eventBefore['page'] = $page;
+                $eventBefore['data'] = $data;
+            }
+        );
+        EventProcessor::on(
+            SOME::class . ':commit:commit',
+            Page::class,
+            function ($page, $data) use (&$eventAfter) {
+                $eventAfter['page'] = $page;
+                $eventAfter['data'] = $data;
+            }
+        );
+
+        $page = new Page(3);
+        $subPage = new Page(4);
+
+        $this->assertEquals('Услуги', $page->name);
+        $this->assertEquals('services', $page->urn);
+        $this->assertEquals(1, $page->vis);
+        $this->assertEquals(1, $subPage->pvis);
+        $this->assertEquals('/services/service1/', $subPage->cache_url);
+        $page->name = 'Услуги 123';
+        $page->vis = 0;
+        $page->urn = 'services123';
+        $page->commit();
+
+        $page = new Page(3);
+        $subPage = new Page(4);
+
+        $this->assertInstanceOf(Page::class, $eventBefore['page']);
+        $this->assertFalse($eventBefore['data']['new']);
+        $this->assertInstanceOf(Page::class, $eventAfter['page']);
+        $this->assertFalse($eventAfter['data']['new']);
+        $this->assertEquals('Услуги 123', $page->name);
+        $this->assertEquals('services123', $page->urn);
+        $this->assertEquals(0, $page->vis);
+        $this->assertEquals(0, $subPage->pvis);
+        $this->assertEquals('/services123/service1/', $subPage->cache_url);
+
+        $eventBefore = $eventAfter = [];
+
+        $page->name = 'Услуги';
+        $page->vis = 1;
+        $page->urn = 'services';
+        $page->commit();
+
+        $page = new Page(3);
+        $subPage = new Page(4);
+
+        $this->assertInstanceOf(Page::class, $eventBefore['page']);
+        $this->assertFalse($eventBefore['data']['new']);
+        $this->assertInstanceOf(Page::class, $eventAfter['page']);
+        $this->assertFalse($eventAfter['data']['new']);
+        $this->assertEquals('Услуги', $page->name);
+        $this->assertEquals('services', $page->urn);
+        $this->assertEquals(1, $page->vis);
+        $this->assertEquals(1, $subPage->pvis);
+        $this->assertEquals('/services/service1/', $subPage->cache_url);
+    }
+
+
+    /**
+     * Тест отката
+     */
+    public function testRollback()
+    {
+        $page = new Page(3);
+
+        $this->assertEquals('Услуги', $page->name);
+
+        $page->name = 'Услуги 123';
+
+        $this->assertEquals('Услуги 123', $page->name);
+
+        $page->rollback();
+
+        $this->assertEquals('Услуги', $page->name);
+    }
+
+
+    /**
+     * Тест перезагрузки
+     */
+    public function testReload()
+    {
+        $page = new Page();
+        $page->id = 3;
+
+        $this->assertEmpty($page->name);
+
+        $page->name = 'Услуги 123';
+
+        $this->assertEquals('Услуги 123', $page->name);
+
+        $page->reload();
+
+        $this->assertEquals('Услуги', $page->name);
+    }
+
+
+    /**
+     * Проверка получения дочерних элементов
+     */
+    public function testChildren()
+    {
+        $page = new Page(3);
+
+        $result = $page->children('children');
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(3, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(4, $result[0]->id);
+        $this->assertEquals(5, $result[1]->id);
+        $this->assertEquals(6, $result[2]->id);
+    }
+
+
+    /**
+     * Проверка получения дочерних элементов
+     * случай с дополнительной SQL-инструкцией и сортировкой
+     */
+    public function testChildrenWithAdditionalParams()
+    {
+        $page = new Page(15);
+
+        $result = $page->children(
+            'children',
+            "id != 24",
+            "ORDER BY id DESC",
+            2
+        );
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(5, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(23, $result[0]->id);
+        $this->assertEquals(1, $result[0]->__level);
+        $this->assertEquals(16, $result[1]->id);
+        $this->assertEquals(1, $result[1]->__level);
+        $this->assertEquals(22, $result[2]->id);
+        $this->assertEquals(2, $result[2]->__level);
+        $this->assertEquals(21, $result[3]->id);
+        $this->assertEquals(2, $result[3]->__level);
+        $this->assertEquals(17, $result[4]->id);
+        $this->assertEquals(2, $result[4]->__level);
+    }
+
+
+    /**
+     * Проверка получения дочерних элементов
+     * случай с некорректной ссылкой для рекурсивного доступа
+     */
+    public function testChildrenWithInvalidRef()
+    {
+        $page = new Page(15);
+
+        $result = $page->children('access', "", "", 2);
+
+        $this->assertFalse($result);
+    }
+
+
+    /**
+     * Проверка получения родительских элементов
+     */
+    public function testParents()
+    {
+        $page = new Page(18);
+
+        $result = $page->parents('parents');
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(4, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(1, $result[0]->id);
+        $this->assertEquals(15, $result[1]->id);
+        $this->assertEquals(16, $result[2]->id);
+        $this->assertEquals(17, $result[3]->id);
+    }
+
+
+    /**
+     * Проверка получения родительских элементов
+     * случай с некорректной ссылкой для рекурсивного доступа
+     */
+    public function testParentsWithInvalidRef()
+    {
+        $page = new Page(18);
+
+        $result = $page->parents('author');
+
+        $this->assertFalse($result);
+    }
+
+
+    /**
+     * Тест перемещения по порядку
+     */
+    public function testReorder()
+    {
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $priority1 = $page1->priority;
+        $priority2 = $page2->priority;
+        $priority3 = $page3->priority;
+
+        $this->assertLessThan($page2->priority, $page1->priority);
+        $this->assertLessThan($page3->priority, $page2->priority);
+
+        $page3->reorder(-2, null, "priority");
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $this->assertLessThan($page1->priority, $page3->priority);
+        $this->assertLessThan($page2->priority, $page1->priority);
+
+        $page3->reorder(1, "", "priority");
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $this->assertLessThan($page3->priority, $page1->priority);
+        $this->assertLessThan($page2->priority, $page3->priority);
+
+        $page3->reorder(1, "", "priority");
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $this->assertLessThan($page2->priority, $page1->priority);
+        $this->assertLessThan($page3->priority, $page2->priority);
+    }
+
+
+    /**
+     * Тест инициализации
+     * @todo
+     */
+    public function testInit()
+    {
+    }
+
+
+    /**
+     * Тест удаления
+     */
+    public function testDelete()
+    {
+        $page = new Page(17);
+        $page2 = new Page(18);
+
+        $this->assertEquals(17, $page->id);
+        $this->assertEquals(18, $page2->id);
+
+        Page::delete($page);
+
+        $page = new Page(17);
+        $page2 = new Page(18);
+
+        $this->assertEmpty($page->id);
+        $this->assertEmpty($page2->id);
+    }
+
+
+    /**
+     * Тести импорта по характеристике
+     */
+    public function testImportBy()
+    {
+        $result = Snippet::importBy('urn', 'head');
+
+        $this->assertEquals(12, $result->id);
+    }
+
+
+    /**
+     * Тест получения массива объектов
+     */
+    public function testGetSet()
+    {
+        $pages = new Pages(2, 2);
+        $result = Page::getSet([
+            'where' => "id IN (3, 7, 8, 9, 10, 11)",
+            'orderBy' => "id DESC"
+        ], $pages);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertEquals(9, $result[0]->id);
+        $this->assertEquals(8, $result[1]->id);
+        $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест получения массива дочерних объектов
+     */
+    public function testGetChildSet()
+    {
+        $page = new Page(3);
+        $result = $page->getChildSet('children', [
+            'where' => "id IN (4, 6)",
+            'orderBy' => "id DESC"
+        ]);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertEquals(6, $result[0]->id);
+        $this->assertEquals(4, $result[1]->id);
+    }
+
+
+    /**
+     * Тест получения id по функции __id()
+     */
+    public function testIdFunction()
+    {
+        $page = new Page(3);
+
+        $result = $page->__id();
+
+        $this->assertEquals(3, $result);
+    }
+
+
+    /**
+     * Тест получения массива объектов по SQL-запросу
+     */
+    public function testGetSQLSet()
+    {
+        $pages = new Pages(2, 2);
+        $sqlQuery = "SELECT SQL_CALC_FOUND_ROWS *
+                       FROM cms_pages
+                      WHERE id IN (?, ?, ?, ?, ?, ?)
+                   ORDER BY id DESC";
+        $sqlBind = [3, 7, 8, 9, 10, 11];
+        $result = Page::getSQLSet([$sqlQuery, $sqlBind], $pages);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertEquals(9, $result[0]->id);
+        $this->assertEquals(8, $result[1]->id);
+        $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест получения объекта по SQL-запросу
+     */
+    public function testGetSQLObject()
+    {
+        $sqlQuery = "SELECT * FROM cms_pages WHERE id = ?";
+        $result = Page::getSQLObject([$sqlQuery, 3]);
+
+        $this->assertInstanceOf(Page::class, $result);
+        $this->assertEquals(3, $result->id);
+    }
+
+
+    /**
+     * Тест получения массива объектов по массиву данных
+     */
+    public function testGetArraySet()
+    {
+        $pages = new Pages(2, 2);
+        $arr = [
+            ['id' => 1, 'name' => 'test1'],
+            ['id' => 2, 'name' => 'test2'],
+            ['id' => 3, 'name' => 'test3'],
+            ['id' => 4, 'name' => 'test4'],
+            ['id' => 5, 'name' => 'test5'],
+            ['id' => 6, 'name' => 'test6'],
+        ];
+        $result = Page::getArraySet($arr, $pages);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(3, $result[0]->id);
+        $this->assertEquals('test3', $result[0]->name);
+        $this->assertEquals(4, $result[1]->id);
+        $this->assertEquals('test4', $result[1]->name);
+        $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест получения названия таблицы
+     */
+    public function testGetTablename()
+    {
+        $result = Page::_tablename();
+
+        $this->assertEquals('cms_pages', $result);
+    }
+
+
+    /**
+     * Тест получения наименования поля id
+     */
+    public function testGetIdN()
+    {
+        $result = Page::_idN();
+
+        $this->assertEquals('id', $result);
+    }
+
+
+    /**
+     * Тест получения ссылок
+     */
+    public function testGetReferences()
+    {
+        $result = Page::_references('parent');
+
+        $this->assertEquals([
+            'FK' => 'pid',
+            'classname' => Page::class,
+            'cascade' => true
+        ], $result);
+    }
+
+
+    /**
+     * Тест получения дочерних ссылок
+     */
+    public function testGetChildren()
+    {
+        $result = Page::_children('children');
+
+        $this->assertEquals([
+            'classname' => Page::class,
+            'FK' => 'pid'
+        ], $result);
+    }
+
+
+    /**
+     * Тест получения родительских ссылок
+     */
+    public function testGetParents()
+    {
+        $result = Page::_parents('parents');
+
+        $this->assertEquals('parent', $result);
+    }
+
+
+    /**
+     * Тест получения связок
+     */
+    public function testGetLinks()
+    {
+        $result = Page::_links('blocks');
+
+        $this->assertEquals([
+            'tablename' => 'cms_blocks_pages_assoc',
+            'field_from' => 'page_id',
+            'field_to' => 'block_id',
+            'classname' => Block::class
+        ], $result);
+    }
+
+
+    /**
+     * Тест получения кэшей
+     */
+    public function testGetCaches()
+    {
+        $result = Page::_caches('pvis');
+
+        $this->assertEquals([
+            'affected' => ['parent'],
+            'sql' => "IF(parent.id, (parent.vis AND parent.pvis), 1)"
+        ], $result);
+    }
+
+
+    /**
+     * Тест получения осознаваемых переменных
+     */
+    public function testGetCognizableVars()
+    {
+        $result = Page::_cognizableVars();
+
+        $this->assertTrue(is_array($result));
+        $this->assertContains('Domain', $result);
+    }
+
+
+    /**
+     * Тест получения префикса БД
+     */
+    public function testGetDbPrefix()
+    {
+        $result = Page::_dbprefix();
+
+        $this->assertEquals('', $result);
+    }
+
+
+    /**
+     * Тест получения сортировки по умолчанию
+     */
+    public function testGetDefaultOrderBy()
+    {
+        $result = Page::_defaultOrderBy();
+
+        $this->assertEquals('priority', $result);
+    }
+
+
+    /**
+     * Тест получения авто-инкремента по порядку отображения
+     */
+    public function testGetAIPriority()
+    {
+        $result = Redirect::_aiPriority();
+
+        $this->assertTrue($result);
+    }
+
+
+    /**
+     * Тест получения базы данных
+     */
+    public function testGetSQL()
+    {
+        $result = Redirect::_SQL();
+
+        $this->assertInstanceof(DB::class, $result);
+    }
+
+
+    /**
+     * Тест получения маркера каскадного обновления сущности
+     */
+    public function testGetObjectCascadeUpdate()
+    {
+        $result = Page::_objectCascadeUpdate();
+
+        $this->assertFalse($result);
+    }
+
+
+    /**
+     * Тест получения маркера каскадного удаления сущности
+     */
+    public function testGetObjectCascadeDelete()
+    {
+        $result = Page::_objectCascadeDelete();
+
+        $this->assertTrue($result);
+    }
+
+
+    /**
+     * Тест получения данных по классам
+     */
+    public function testGetClasses()
+    {
+        $result = Page::_classes();
+
+        $this->assertEquals('id', $result[Page::class]['PRI']);
+        $this->assertTrue($result[Page::class]['AI']);
+    }
+
+
+    /**
+     * Тест получения ссылки по внешнему ключу
+     */
+    public function testGetReferenceByFK()
+    {
+        $result = Page::getReferenceByFK('pid');
+
+        $this->assertEquals('parent', $result);
+    }
+
+
+    /**
+     * Тест упорядочения сущностей
+     */
+    public function testPriorityRepair()
+    {
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $page1->priority = 111;
+        $page2->priority = 222;
+        $page3->priority = 333;
+        $page1->commit();
+        $page2->commit();
+        $page3->commit();
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+        $this->assertEquals(111, $page1->priority);
+        $this->assertEquals(222, $page2->priority);
+        $this->assertEquals(333, $page3->priority);
+
+        Page::priorityRepair();
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+        $this->assertNotEquals(111, $page1->priority);
+        $this->assertNotEquals(222, $page2->priority);
+        $this->assertNotEquals(333, $page3->priority);
+
+        $this->assertLessThan($page2->priority, $page1->priority);
+        $this->assertLessThan($page3->priority, $page2->priority);
+    }
+
+
+    /**
+     * Тест "доверия" (принятия изменений)
+     */
+    public function testTrust()
+    {
+        $page = new Page(3);
+
+        $page->name = 'Услуги 123';
+
+        $this->assertEquals('Услуги 123', $page->name);
+
+        unset($page->name);
+
+        $this->assertEquals('Услуги', $page->name);
+
+        $page->name = 'Услуги 123';
+        $page->trust();
+
+        unset($page->name);
+
+        $this->assertEquals('Услуги 123', $page->name);
     }
 }
