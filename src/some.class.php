@@ -7,10 +7,8 @@
  * семантическими объектами с неопределенным количеством параметров
  * @package SOME
  * @subpackage SOME
- * @author Александр В. Сурнин <avs@volumnet.ru>
- * @copyright © 2013, Volume Networks
- * @version 4.2
- * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
+ * @author Александр В. Сурнин <info@volumnet.ru>
+ * @copyright © 2020, Volume Networks
  */
 namespace SOME;
 
