@@ -6,7 +6,9 @@ namespace SOME;
 
 use RAAS\CMS\Block;
 use RAAS\CMS\Field;
+use RAAS\CMS\Material;
 use RAAS\CMS\Page;
+use RAAS\CMS\PageWithAlias;
 use RAAS\CMS\Redirect;
 use RAAS\CMS\Snippet;
 use RAAS\CMS\User;
@@ -43,12 +45,42 @@ class SOMETest extends BaseDBTest
 
 
     /**
+     * Тест создания объекта по объекту другого типа
+     */
+    public function testConstructWithAnotherObject()
+    {
+        $page = new Material(1);
+
+        $result = new Page($page);
+
+        $this->assertInstanceOf(Page::class, $result);
+        $this->assertNull($result->id);
+        $this->assertEquals('Клиент-ориентированный подход', $result->name);
+    }
+
+
+    /**
      * Тест создания объекта по массиву
      */
     public function testConstructWithArray()
     {
         $page = new Page([
             'name' => 'abc',
+            'urn' => 'aaa'
+        ]);
+
+        $this->assertEquals('abc', $page->name);
+        $this->assertEquals('aaa', $page->urn);
+    }
+
+
+    /**
+     * Тест создания объекта по массиву с использованием псевдонимов
+     */
+    public function testConstructWithArrayAliased()
+    {
+        $page = new PageWithAlias([
+            'title' => 'abc',
             'urn' => 'aaa'
         ]);
 
@@ -310,6 +342,30 @@ class SOMETest extends BaseDBTest
 
 
     /**
+     * Тест установки, получения, удаления и проверки по псевдониму
+     */
+    public function testGetSetUnsetIssetAlias()
+    {
+        $page = new PageWithAlias(3);
+
+        $this->assertTrue(isset($page->title));
+        $this->assertEquals('Услуги', $page->name);
+        $this->assertEquals('Услуги', $page->title);
+
+        $page->title = 'Услуги компании';
+
+        $this->assertTrue(isset($page->title));
+        $this->assertEquals('Услуги компании', $page->name);
+        $this->assertEquals('Услуги компании', $page->title);
+
+        unset($page->title);
+
+        $this->assertEquals('Услуги', $page->name);
+        $this->assertEquals('Услуги', $page->title);
+    }
+
+
+    /**
      * Тест клонирования
      */
     public function testClone()
@@ -452,6 +508,50 @@ class SOMETest extends BaseDBTest
 
 
     /**
+     * Тест коммита с новым объектом
+     */
+    public function testCommitWithNew()
+    {
+        $a = new Redirect();
+        $a->commit();
+
+        $b = new Redirect();
+        $b->commit();
+
+        $this->assertEquals($a->id + 1, $b->id);
+        $this->assertEquals($a->priority + 1, $b->priority);
+
+        Redirect::delete($a);
+        Redirect::delete($b);
+    }
+
+
+    /**
+     * Тест коммита без автоинкрементного поля
+     */
+    public function testCommitWithoutAI()
+    {
+        $sqlQuery = "CREATE TEMPORARY TABLE IF NOT EXISTS tmp_entity (
+                         id INT UNSIGNED NOT NULL DEFAULT 0,
+                         name VARCHAR(255) NOT NULL DEFAULT '',
+
+                         PRIMARY KEY (id)
+                     );";
+        SOME::_SQL()->query($sqlQuery);
+        $a = new EntityWithoutPrimary(['name' => 'aaa']);
+        $a->commit();
+        $b = new EntityWithoutPrimary(['name' => 'bbb']);
+        $b->commit();
+
+        $this->assertEquals(1, $a->id);
+        $this->assertEquals(2, $b->id);
+
+        $sqlQuery = "TRUNCATE TABLE tmp_entity";
+        SOME::_SQL()->query($sqlQuery);
+    }
+
+
+    /**
      * Тест отката
      */
     public function testRollback()
@@ -505,6 +605,22 @@ class SOMETest extends BaseDBTest
         $this->assertEquals(4, $result[0]->id);
         $this->assertEquals(5, $result[1]->id);
         $this->assertEquals(6, $result[2]->id);
+    }
+
+
+    /**
+     * Проверка получения дочерних элементов (случай с корневым элементом)
+     */
+    public function testChildrenWithRoot()
+    {
+        $page = new Page();
+
+        $result = $page->children('children');
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(1, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(1, $result[0]->id);
     }
 
 
@@ -611,7 +727,7 @@ class SOMETest extends BaseDBTest
         $this->assertLessThan($page1->priority, $page3->priority);
         $this->assertLessThan($page2->priority, $page1->priority);
 
-        $page3->reorder(1, "", "priority");
+        $page3->reorder(1, "");
 
         $page1 = new Page(4);
         $page2 = new Page(5);
@@ -628,6 +744,79 @@ class SOMETest extends BaseDBTest
 
         $this->assertLessThan($page2->priority, $page1->priority);
         $this->assertLessThan($page3->priority, $page2->priority);
+    }
+
+
+    /**
+     * Тест перемещения по порядку (случай с дополнительным условием)
+     */
+    public function testReorderWithSQLBindings()
+    {
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $priority1 = $page1->priority;
+        $priority2 = $page2->priority;
+        $priority3 = $page3->priority;
+
+        $this->assertLessThan($page2->priority, $page1->priority);
+        $this->assertLessThan($page3->priority, $page2->priority);
+
+        $page3->reorder(-1, ["id != :idVal", ['idVal' => 5]]);
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $this->assertEquals($priority1, $page3->priority);
+        $this->assertEquals($priority2, $page2->priority);
+        $this->assertEquals($priority3, $page1->priority);
+
+        $page3->reorder(1, ["id != :idVal", ['idVal' => 5]]);
+
+        $page1 = new Page(4);
+        $page2 = new Page(5);
+        $page3 = new Page(6);
+
+        $this->assertEquals($priority1, $page1->priority);
+        $this->assertEquals($priority2, $page2->priority);
+        $this->assertEquals($priority3, $page3->priority);
+    }
+
+
+    /**
+     * Тест перемещения по порядку (случай с отсутствием порядка по умолчанию)
+     * @expectedException Exception
+     * @expectedExceptionMessage You have to define property name
+     */
+    public function testReorderWithoutDefaultOrderBy()
+    {
+        $sqlQuery = "CREATE TEMPORARY TABLE IF NOT EXISTS tmp_entity (
+                         id INT UNSIGNED NOT NULL DEFAULT 0,
+                         name VARCHAR(255) NOT NULL DEFAULT '',
+
+                         PRIMARY KEY (id)
+                     );";
+        SOME::_SQL()->query($sqlQuery);
+        $a = new EntityWithoutPrimary();
+        $a->commit();
+        $a->reorder(1);
+
+        $sqlQuery = "TRUNCATE TABLE tmp_entity";
+        SOME::_SQL()->query($sqlQuery);
+    }
+
+
+    /**
+     * Тест перемещения по порядку (случай с отсутствием шага)
+     * @expectedException Exception
+     * @expectedExceptionMessage You have to define step
+     */
+    public function testReorderWithoutStep()
+    {
+        $page1 = new Page(4);
+        $page1->reorder();
     }
 
 
@@ -669,6 +858,17 @@ class SOMETest extends BaseDBTest
         $result = Snippet::importBy('urn', 'head');
 
         $this->assertEquals(12, $result->id);
+    }
+
+
+    /**
+     * Тести импорта по характеристике (случай с нерегулярным полем)
+     */
+    public function testImportByWithoutRegularField()
+    {
+        $result = Snippet::importBy('children', 2);
+
+        $this->assertNull($result);
     }
 
 

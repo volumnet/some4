@@ -107,13 +107,13 @@ abstract class SOME extends \ArrayObject
      * Описание исключения для обозначения отсутствия параметра для сортировки,
      * для использования в методе $this->reorder()
      */
-    const EXCEPTION_REORDER_PROPERTY_NAME = 'You have to define property name (argument #0)';
+    const EXCEPTION_REORDER_PROPERTY_NAME = 'You have to define property name (argument #2)';
 
     /**
      * Описание исключения для обозначения отсутствия шага,
      * для использования в методе $this->reorder()
      */
-    const EXCEPTION_REORDER_STEP = 'You have to define step (argument #1)';
+    const EXCEPTION_REORDER_STEP = 'You have to define step (argument #0)';
 
     /**
      * Описание исключения для обозначения отсутствия параметра для сортировки,
@@ -655,10 +655,8 @@ abstract class SOME extends \ArrayObject
             return $this->__get_children($var);
         } elseif ($type == self::FIELD_PARENTS) {
             return $this->__get_parents($var);
-        } elseif ($type == self::FIELD_META) {
-            return isset($this->meta[$var]) ? $this->meta[$var] : null;
         }
-        return null;
+        return isset($this->meta[$var]) ? $this->meta[$var] : null;
     }
 
 
@@ -695,6 +693,9 @@ abstract class SOME extends \ArrayObject
 
     public function __isset($var)
     {
+        if (isset(static::$aliases[$var])) {
+            $var = static::$aliases[$var];
+        }
         $key = self::typeof($var);
         switch ($key) {
             case self::FIELD_REFERENCE:
@@ -719,6 +720,9 @@ abstract class SOME extends \ArrayObject
 
     public function __unset($var)
     {
+        if (isset(static::$aliases[$var])) {
+            $var = static::$aliases[$var];
+        }
         $key = self::typeof($var);
         switch ($key) {
             case self::FIELD_REFERENCE:
@@ -1032,7 +1036,8 @@ abstract class SOME extends \ArrayObject
             if (!$priorityN) {
                 throw new Exception(self::EXCEPTION_REORDER_PROPERTY_NAME);
             }
-        } elseif (!$step) {
+        }
+        if (!$step) {
             throw new Exception(self::EXCEPTION_REORDER_STEP);
         }
         $SQL_query = "SELECT " . static::_idN() . ", " . $priorityN . "  FROM " . static::_tablename()
@@ -1782,7 +1787,7 @@ abstract class SOME extends \ArrayObject
         if (\get_class($row) == \get_class($this)) {
             $mask = 0xFF;
         } else {
-            $mask = 0x83;
+            $mask = 0x82;
         }
         $this->__construct_array($row->getArrayCopy($mask));
     }
