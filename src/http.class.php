@@ -52,7 +52,7 @@ final class HTTP
         $includeDirs = false,
         $initialPath = null,
         $removeTrailingQuestion = true,
-        $appendDirsToEmptyString = true
+        $appendDirsToEmptyString = false
     ) {
         if ($initialPath === null) {
             $initialPath = $_SERVER['REQUEST_URI'];
