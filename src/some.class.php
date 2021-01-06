@@ -1116,7 +1116,7 @@ abstract class SOME extends \ArrayObject
      *
      * @param \SOME\SOME Объект(ы) для удаления
      */
-    public static function delete(SOME $object)
+    public static function delete(self $object)
     {
         EventProcessor::emit('beforedelete', $object);
         $classname = \get_class($object);
@@ -2399,7 +2399,7 @@ abstract class SOME extends \ArrayObject
      * @param string $child|null Наименование дочерней ссылки из схемы класса. Может использоваться только при не статическом вызове.
      * @param string $link|null Наименование связки из схемы класса. Может использоваться только при не статическом вызове.
      */
-    private function getSet_parseParams($args, &$Pages, &$params, &$child = null, &$link = null)
+    private static function getSet_parseParams($args, &$Pages, &$params, &$child = null, &$link = null)
     {
         $Pages = null;
         $params = array('select' => array(), 'from' => array(), 'where' => array(), 'orderBy' => '', 'groupBy' => '');

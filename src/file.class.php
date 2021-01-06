@@ -15,11 +15,11 @@ namespace SOME;
 
 /**
  * Класс работы с файловой системой
- * 
+ *
  * Данный класс предоставляет в виде статических функций расширенный функционал для работы с файловой системой
  * @package SOME
  * @subpackage Filesystem
- */   
+ */
 final class File
 {
     /**
@@ -52,72 +52,80 @@ final class File
         }
         return $ok;
     }
-    
+
     /**
      * Функция копирует файл или (рекурсивно) директорию
      *
      * @param string $source Путь к файлу или директории для удаления
      * @param string $dest Путь к файлу или директории назначения
      * @param bool $overwrite Флаг перезаписи. Если установлен в true, файлы с совпадающими именами будут перезаписаны
-     * @param bool $copy_rights Флаг копирования прав доступа. Если установлен в true, скопированные объекты будут обладать теми же правами 
-     *                          доступа, что и их прототипы. Если же установлен в false, создаваемые директории будут общедоступными 
+     * @param bool $copy_rights Флаг копирования прав доступа. Если установлен в true, скопированные объекты будут обладать теми же правами
+     *                          доступа, что и их прототипы. Если же установлен в false, создаваемые директории будут общедоступными
      *                          (права доступа 0777)
-     * @param callback $scandir_callback функция для фильтрации подкаталогов, либо ее текст. Текущая позиция задается переменной $x. 
+     * @param callback $scandir_callback функция для фильтрации подкаталогов, либо ее текст. Текущая позиция задается переменной $x.
      *                                   Директория задается переменной $dir.
      * @return bool Возвращает true при успешном завершении копирования, либо false при возникновении ошибки
      */
-    public static function copy($src, $dest, $overwrite = true, $copy_rights = false, $scandir_callback = 'return ($x != "." && $x != "..");') 
+    public static function copy($src, $dest, $overwrite = true, $copy_rights = false, $scandir_callback = 'return ($x != "." && $x != "..");')
     {
         $src = rtrim($src, '\\/');
         $dest = rtrim($dest, '\\/');
         if (is_string($scandir_callback) && !function_exists($scandir_callback)) {
-            $scandir_callback = create_function('$x', $scandir_callback);
+            $callbackFunction = function ($x) use ($scandir_callback) {
+                return eval($scandir_callback);
+            };
+        } else {
+            $callbackFunction = $scandir_callback;
         }
         if (!file_exists($src)) {
             return false;
-        } 
-        $status = self::copy_single($src, $dest, $overwrite, $copy_rights);
+        }
+        $status = self::copySingle($src, $dest, $overwrite, $copy_rights);
         if ($status) {
             return ($status == 1 ? true : false);
         }
         $ok = true;
         if (is_dir($src)) {
-            $list = self::scandir($src, $scandir_callback);
+            $list = self::scandir($src, $callbackFunction);
             foreach ($list as $file) {
-                $ok &= self::copy($src . '/' . $file, $dest . '/' . $file, $overwrite, $copy_rights, $scandir_callback);
+                $ok &= self::copy($src . '/' . $file, $dest . '/' . $file, $overwrite, $copy_rights, $callbackFunction);
             }
         }
         return $ok;
     }
-    
-    
+
+
     /**
      * Выбирает все файлы и поддиректории из заданной директории
-     * 
+     *
      * Отличие от стандартной функции scandir() {@link http://ru2.php.net/manual/ru/function.scandir.php}. состоит в фильтрации результатов
      * @param string $dir директория для исследования
-     * @param callback $callback функция для фильтрации, либо ее текст. Текущая позиция задается переменной $x. 
+     * @param callable|string $callback функция для фильтрации, либо ее текст. Текущая позиция задается переменной $x.
      *                           Директория задается переменной $dir.
      * @return array|false массив в случае удачного сканирования директории, либо false в случае ошибки.
-     */     
+     */
     public static function scandir($dir, $callback = 'return ($x != "." && $x != "..");')
     {
         if (is_string($callback) && !function_exists($callback)) {
             $callback = str_replace('$dir', '"' . addslashes($dir) . '"', $callback);
-            $callback = create_function('$x', $callback);
+            $callbackFunction = function ($x) use ($callback) {
+                return eval($callback);
+            };
+        } else {
+            $callbackFunction = $callback;
         }
         $list = \scandir($dir);
         if (!is_array($list)) {
             return false;
         }
-        $list = \array_values(\array_filter($list, $callback));
+        $list = \array_values(\array_filter($list, $callbackFunction));
         return $list;
     }
 
 
     /**
      * Разрешает путь относительно псевдокаталогов ".." и "."
-     * 
+     *
      * @param string $path - путь, содержащий псевдокаталоги
      * @return string путь без псевдокаталогов
      */
@@ -151,7 +159,7 @@ final class File
         $dest = self::resolvepath(str_replace('\\', '/', $dest));
         $srcArray = array_values(array_filter(explode('/', trim($src, '/'))));
         $destArray = array_values(array_filter(explode('/', trim($dest, '/'))));
-        
+
         for ($match = 0; $match < count($srcArray); $match++) {
             if ($srcArray[$match] != $destArray[$match]) {
                 break;
@@ -165,22 +173,22 @@ final class File
         $relPath = self::resolvepath(implode('/', $relArray));
         return $relPath;
     }
-    
-    
+
+
     /**
      * Копирует единичный файл или директорию
-     *      
+     *
      * @param string $source Путь к файлу или директории для удаления
      * @param string $dest Путь к файлу или директории назначения
      * @param bool $overwrite Флаг перезаписи. Если установлен в true, файлы с совпадающими именами будут перезаписаны
-     * @param bool $copy_rights Флаг копирования прав доступа. Если установлен в true, скопированные объекты будут обладать теми же правами 
-     *                          доступа, что и их прототипы. Если же установлен в false, создаваемые директории будут общедоступными 
+     * @param bool $copy_rights Флаг копирования прав доступа. Если установлен в true, скопированные объекты будут обладать теми же правами
+     *                          доступа, что и их прототипы. Если же установлен в false, создаваемые директории будут общедоступными
      *                          (права доступа 0777)
      * @return int Возвращает 1 при успешном завершении проверки без необходимости дальнейших действий
      *             возвращает -1 при ошибке проверки без необходимости дальнейших действий
-     *             возвращает 0 при успешной проверке для продолжения копирования     
-     */         
-    private static function copy_single($src, $dest, $overwrite = true, $copy_rights = false)
+     *             возвращает 0 при успешной проверке для продолжения копирования
+     */
+    private static function copySingle($src, $dest, $overwrite = true, $copy_rights = false)
     {
         $ex = is_dir($src) ? is_file($dest) : file_exists($dest);
         if ($ex && !$overwrite) {
