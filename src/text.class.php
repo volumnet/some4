@@ -195,8 +195,9 @@ final class Text
      */
     public static function cuttext($string, $limit = 256, $overflow = '')
     {
+        $string = (string)$string;
         if ($limit && mb_strlen($string) > $limit) {
-            $temp = mb_split(' ', $string);
+            $temp = explode(' ', $string);
             for ($i = 1; $i <= count($temp); $i++) {
                 if (mb_strlen(implode(' ', array_slice($temp, 0, $i + 1))) >= $limit) {
                     return implode(' ', array_slice($temp, 0, $i)) . $overflow;
@@ -273,12 +274,13 @@ final class Text
      * Формирует телефонный номер 10-значным числом
      *
      * @param string $string исходный номер для преобразования
+     * @param int $nOfDigits Количество значимых цифр в телефоне
      * @return string преобразованная строка
      */
-    public static function beautifyPhone($phone)
+    public static function beautifyPhone($phone, $nOfDigits = 10)
     {
         $phone = preg_replace('/[^\\d]+/i', '', $phone);
-        $phone = substr($phone, -10);
+        $phone = substr($phone, -1 * $nOfDigits);
         return $phone;
     }
 

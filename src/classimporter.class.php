@@ -57,7 +57,8 @@ class ClassImporter
                 $text
             );
         }
-        $_SESSION['SOME_CLASSIMPORTER_LAST_FILENAME'] = $filename;
+        $_SESSION['EVAL_DEBUG'] = $filename;
         eval('?' . '>' . $text);
+        $_SESSION['EVAL_DEBUG'] = '';
     }
 }
