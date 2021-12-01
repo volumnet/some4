@@ -2421,7 +2421,8 @@ abstract class SOME extends \ArrayObject
                             break;
                     }
                 }
-            } elseif (isset($this) && ($this instanceof self) && is_string($args[$i])) {
+            } elseif (/*isset($this) && ($this instanceof self) && */is_string($args[$i])) {
+                // 2021-11-19, AVS: закомментировали, т.к. статический вызов в PHP 7 ругается на $this
                 if (static::typeof($args[$i]) == static::FIELD_CHILDREN) {
                     $child = static::$children[$args[$i]];
                 } elseif (static::typeof($args[$i]) == static::FIELD_LINK) {
