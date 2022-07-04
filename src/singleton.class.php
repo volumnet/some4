@@ -19,41 +19,41 @@ namespace SOME;
  * @version 4.1
  * @author Alex V. Surnin <info@volumnet.ru>
  * @copyright 2011, Volume Networks
- */       
+ */
 /**
  * Класс шаблона Singleton ("одиночка")
  * @package RAAS
- */       
+ */
 abstract class Singleton
 {
     /**
      * Экземпляр класса
      * @var Singleton
-     */              
+     */
     protected static $instance;
-    
+
 
     /**
      * Конструктор класса
-     */         
-    final private function __construct()
+     */
+    private function __construct()
     {
     }
-    
-    
+
+
     /**
      * Клонирование класса
-     */         
-    final private function __clone()
+     */
+    private function __clone()
     {
     }
 
 
     /**
      * Возвращает (и при необходимости создает) экземпляр класса
-     * @return Singleton     
-     */         
-    public static function i() 
+     * @return Singleton
+     */
+    public static function i()
     {
         $args = func_get_args();
         if (!isset(static::$instance)) {
@@ -62,8 +62,8 @@ abstract class Singleton
         }
         return static::$instance;
     }
-    
-    
+
+
     /**
      * Фактический конструктор (инициализатор) объекта
      */

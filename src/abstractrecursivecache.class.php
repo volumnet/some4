@@ -655,7 +655,11 @@ abstract class AbstractRecursiveCache extends Singleton
             foreach ($ch as $chId) {
                 if ($this->childrenIds[$chId]) {
                     $allGrandChildrenIdsByIds = array_map(function ($x) {
-                        return (array)$this->allChildrenIds[$x];
+                        if (isset($this->allChildrenIds[$x])) {
+                            return (array)$this->allChildrenIds[$x];
+                        } else {
+                            return [];
+                        }
                     }, $this->childrenIds[$chId]);
                     $allGrandChildrenIds = array_reduce(
                         $allGrandChildrenIdsByIds,
@@ -671,7 +675,10 @@ abstract class AbstractRecursiveCache extends Singleton
                 }
             }
             $ch = array_map(function ($x) {
-                return $this->parentId[$x];
+                if (isset($this->parentId[$x])) {
+                    return $this->parentId[$x];
+                }
+                return null;
             }, $ch);
             $ch = array_filter($ch, function ($x) {
                 return $x !== null;

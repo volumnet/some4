@@ -60,7 +60,9 @@ final class HTTP
         if (substr($changeQuery, 0, 1) == '?') {
             $changeQuery = substr($changeQuery, 1);
         }
-        list($queryDir, $queryStr) = explode('?', $initialPath, 2);
+        $initialPathArr = explode('?', $initialPath, 2);
+        $queryDir = $initialPathArr[0];
+        $queryStr = isset($initialPathArr[1]) ? $initialPathArr[1] : '';
         @parse_str($queryStr, $query);
         @parse_str($changeQuery, $change);
         $oldQuery = $query;

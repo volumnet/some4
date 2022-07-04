@@ -107,7 +107,7 @@ final class CSV
         $rows = [];
         for ($i = 0; $i < count($this->data); $i++) {
             for ($j = 0; $j < count($this->data[$i]); $j++) {
-                if ($escchars) {
+                if ($this->_escchars) {
                     $data[$i][$j] = addcslashes(
                         $this->data[$i][$j],
                         "\0..\37\\"

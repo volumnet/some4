@@ -12,6 +12,8 @@
  */
 namespace SOME;
 
+use ArrayObject;
+
 /**
  * Класс сущности SOME
  *
@@ -61,7 +63,7 @@ namespace SOME;
  *                            элементов всех поколений по заданной ссылке.
  * @proprerty mixed [тип self::FIELD_META] Дополнительные данные, не сохраняемые в таблице базы данных.
  */
-abstract class SOME extends \ArrayObject
+abstract class SOME extends ArrayObject
 {
     /**
      * Тип свойства — первичный ключ
@@ -1627,7 +1629,9 @@ abstract class SOME extends \ArrayObject
             return $x['FK'] == $FK;
         });
         if ($temp) {
-            return array_shift(array_keys($temp));
+            $result = array_keys($temp);
+            $result = array_shift($result);
+            return $result;
         }
         return false;
     }
@@ -1752,7 +1756,7 @@ abstract class SOME extends \ArrayObject
      * - Устанавливаются $cognizable (т.к. мы можем вычислять их и на уровне запроса)
      * @param array $row Ассоциативный массив вида array([имя поля] => [значение поля])
      */
-    final private function __construct_array(array $row)
+    private function __construct_array(array $row)
     {
         foreach ($row as $key => $val) {
             if (isset(static::$aliases[$key])) {
@@ -1782,7 +1786,7 @@ abstract class SOME extends \ArrayObject
      * При различных типах копируются только ID, properties, updates и meta
      * @param \SOME\SOME $row SOME-объект
      */
-    final private function __construct_object(\SOME\SOME $row)
+    private function __construct_object(\SOME\SOME $row)
     {
         if (\get_class($row) == \get_class($this)) {
             $mask = 0xFF;
@@ -1801,7 +1805,7 @@ abstract class SOME extends \ArrayObject
      * - Устанавливаются $properties
      * @param mixed $id
      */
-    final private function __construct_id($id)
+    private function __construct_id($id)
     {
         $SQL_query = "SELECT * FROM " . static::_tablename() . " WHERE " . static::_idN() . " = ? LIMIT 1";
         $row = static::$SQL->getline(array($SQL_query, array($id)));
@@ -1827,7 +1831,7 @@ abstract class SOME extends \ArrayObject
      * @param string $var Наименование свойства
      * @return mixed Значение свойства
      */
-    final private function __get_reference($var)
+    private function __get_reference($var)
     {
         if (!isset($this->referenced[$var])) {
             $classname = static::$references[$var]['classname'];
@@ -1848,7 +1852,7 @@ abstract class SOME extends \ArrayObject
      * @param string $var Наименование свойства
      * @return array Массив объектов либо ключей
      */
-    final private function __get_links($var)
+    private function __get_links($var)
     {
         ($ids = preg_match('/(.*?)_ids$/i', $var, $regs)) ? ($var = $regs[1]) : false;
         $classname = static::getClassByLink($var);
@@ -1874,7 +1878,7 @@ abstract class SOME extends \ArrayObject
      * @param string|null $classname Имя класса, экземплярами которого должны быть возвращаемые в массиве
      *                    объекты, либо null для возврата значений field_to
      */
-    final private function __get_links_getLinked($var, $classname = null)
+    private function __get_links_getLinked($var, $classname = null)
     {
         $tl = static::$dbprefix . static::$links[$var]['tablename'];
         $ffrom = static::$links[$var]['field_from'];
@@ -1912,7 +1916,7 @@ abstract class SOME extends \ArrayObject
      * @param string $var Наименование свойства
      * @return mixed Значение свойства
      */
-    final private function __get_cognizable($var)
+    private function __get_cognizable($var)
     {
         if (!isset($this->cognized[$var]) && \in_array($var, static::$cognizableVars) && is_callable(array($this, '_' . $var))) {
             $this->cognized[$var] = $this->{'_' . $var}($this);
@@ -1927,7 +1931,7 @@ abstract class SOME extends \ArrayObject
      * @param string $var Наименование свойства (совпадает с ключом из массива static::$children)
      * @return mixed Значение свойства
      */
-    final private function __get_children($var)
+    private function __get_children($var)
     {
         $all = preg_match('/^all_/i', $var);
         $ids = preg_match('/_ids$/i', $var);
@@ -1956,7 +1960,7 @@ abstract class SOME extends \ArrayObject
      * @param string $var Наименование свойства (совпадает с ключом из массива static::$parents)
      * @return mixed Значение свойства
      */
-    final private function __get_parents($var)
+    private function __get_parents($var)
     {
         $ids = preg_match('/_ids$/i', $var);
         $ref = self::clear_var($var);
@@ -1973,7 +1977,7 @@ abstract class SOME extends \ArrayObject
      * Удаляет сохраненные в кэше значения дочерних элементов
      * @param string $var Наименование свойства
      */
-    final private function __unset_children($var)
+    private function __unset_children($var)
     {
         $key = self::typeof($var);
         $var = self::clear_var($var);
@@ -1986,7 +1990,7 @@ abstract class SOME extends \ArrayObject
      * Удаляет обновления свойств, хранимых в таблице базы данных (тип self::FIELD_REGULAR)
      * @param string $var Наименование свойства
      */
-    final private function __unset_regular($var)
+    private function __unset_regular($var)
     {
         if (isset($this->updates[$var])) {
             $ref = static::getReferenceByFK($var);
@@ -2008,7 +2012,7 @@ abstract class SOME extends \ArrayObject
      *
      * Если у объекта изменены свойства, порождающие кэш, а сам кэш не изменен, система автоматически меняет кэш
      */
-    final private function commit_checkCaches()
+    private function commit_checkCaches()
     {
         $affectedCaches = array();
         foreach (static::$caches as $FC => $cache) {
@@ -2048,7 +2052,7 @@ abstract class SOME extends \ArrayObject
      */
     public function trust()
     {
-        // 2017-09-01, AVS: поменял с final private на public, вдруг понадобится
+        // 2017-09-01, AVS: поменял с private на public, вдруг понадобится
         $this->properties = array_merge($this->properties, $this->updates);
         $this->updates = array();
         $this->_children = array();
@@ -2065,7 +2069,7 @@ abstract class SOME extends \ArrayObject
      * @return bool Возвращает true, если пройден цикл каскадного изменения, либо false в случае, если
      *              отсутствовали первичные ключи изменяемых/удаляемых элементов
      */
-    final private static function onupdate(array $ids, $ondelete = false)
+    private static function onupdate(array $ids, $ondelete = false)
     {
         if (!$ids) {
             return false;
@@ -2113,7 +2117,7 @@ abstract class SOME extends \ArrayObject
      * @return array|false Массив вида array([запрос на выборку], [запрос на модификацию]),
      *                     либо false в случае отсутствия задействованных классов.
      */
-    final private static function onupdate_getSQL($event_class, array $ids, $ondelete)
+    private static function onupdate_getSQL($event_class, array $ids, $ondelete)
     {
         $S = array("__SOME__." . (static::$objectCascadeUpdate ? "*" : static::_idN()));
         $F = array(static::_tablename() . " AS __SOME__");
@@ -2152,7 +2156,7 @@ abstract class SOME extends \ArrayObject
      * @param string $FC Наименование внешнего ключа
      * @return string Выражение для получения нового значения внешнего ключа в виде __SOME__[наименование внешнего ключа]
      */
-    final private static function onupdate_getSQL_whatByCache($FC)
+    private static function onupdate_getSQL_whatByCache($FC)
     {
         $cache = static::$caches[$FC];
         return "(" . $cache['sql'] . ") AS __SOME__" . $FC;
@@ -2165,7 +2169,7 @@ abstract class SOME extends \ArrayObject
      * @param string $FC Наименование внешнего ключа
      * @return string Выражение для использования в SET
      */
-    final private static function onupdate_getSQL_updateByCache($FC)
+    private static function onupdate_getSQL_updateByCache($FC)
     {
         $cache = static::$caches[$FC];
         return "__SOME__." . $FC . " = (" . $cache['sql'] . ")";
@@ -2178,7 +2182,7 @@ abstract class SOME extends \ArrayObject
      * @param string $FC Наименование внешнего ключа
      * @return array<string> Массив объявлений таблиц для использования в FROM
      */
-    final private static function onupdate_getSQL_fromByCache($FC)
+    private static function onupdate_getSQL_fromByCache($FC)
     {
         $cache = static::$caches[$FC];
         $SQL_from = array();
@@ -2202,7 +2206,7 @@ abstract class SOME extends \ArrayObject
      * @param array $ids Массив первичных ключей изменяемых/удаляемых объектов класса $event_class
      * @return string Выражение для использования в WHERE
      */
-    final private static function onupdate_getSQL_whereByCache($FC, $event_class, array $ids)
+    private static function onupdate_getSQL_whereByCache($FC, $event_class, array $ids)
     {
         $cache = static::$caches[$FC];
         $W = "(( 0 ";
@@ -2223,7 +2227,7 @@ abstract class SOME extends \ArrayObject
      * @param string $ref Наименование ссылки
      * @return string Выражение для получения нового значения ссылки в виде __SOME__[наименование внешнего ключа]
      */
-    final private static function onupdate_getSQL_whatByRef($ref)
+    private static function onupdate_getSQL_whatByRef($ref)
     {
         $reference = static::$references[$ref];
         $cls = $reference['classname'];
@@ -2240,7 +2244,7 @@ abstract class SOME extends \ArrayObject
      * @param string $ref Наименование ссылки
      * @return string Выражение для использования в SET
      */
-    final private static function onupdate_getSQL_updateByRef($ref)
+    private static function onupdate_getSQL_updateByRef($ref)
     {
         $reference = static::$references[$ref];
         $cls = $reference['classname'];
@@ -2257,7 +2261,7 @@ abstract class SOME extends \ArrayObject
      * @param string $refKey Наименование ссылки
      * @return array<string> Массив объявлений таблиц для использования в FROM
      */
-    final private static function onupdate_getSQL_fromByRef($refKey)
+    private static function onupdate_getSQL_fromByRef($refKey)
     {
         $SQL_from = array();
         $reference = static::$references[$refKey];
@@ -2278,7 +2282,7 @@ abstract class SOME extends \ArrayObject
      * @param array $ids Массив первичных ключей изменяемых/удаляемых объектов класса $eventClass
      * @return string Выражение для использования в WHERE
      */
-    final private static function onupdate_getSQL_whereByRef($refKey, $eventClass, array $ids)
+    private static function onupdate_getSQL_whereByRef($refKey, $eventClass, array $ids)
     {
         $reference = static::$references[$refKey];
         $refCls = $reference['classname'];
@@ -2300,7 +2304,7 @@ abstract class SOME extends \ArrayObject
      * @return bool Возвращает true, если пройден цикл каскадного изменения, либо false в случае, если
      *              отсутствовали первичные ключи изменяемых/удаляемых элементов
      */
-    final private static function ondelete(array $ids)
+    private static function ondelete(array $ids)
     {
         if (!$ids) {
             return false;
@@ -2346,7 +2350,7 @@ abstract class SOME extends \ArrayObject
      * Реализует каскадное удаление задействованных объектов по запросу на удаление, для использования в методе static::ondelete().
      * @param $SQL_query Запрос на выборку объектов задействованного класса.
      */
-    final private static function ondelete_cascadeDelete($SQL_query)
+    private static function ondelete_cascadeDelete($SQL_query)
     {
         $SQL_result = static::$SQL->get($SQL_query);
         if ($SQL_result) {
@@ -2578,7 +2582,7 @@ abstract class SOME extends \ArrayObject
      * @param string $dbprefix Префикс таблиц базы данных
      * @return bool Возвращает true в случае нормального присвоения, false в противном случае
      */
-    final private static function init_setSQL(\SOME\DB $SQL = null, $dbprefix = null)
+    private static function init_setSQL(\SOME\DB $SQL = null, $dbprefix = null)
     {
         $ok = true;
         if ($SQL !== null) {
@@ -2607,7 +2611,7 @@ abstract class SOME extends \ArrayObject
      * Проверяет правильность формата импортируемых классов
      * @param array $classes массив импортируемых классов
      */
-    final private static function init_checkClasses(array $classes)
+    private static function init_checkClasses(array $classes)
     {
         $classes_to_initialize = array();
         foreach ($classes as $classname => $class) {
@@ -2630,7 +2634,7 @@ abstract class SOME extends \ArrayObject
      * Проверяет доступность базы данных и таблицы класса, для использования в методе static::init().
      * @return bool Возвращает true в случае, если база данных и таблица доступны, false в противном случае
      */
-    final private static function init_checkSQL()
+    private static function init_checkSQL()
     {
         $ok = true;
         if (!static::$SQL || !static::$SQL->connection) {
@@ -2650,7 +2654,7 @@ abstract class SOME extends \ArrayObject
      * @return array|false Возвращает массив классов в очередь на инициализацию в случае, если ссылки правильные,
      *                     либо false в противном случае
      */
-    final private static function init_checkReferences()
+    private static function init_checkReferences()
     {
         $ok = true;
         $classes_to_initialize = array();
@@ -2678,7 +2682,7 @@ abstract class SOME extends \ArrayObject
      * @return array|false Возвращает массив классов в очередь на инициализацию в случае, если ссылки правильные,
      *                     либо false в противном случае
      */
-    final private static function init_checkChildren()
+    private static function init_checkChildren()
     {
         $ok = true;
         $classes_to_initialize = array();
@@ -2713,7 +2717,7 @@ abstract class SOME extends \ArrayObject
      * должна быть рекурсивной, т.е. вести на тот же класс
      * @return bool Возвращает true в случае, если ссылки правильные, false в противном случае
      */
-    final private static function init_checkParents()
+    private static function init_checkParents()
     {
         $ok = true;
         foreach (static::$parents as $key => $ref) {
@@ -2730,7 +2734,7 @@ abstract class SOME extends \ArrayObject
      * Проверяет правильность таблиц-связок, для использования в методе static::init().
      * @return bool Возвращает true в случае, если ссылки правильные, false в противном случае
      */
-    final private static function init_checkLinks()
+    private static function init_checkLinks()
     {
         $ok = true;
         foreach (static::$links as $i => $link) {
@@ -2759,7 +2763,7 @@ abstract class SOME extends \ArrayObject
      * Проверяет доступность таблицы и первичного ключа, для использования в методе static::init().
      * @return bool Возвращает true в случае, если таблица и первичный ключ доступны, false в противном случае
      */
-    final private static function init_getFields()
+    private static function init_getFields()
     {
         $ok = true;
         if (in_array(static::$SQL->dbtype, array('sqlite', 'sqlite2'))) {
@@ -2818,7 +2822,7 @@ abstract class SOME extends \ArrayObject
      * @param string $prop Имя свойства
      * @return int Константы типов свойств вида self::FIELD_*
      */
-    final private static function typeof($prop)
+    private static function typeof($prop)
     {
         static::init();
         if ($prop == self::$classes[\get_called_class()]['PRI']) {
@@ -2845,7 +2849,7 @@ abstract class SOME extends \ArrayObject
      * @param string $prop Наименование свойства
      * @return string
      */
-    final private static function clear_var($prop)
+    private static function clear_var($prop)
     {
         $prop2 = preg_replace('/^(.*?)_ids$/i', '$1', preg_replace('/^all_(.*?)$/i', '$1', $prop));
         return $prop2;
