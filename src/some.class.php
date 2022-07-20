@@ -950,7 +950,8 @@ abstract class SOME extends ArrayObject
         }
         $i = 0;
         do {
-            $SQL_query = "SELECT *, " . ++$i . " AS __level FROM " . $classname::_tablename()
+            $SQL_query = "SELECT *, " . ++$i . " AS __level "
+                       . "  FROM `" . $classname::_tablename() . "`"
                        . " WHERE " . $pidN . " IN (" . implode(", ", array_fill(0, count($ch), "?")) . ") "
                        . ($where ? " AND (" . $where . ")" : "") . $addSQL;
             $ch = static::$SQL->get(array($SQL_query, $ch));
@@ -1890,7 +1891,7 @@ abstract class SOME extends ArrayObject
                 $orderBy = $classname::_defaultOrderBy();
                 // 2013-12-08 добавлено tl.* для получения промежуточных параметров ссылок
                 // 2014-02-12 переставили местами tl, te - иначе при присутствии в tl поля id выдается id исходной сущности, а не искомых
-                $SQL_query = "SELECT tl.*, te.* FROM " . $te . " AS te JOIN " . $tl . " AS tl ON tl." . $fto . " = te." . $idN
+                $SQL_query = "SELECT tl.*, te.* FROM `" . $te . "` AS te JOIN " . $tl . " AS tl ON tl." . $fto . " = te." . $idN
                            . " WHERE tl." . $ffrom . " = ?"
                            . ($orderBy ? " ORDER BY te." . $orderBy : "");
                 $SQL_result = static::$SQL->get(array($SQL_query, $this->_id));
@@ -2769,7 +2770,7 @@ abstract class SOME extends ArrayObject
         if (in_array(static::$SQL->dbtype, array('sqlite', 'sqlite2'))) {
             $SQL_query = "SELECT sql FROM sqlite_master WHERE type = 'table' AND tbl_name = '" . static::$SQL->real_escape_string(self::$classes[\get_called_class()]['tablename']) . "'";
         } else {
-            $SQL_query = "SHOW FIELDS FROM " . self::$classes[\get_called_class()]['tablename'];
+            $SQL_query = "SHOW FIELDS FROM `" . self::$classes[\get_called_class()]['tablename'] . "`";
         }
 
         $SQL_result = static::$SQL->uget($SQL_query);
