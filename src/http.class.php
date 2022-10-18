@@ -7,11 +7,9 @@
  *
  * @package SOME
  * @subpackage Filesystem
- * @author Александр В. Сурнин <avs@volumnet.ru>
- * @copyright © 2011, ООО «Объемные Сети»
- * @version 4.0
- * @license GPL для собственных и некоммерческих проектов,
- *          коммерческая для веб-разработчиков и студий
+ * @author Александр В. Сурнин <info@volumnet.ru>
+ * @copyright © 2022, «Объемные Сети»
+ * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
 namespace SOME;
 
@@ -30,22 +28,17 @@ final class HTTP
      *
      * Метод берет все GET-переменные запроса, при необходимости заменяет их
      * и формирует новый GET-запрос
-     * @param string $changeQuery строка для смены запроса: URL-закодированные
-     *                            пары вида [ключ]=[значение], объединенные
-     *                            амперсандом (&)
-     *                            при указании пустой строки, переменная удаляется
-     *                            например: aaa=bbb&ccc=ddd&eee=fff
-     * @param bool $includeDirs При установке в true, также добавляет
-     *                          в возвращаемое значение директории
-     *                          вида /path/to/script/
-     * @param string|null $initialPath Путь, от которого считаются изменения.
-     *                                 По умолчанию - $_SERVER['REQUEST_URI']
+     * @param string $changeQuery строка для смены запроса: URL-закодированные пары вида [ключ]=[значение],
+     *     объединенные амперсандом (&); при указании пустой строки, переменная удаляется
+     *     например: aaa=bbb&ccc=ddd&eee=fff
+     * @param bool $includeDirs При установке в true, также добавляет в возвращаемое значение директории
+     *     вида /path/to/script/
+     * @param string|null $initialPath Путь, от которого считаются изменения. По умолчанию - $_SERVER['REQUEST_URI']
      * @param bool $removeTrailingQuestion Убирать знак вопроса в конце
      * @param bool $appendDirsToEmptyString Добавлять директории, если запрос пустой
      * @return string новый запрос вида
-     *                /path/to/script/?[ключ]=[значение]&[ключ]=[значение]&[ключ]=[значение].
-     *                Если GET-запрос пустой или $removeTrailingQuestion = true,
-     *                знак вопроса не ставится
+     *     /path/to/script/?[ключ]=[значение]&[ключ]=[значение]&[ключ]=[значение].
+     *     Если GET-запрос пустой или $removeTrailingQuestion = true, знак вопроса не ставится
      */
     public static function queryString(
         $changeQuery = '',
@@ -89,12 +82,11 @@ final class HTTP
      * @param string $href ссылка
      * @param string $current текущий адрес
      * @param bool $strictURL воспринимать только точное соответствие по пути
-     * @param bool $strictGET воспринимать только точное соответствие
-     *                        $_GET-переменных
+     * @param bool $strictGET воспринимать только точное соответствие $_GET-переменных
      * @return int возвращает:
-     *             2 - если ссылки абсолютно идентичны;
-     *             1 - если текущий адрес является подразделом искомого;
-     *             0 - если адреса разные
+     *     2 - если ссылки абсолютно идентичны;
+     *     1 - если текущий адрес является подразделом искомого;
+     *     0 - если адреса разные
      */
     public static function isActiveURL(
         $href,

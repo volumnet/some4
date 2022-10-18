@@ -6,20 +6,12 @@
  *
  * @package SOME
  * @subpackage Singleton
- * @author Александр В. Сурнин <avs@volumnet.ru>
- * @copyright © 2013, ООО «Объемные Сети»
- * @version 4.0
+ * @author Александр В. Сурнин <info@volumnet.ru>
+ * @copyright © 2022, ООО «Объемные Сети»
  * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
 namespace SOME;
 
-/**
- * Файл шаблона Singleton ("одиночка")
- * @package RAAS
- * @version 4.1
- * @author Alex V. Surnin <info@volumnet.ru>
- * @copyright 2011, Volume Networks
- */
 /**
  * Класс шаблона Singleton ("одиночка")
  * @package RAAS
