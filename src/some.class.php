@@ -520,8 +520,8 @@ abstract class SOME extends ArrayObject
                 $this->__construct($arr);
             } elseif ($importData !== null) {
                 $sqlQuery = "SELECT *
-                               FROM " . static::_tablename()
-                          . " WHERE " . static::_idN() . " = ?
+                               FROM `" . static::_tablename() . "`
+                              WHERE " . static::_idN() . " = ?
                               LIMIT 1";
                 $sqlResult = static::$SQL->getline([$sqlQuery, array($importData)]);
                 foreach ((array)$sqlResult as $key => $val) {
@@ -1109,7 +1109,7 @@ abstract class SOME extends ArrayObject
         $parents = [];
         $p = $this;
         do {
-            $sqlQuery = "SELECT * FROM " . static::_tablename() . " WHERE " . static::_idN() . " = ?";
+            $sqlQuery = "SELECT * FROM `" . static::_tablename() . "` WHERE " . static::_idN() . " = ?";
             $p = static::$SQL->getline([$sqlQuery, [$p->$pidN]]);
             if ($p) {
                 $p = new static($p);
