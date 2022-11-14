@@ -269,6 +269,8 @@ class DB
         } catch (Exception $e) { // Ошибка
             if ($this->error_handler) {
                 call_user_func($this->error_handler, $e);
+            } else {
+                throw $e;
             }
         }
         $time_end = microtime(true);

@@ -1604,9 +1604,12 @@ abstract class SOME extends ArrayObject
             $sql[$key] = $x;
             $sqlBind = array_merge((array)$sqlBind, (array)$y);
         }
+        $sql['where'] = array_filter($sql['where'], function ($x) {
+            return trim($x) !== ''; // 2022-11-11, AVS: сделал строгую проверку, чтобы можно было шунтировать нулём
+        });
         $sql['where'] = array_map(function ($x) {
             return "(" . $x . ")";
-        }, array_filter($sql['where'], 'trim'));
+        }, $sql['where']);
         $sqlQuery = " SELECT SQL_CALC_FOUND_ROWS " . implode(", ", $sql['select'])
                     . " FROM " . implode(" LEFT JOIN ", $sql['from'])
                     . ($sql['where'] ? " WHERE " . implode(" AND ", $sql['where']) : "")
