@@ -543,6 +543,9 @@ abstract class SOME extends ArrayObject
 
     public function __get($var)
     {
+        if (in_array($var, ['meta', 'properties', 'updates'])) {
+            return $this->$var;
+        }
         if (isset(static::$aliases[$var])) {
             $var = static::$aliases[$var];
         }
