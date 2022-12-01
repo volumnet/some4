@@ -1038,7 +1038,7 @@ abstract class SOME extends ArrayObject
             = $this->_parents
             = [];
         if ($this->_id) {
-            $this->__construct($this->_id);
+            self::__construct($this->_id);
         }
     }
 
