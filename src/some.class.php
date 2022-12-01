@@ -1038,6 +1038,7 @@ abstract class SOME extends ArrayObject
             = $this->_parents
             = [];
         if ($this->_id) {
+            // 2022-12-01, AVS: заменил $this-> на self:: во избежание побочных явлений от других конструкторов
             self::__construct($this->_id);
         }
     }
