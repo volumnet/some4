@@ -62,114 +62,6 @@ final class Text
         'декабрь'
     ];
 
-    /**
-     * Числительные в русском языке.
-     * @var array
-     */
-    private static $NUM = [
-        0 => '',
-        1 => ['одна', 'один', 'одно'],
-        2 => ['две', 'два', 'два'],
-        3 => 'три',
-        4 => 'четыре',
-        5 => 'пять',
-        6 => 'шесть',
-        7 => 'семь',
-        8 => 'восемь',
-        9 => 'девять',
-        10 => 'десять',
-        11 => 'одиннадцать',
-        12 => 'двенадцать',
-        13 => 'тринадцать',
-        14 => 'четырнадцать',
-        15 => 'пятнадцать',
-        16 => 'шестнадцать',
-        17 => 'семнадцать',
-        18 => 'восемнадцать',
-        19 => 'девятнадцать',
-        20 => 'двадцать',
-        30 => 'тридцать',
-        40 => 'сорок',
-        50 => 'пятьдесят',
-        60 => 'шестьдесят',
-        70 => 'семдесят',
-        80 => 'восемдесят',
-        90 => 'девяносто',
-        100 => 'сто',
-        200 => 'двести',
-        300 => 'триста',
-        400 => 'четыреста',
-        500 => 'пятьсот',
-        600 => 'шестьсот',
-        700 => 'семьсот',
-        800 => 'восемьсот',
-        900 => 'девятьсот'
-    ];
-
-    /**
-     * Название степеней тысяч на русском языке.
-     * @var array
-     */
-    private static $DEC = [
-        '',
-        'тысяч',
-        'миллион',
-        'миллиард',
-        'триллион',
-        'квадриллион',
-        'квинтиллион',
-        'секстиллион',
-        'септиллион',
-        'октиллион',
-        'нониллион',
-        'дециллион'
-    ];
-
-    /**
-     * Правила транслитерации букв в буквосочетаниях кириллицы.
-     * @var array
-     */
-    private static $translit_rx = [
-        'ЫЙ' => 'YI',
-        'ый' => 'yi',
-        'Ый' => 'Yi',
-        'ыЙ' => 'yI',
-        '(Ъ|Ь|ъ|ь|\')(Е|Ё)' => 'Ye',
-        '(Ъ|Ь|ъ|ь|\')(е|ё)' => 'ye',
-        'Ы(Й|й|y|i)' => 'I$1',
-        'ы(Й|й|y|i)' => 'i$1',
-        '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')ъ' => '$1y',
-        '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')Ъ' => '$1Y',
-        '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')Ю' => '$1Yu',
-        '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')ю' => '$1yu',
-        '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')Я' => '$1Ya',
-        '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')я' => '$1ya',
-        'Ч' => 'Ch',
-        'ч' => 'ch',
-        'Ш' => 'Sh',
-        'ш' => 'sh',
-        'Щ' => 'Sch',
-        'щ' => 'sch',
-        'Ъ' => '',
-        'ъ' => '',
-        'Ю' => "'U",
-        'ю' => "'u",
-        'Я' => "'A",
-        'я' => "'a"
-    ];
-
-    /**
-     * Набор букв для безусловной транслитерации кириллицы.
-     * @var string
-     */
-    private static $translit_from = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЫЬЭабвгдеёжзийклмнопрстуфхцыьэ';
-
-    /**
-     * Набор соответствующих букв латиницы для безусловной транслитерации кириллических букв.
-     * @var string
-     */
-    private static $translit_to =   "ABVGDEEJZIYKLMNOPRSTUFHCY'Eabvgdeejziyklmnoprstufhcy'e";
-
 
     /**
      * Проверяет, является ли строка корректным номером ICQ
@@ -234,6 +126,60 @@ final class Text
     {
         $str = preg_replace('/\\D+/umis', '', $str);
 
+        $numerals = [
+            0 => '',
+            1 => ['одна', 'один', 'одно'],
+            2 => ['две', 'два', 'два'],
+            3 => 'три',
+            4 => 'четыре',
+            5 => 'пять',
+            6 => 'шесть',
+            7 => 'семь',
+            8 => 'восемь',
+            9 => 'девять',
+            10 => 'десять',
+            11 => 'одиннадцать',
+            12 => 'двенадцать',
+            13 => 'тринадцать',
+            14 => 'четырнадцать',
+            15 => 'пятнадцать',
+            16 => 'шестнадцать',
+            17 => 'семнадцать',
+            18 => 'восемнадцать',
+            19 => 'девятнадцать',
+            20 => 'двадцать',
+            30 => 'тридцать',
+            40 => 'сорок',
+            50 => 'пятьдесят',
+            60 => 'шестьдесят',
+            70 => 'семдесят',
+            80 => 'восемдесят',
+            90 => 'девяносто',
+            100 => 'сто',
+            200 => 'двести',
+            300 => 'триста',
+            400 => 'четыреста',
+            500 => 'пятьсот',
+            600 => 'шестьсот',
+            700 => 'семьсот',
+            800 => 'восемьсот',
+            900 => 'девятьсот'
+        ];
+        $decimals = [
+            '',
+            'тысяч',
+            'миллион',
+            'миллиард',
+            'триллион',
+            'квадриллион',
+            'квинтиллион',
+            'секстиллион',
+            'септиллион',
+            'октиллион',
+            'нониллион',
+            'дециллион'
+        ];
+
         $str = str_pad($str, ceil(mb_strlen($str) / 3) * 3, '0', STR_PAD_LEFT);
         $temp = [];
         for ($i = 0; $i < ceil(mb_strlen($str) / 3); $i++) {
@@ -243,27 +189,27 @@ final class Text
             $c = floor((int)$x / 100) % 100;
 
             $X = [];
-            if ($c && isset(self::$NUM[$c * 100])) {
-                $X[] = self::$NUM[$c * 100];
+            if ($c && isset($numerals[$c * 100])) {
+                $X[] = $numerals[$c * 100];
             }
             if ($d == 1 && $e) {
-                if (isset(self::$NUM[$d * 10 + $e])) {
-                    $X[] = self::$NUM[$d * 10 + $e];
+                if (isset($numerals[$d * 10 + $e])) {
+                    $X[] = $numerals[$d * 10 + $e];
                 }
             } else {
-                if ($d && isset(self::$NUM[$d * 10])) {
-                    $X[] = self::$NUM[$d * 10];
+                if ($d && isset($numerals[$d * 10])) {
+                    $X[] = $numerals[$d * 10];
                 }
-                if ($e > 2 && isset(self::$NUM[$e])) {
-                    $X[] = self::$NUM[$e];
-                } elseif ($e && isset(self::$NUM[$e])) {
-                    $X[] = self::$NUM[$e][$i ? ($i == 1 ? 0 : 1) : $gender];
+                if ($e > 2 && isset($numerals[$e])) {
+                    $X[] = $numerals[$e];
+                } elseif ($e && isset($numerals[$e])) {
+                    $X[] = $numerals[$e][$i ? ($i == 1 ? 0 : 1) : $gender];
                 }
             }
-            if ($i > 1 && isset(self::$DEC[$i])) {
-                $X[] = self::numTxt($c * 100 + $d * 10 + $e, [self::$DEC[$i] . 'ов', self::$DEC[$i], self::$DEC[$i] . 'а']);
-            } elseif ($i && isset(self::$DEC[$i])) {
-                $X[] = self::numTxt($c * 100 + $d * 10 + $e, [self::$DEC[$i], self::$DEC[$i] . 'а', self::$DEC[$i] . 'и']);
+            if ($i > 1 && isset($decimals[$i])) {
+                $X[] = self::numTxt($c * 100 + $d * 10 + $e, [$decimals[$i] . 'ов', $decimals[$i], $decimals[$i] . 'а']);
+            } elseif ($i && isset($decimals[$i])) {
+                $X[] = self::numTxt($c * 100 + $d * 10 + $e, [$decimals[$i], $decimals[$i] . 'а', $decimals[$i] . 'и']);
             }
             $temp[] = implode(' ', $X);
         }
@@ -281,13 +227,156 @@ final class Text
     public static function translit($string)
     {
         $result = $string;
-        foreach (self::$translit_rx as $key => $val) {
+        $translitFrom = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЫЬЭабвгдеёжзийклмнопрстуфхцыьэ';
+        $translitTo =   "ABVGDEEJZIYKLMNOPRSTUFHCY'Eabvgdeejziyklmnoprstufhcy'e";
+        $translitRx = [
+            'ЫЙ' => 'YI',
+            'ый' => 'yi',
+            'Ый' => 'Yi',
+            'ыЙ' => 'yI',
+            '(Ъ|Ь|ъ|ь|\')(Е|Ё)' => 'Ye',
+            '(Ъ|Ь|ъ|ь|\')(е|ё)' => 'ye',
+            'Ы(Й|й|y|i)' => 'I$1',
+            'ы(Й|й|y|i)' => 'i$1',
+            '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')ъ' => '$1y',
+            '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')Ъ' => '$1Y',
+            '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')Ю' => '$1Yu',
+            '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')ю' => '$1yu',
+            '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')Я' => '$1Ya',
+            '(^| |А|Е|Ё|И|О|У|Ъ|Ы|Ь|Э|Ю|Я|а|е|ё|и|о|у|ъ|ы|ь|э|ю|я|A|E|I|O|U|Y|a|e|i|o|u|y\')я' => '$1ya',
+            'Ч' => 'Ch',
+            'ч' => 'ch',
+            'Ш' => 'Sh',
+            'ш' => 'sh',
+            'Щ' => 'Sch',
+            'щ' => 'sch',
+            'Ъ' => '',
+            'ъ' => '',
+            'Ю' => "'U",
+            'ю' => "'u",
+            'Я' => "'A",
+            'я' => "'a"
+        ];
+        foreach ($translitRx as $key => $val) {
             $result = preg_replace('/' . $key . '/ums', $val, $result);
         }
-        for ($i = 0; $i < mb_strlen(self::$translit_from); $i++) {
-            $x = mb_substr(self::$translit_from, $i, 1);
-            $y = mb_substr(self::$translit_to, $i, 1);
+        for ($i = 0; $i < mb_strlen($translitFrom); $i++) {
+            $x = mb_substr($translitFrom, $i, 1);
+            $y = mb_substr($translitTo, $i, 1);
             $result = str_replace($x, $y, $result);
+        }
+        return $result;
+    }
+
+
+    /**
+     * Возвращает строку с конвертированной раскладкой (русский-английский)
+     *
+     * Преобразует текст, набранный кириллицей, в текст, набранный латиницей, с учетом входной кодировки
+     * @param string $string исходная строка для преобразования - кириллицей
+     * @return string преобразованная строка
+     */
+    public static function convertLayout($string)
+    {
+        $layoutLettersEnRu = [
+            'q' => 'й',
+            'w' => 'ц',
+            'e' => 'у',
+            'r' => 'к',
+            't' => 'е',
+            'y' => 'н',
+            'u' => 'г',
+            'i' => 'ш',
+            'o' => 'щ',
+            'p' => 'з',
+            'a' => 'ф',
+            's' => 'ы',
+            'd' => 'в',
+            'f' => 'а',
+            'g' => 'п',
+            'h' => 'р',
+            'j' => 'о',
+            'k' => 'л',
+            'l' => 'д',
+            'z' => 'я',
+            'x' => 'ч',
+            'c' => 'с',
+            'v' => 'м',
+            'b' => 'и',
+            'n' => 'т',
+            'm' => 'ь',
+            'Q' => 'Й',
+            'W' => 'Ц',
+            'E' => 'У',
+            'R' => 'К',
+            'T' => 'Е',
+            'Y' => 'Н',
+            'U' => 'Г',
+            'I' => 'Ш',
+            'O' => 'Щ',
+            'P' => 'З',
+            'A' => 'Ф',
+            'S' => 'Ы',
+            'D' => 'В',
+            'F' => 'А',
+            'G' => 'П',
+            'H' => 'Р',
+            'J' => 'О',
+            'K' => 'Л',
+            'L' => 'Д',
+            'Z' => 'Я',
+            'X' => 'Ч',
+            'C' => 'С',
+            'V' => 'М',
+            'B' => 'И',
+            'N' => 'Т',
+            'M' => 'Ь',
+        ];
+        $layoutSpecialEnRu = [
+            '`' => 'ё',
+            '[' => 'х',
+            ']' => 'ъ',
+            ';' => 'ж',
+            "'" => 'э',
+            ',' => 'б',
+            '.' => 'ю',
+            '/' => '.',
+
+            '~' => 'Ё',
+            '@' => '"',
+            '#' => '№',
+            '$' => ';',
+            '^' => ':',
+            '&' => '?',
+            '{' => 'Х',
+            '}' => 'Ъ',
+            '|' => '/',
+            ':' => 'Ж',
+            '"' => 'Э',
+            '<' => 'Б',
+            '>' => 'Ю',
+            '?' => ',',
+        ];
+
+        $initialLayout = preg_match('/[А-Яа-я]+/umis', $string) ? 'ru' : 'en';
+        $layoutLetters = array_merge($layoutLettersEnRu, array_flip($layoutLettersEnRu));
+        if ($initialLayout == 'ru') {
+            $layoutSpecial = array_merge($layoutSpecialEnRu, array_flip($layoutSpecialEnRu));
+        } else {
+            $layoutSpecial = array_merge(array_flip($layoutSpecialEnRu), $layoutSpecialEnRu);
+        }
+        $layout = array_merge($layoutLetters, $layoutSpecial);
+
+        $l = mb_strlen($string);
+        $result = '';
+        for ($i = 0; $i < $l; $i++) {
+            $chr = mb_substr($string, $i, 1);
+            if (isset($layout[$chr])) {
+                $resChr = $layout[$chr];
+            } else {
+                $resChr = $chr;
+            }
+            $result .= $resChr;
         }
         return $result;
     }
@@ -379,15 +468,18 @@ final class Text
         $string = Text::translit($string, false);
         $string = iconv(mb_internal_encoding(), 'cp1251//TRANSLIT', $string);
         $string = strtolower($string);
-        $string = preg_replace('/ /i', $spaceSeparator, $string);
-        $string = preg_replace('/[^\\-\\w]/i', '', $string);
+        if ($string == '') {
+            $string = preg_replace('/[^a-z0-9]/umis', '', $string);
+        } else {
+            $string = preg_replace('/ /i', $spaceSeparator, $string);
+            $string = preg_replace('/[^\\-\\w]/i', '', $string);
+        }
         return $string;
     }
 
 
     /**
      * Формирует телефонный номер 10-значным числом
-     *
      * @param string $phone исходный номер для преобразования
      * @param int $nOfDigits Количество значимых цифр в телефоне
      * @return string преобразованная строка
@@ -397,6 +489,36 @@ final class Text
         $phone = preg_replace('/[^\\d]+/i', '', $phone);
         $phone = substr($phone, -1 * $nOfDigits);
         return $phone;
+    }
+
+
+    /**
+     * Форматирует телефонный номер в виде +7 (999) 000-00-00
+     * @param string $phone исходный номер для преобразования
+     * @param bool $useParentheses Использовать скобки вокруг кода оператора
+     * @param string $mask Маска для номера
+     * @return string преобразованная строка, либо пустая строка, если входная пустая
+     */
+    public static function formatPhone($phone, $useParentheses = true, $mask = '70000000000')
+    {
+        $phone = static::beautifyPhone($phone, 11);
+        if (!$phone) {
+            return '';
+        }
+        $mask = static::beautifyPhone($mask, 11);
+        if (mb_strlen($phone) < 11) {
+            $phone = mb_substr($mask, 0, 11 - mb_strlen($mask)) . $phone;
+        }
+        $result = '+' . mb_substr($phone, 0, 1) . ' ';
+        if ($useParentheses) {
+            $result .= '(';
+        }
+        $result .= mb_substr($phone, 1, 3);
+        if ($useParentheses) {
+            $result .= ')';
+        }
+        $result .= ' ' . mb_substr($phone, 4, 3) . '-' . mb_substr($phone, 7, 2) . '-' . mb_substr($phone, 9);
+        return $result;
     }
 
 

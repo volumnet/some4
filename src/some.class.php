@@ -717,7 +717,9 @@ abstract class SOME extends ArrayObject
                 return isset($this->linked[$var]);
                 break;
             case self::FIELD_COGNIZABLE:
-                return isset($this->cognized[$var]);
+                // 2023-01-26, AVS: заменил на true, т.к. иначе проблемы с обращением
+                // return isset($this->cognized[$var]);
+                return true;
                 break;
             case self::FIELD_META:
                 return isset($this->meta[$var]);

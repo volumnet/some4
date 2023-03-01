@@ -401,7 +401,7 @@ class DB
         }
         $cells = $result->fetch(self::FETCH_NUM);
         $result->closeCursor();
-        if (isset($cells)) {
+        if (isset($cells) && isset($cells[0])) {
             return $cells[0];
         }
         return false;

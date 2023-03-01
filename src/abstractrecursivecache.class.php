@@ -428,7 +428,7 @@ abstract class AbstractRecursiveCache extends Singleton
         $ids = $this->canonizeIds(is_array($data) ? $data : [$data]);
         $result = [];
         foreach ($ids as $id) {
-            $result[(string)$id] = (array)$this->{$var}[(string)(int)$id];
+            $result[(string)$id] = (array)($this->{$var}[(string)(int)$id] ?? []);
             if (!($assoc & self::ASSOC_INNER)) {
                 $result[(string)$id] = array_unique($result[(string)$id]);
                 $result[(string)$id] = array_values($result[(string)$id]);
