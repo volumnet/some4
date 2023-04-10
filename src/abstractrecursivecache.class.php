@@ -564,7 +564,7 @@ abstract class AbstractRecursiveCache extends Singleton
         }
 
         // Установим цепочки родительских ID#
-        $ch = array_filter(['0' => $this->childrenIds['0']]);
+        $ch = array_filter(['0' => ($this->childrenIds['0'] ?? [])]);
         while ($ch) {
             $newCh = [];
             foreach ($ch as $pid => $chIds) {

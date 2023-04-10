@@ -2231,6 +2231,9 @@ abstract class SOME extends ArrayObject
         $ids = array_map(function ($x) {
             return static::$SQL->quote($x);
         }, $ids);
+        // 2023-03-13, AVS: потеряно объявление $eventClass, но судя по названию, наверное это текущий класс
+        // Возможно, придется поправить, назначил интуитивно
+        $eventClass = static::class;
         $classes = array_keys(array_merge(static::affects(), $ondelete ? static::isReferencedBy(false) : []));
         foreach ($classes as $classname) {
             $sqlSelect = ["__SOME__." . ($classname::$objectCascadeUpdate ? "*" : $classname::_idN())];
@@ -2380,7 +2383,7 @@ abstract class SOME extends ArrayObject
         // Удаляем связки, где текущий класс объявлен как сопряженный в явном виде
         foreach (self::$classes as $classname => $class) {
             foreach ($classname::$links as $key => $link) {
-                if ($link['classname'] == static::class) {
+                if (($link['classname'] ?? '') == static::class) {
                     $sqlQuery = "DELETE FROM " . $classname::$dbprefix . $link['tablename']
                                . " WHERE " . $link['field_to'] . " IN (" . implode(", ", $ids) . ") ";
                     static::$SQL->query($sqlQuery);

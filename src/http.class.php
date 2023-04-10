@@ -61,6 +61,9 @@ final class HTTP
         $oldQuery = $query;
         $query = array_merge($query, $change);
         $query = array_filter($query, function ($x) {
+            if (is_array($x)) {
+                return (bool)$x;
+            }
             return ((string)$x !== '');
         });
         $query = http_build_query($query);
