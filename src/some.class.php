@@ -1432,24 +1432,40 @@ abstract class SOME extends ArrayObject
 
     /**
      * Удаляет объект и его окружение согласно установленным связям
-     *
      * @param SOME Объект для удаления
      */
     public static function delete(self $object)
     {
         EventProcessor::emit('beforedelete', $object);
         $classname = get_class($object);
-        if ($object->_id) {
-            $classname::ondelete([$object->_id]);
-            $classname::onupdate([$object->_id]);
+        $classname::batchDelete([$object]);
+        EventProcessor::emit('delete', $object);
+    }
+
+
+    /**
+     * Удаляет объекты и их окружения согласно установленным связям
+     *
+     * ВНИМАНИЕ!!! Объекты должны быть одного типа соответствующего вызову
+     * @param  SOME[] $objects Объекты для удаления
+     */
+    public static function batchDelete(array $objects)
+    {
+        EventProcessor::emit('beforebatchdelete', $objects);
+        $objectsIds = array_values(array_filter(array_map(function ($x) {
+            return $x->_id;
+        }, $objects)));
+        if ($objectsIds) {
+            static::ondelete($objectsIds);
+            static::onupdate($objectsIds);
             // 2017-02-10, AVS: переместили удаление текущей сущности в конец, т.к. логичнее удалять ее последней,
             // к тому же возникали проблемы с "висящими" ссылками в RAAS\CMS\Pages при каскадном удалении
-            $sqlQuery = "DELETE FROM " . $classname::_tablename() . " WHERE " . $classname::_idN() . " = ?";
-            $sqlBind = [$object->_id];
-            $classname::$SQL->query([$sqlQuery, $sqlBind]);
+            $sqlQuery = "DELETE FROM " . static::_tablename()
+                      . " WHERE " . static::_idN() . " IN (" . implode(", ", array_fill(0, count($objectsIds), "?")) . ")";
+            $sqlBind = $objectsIds;
+            static::$SQL->query([$sqlQuery, $sqlBind]);
         }
-        EventProcessor::emit('delete', $object);
-        $object = null;
+        EventProcessor::emit('batchdelete', $objects);
     }
 
 
@@ -2353,22 +2369,19 @@ abstract class SOME extends ArrayObject
             $sqlResult = static::$SQL->get($sqlQuery);
             if ($sqlResult) {
                 if ($classname::$objectCascadeDelete) {
-                    foreach ($sqlResult as $row) {
-                        $row = new $classname($row);
-                        $classname::delete($row);
-                    }
+                    $objectsToDelete = array_map(function ($row) use ($classname) {
+                        return new $classname($row);
+                    }, $sqlResult);
+                    $classname::batchDelete($objectsToDelete);
                 } else {
                     $idN = $classname::_idN();
-                    $SQL = $classname::$SQL;
                     $newIds = array_map(function ($x) use ($idN) {
                         return $x[$idN];
                     }, $sqlResult);
-                    $sqlNewIds = array_map(function ($x) use ($SQL) {
-                        return $SQL->quote($x);
-                    }, $newIds);
                     $sqlQuery = "DELETE FROM " . $classname::_tablename()
-                               . " WHERE " . $classname::_idN() . " IN (" . implode(", ", $sqlNewIds) . ")";
-                    $classname::$SQL->query($sqlQuery);
+                              . " WHERE " . $classname::_idN() . " IN (" . implode(", ", array_fill(0, count($newIds), "?")) . ")";
+                    $sqlBind = $newIds;
+                    $classname::$SQL->query([$sqlQuery, $sqlBind]);
                     $classname::ondelete($newIds);
                     $classname::onupdate($newIds, true);
                 }
