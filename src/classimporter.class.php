@@ -23,42 +23,39 @@ class ClassImporter
      *                     array соответствие старого/нового имен,
      *                     если файл содержит несколько классов;
      */
-    public static function import($filename, $as)
+    public static function import($filename, $as = null)
     {
         if (!is_file($filename)) {
-            throw new InvalidArgumentException(
-                'File ' . $filename . ' is not found'
-            );
+            throw new InvalidArgumentException('File ' . $filename . ' is not found');
         }
-        $text = file_get_contents($filename);
-        if (!stristr($text, 'class ')) {
-            throw new InvalidArgumentException(
-                'File ' . $filename . ' has no classes'
-            );
-        }
-        if (is_array($as)) {
-            $mapping = [];
-            foreach ($as as $oldName => $newName) {
-                // if (class_exists($newName, false)) {
-                //     return;
-                // }
-                $mapping['class ' . $oldName] = 'class ' . $newName;
-                $mapping['trait ' . $oldName] = 'trait ' . $newName;
-                $mapping['interface ' . $oldName] = 'interface ' . $newName;
+
+        $crc32File = hash_file('crc32b', $filename);
+        $crc32As = is_array($as) ? dechex(crc32(json_encode($as))) : $as;
+        $tmpFilename = pathinfo($filename, PATHINFO_FILENAME) . '.' . $crc32File . ($crc32As ? ('.' . $crc32As) : '')
+            . '.' . pathinfo($filename, PATHINFO_EXTENSION);
+        $tmpFilepath = sys_get_temp_dir() . '/' . $tmpFilename;
+
+        if (!is_file($tmpFilepath)) {
+            $text = file_get_contents($filename);
+            if (!stristr($text, 'class ')) {
+                throw new InvalidArgumentException('File ' . $filename . ' has no classes');
             }
-            $text = strtr($text, $mapping);
-        } else {
-            // if (class_exists($as, false)) {
-            //     return;
-            // }
-            $text = preg_replace(
-                '/(class|interface|trait) (\\w+)/umis',
-                '$1 ' . $as,
-                $text
-            );
+            if (is_array($as)) {
+                $mapping = [];
+                foreach ($as as $oldName => $newName) {
+                    $mapping['class ' . $oldName] = 'class ' . $newName;
+                    $mapping['trait ' . $oldName] = 'trait ' . $newName;
+                    $mapping['interface ' . $oldName] = 'interface ' . $newName;
+                }
+                $text = strtr($text, $mapping);
+            } elseif ($as) {
+                $text = preg_replace('/(class|interface|trait) (\\w+)/umis', '$1 ' . $as, $text);
+            } else {
+                $text = preg_replace('/(class|interface|trait) (\\w+)/umis', '$1 $2Original', $text);
+            }
+            file_put_contents($tmpFilepath, $text);
         }
-        $_SESSION['EVAL_DEBUG'] = $filename;
-        eval('?' . '>' . $text);
-        $_SESSION['EVAL_DEBUG'] = '';
+
+        include $tmpFilepath;
     }
 }
