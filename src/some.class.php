@@ -493,22 +493,10 @@ abstract class SOME extends ArrayObject
                     if (isset(static::$aliases[$key])) {
                         $key = static::$aliases[$key];
                     }
-                    switch ($typeOfKey = self::typeof($key)) {
-                        case self::FIELD_ID:
-                            if (!$this->_id) {
-                                $this->_id = $val;
-                            }
-                            break;
-                        case self::FIELD_REGULAR:
-                            $this->updates[$key] = $val;
-                            break;
-                        case self::FIELD_META:
-                            $this->meta[$key] = $val;
-                            break;
-                        case self::FIELD_COGNIZABLE:
-                            $this->cognized[$key] = $val;
-                            break;
-                    }
+                    $this->__set($key, $val);
+                    // 2023-10-16, AVS: сделал общее присвоение через __set вместо перебора типов полей,
+                    // т.к. в ряде случаев (например с RAAS\Attachment) может включаться обработка
+                    // Также перенес в __set предыдущую установку cognizable - пока непонятно, чем это может обернуться
                 }
             } elseif ($importData instanceof self) {
                 if (get_class($importData) == get_class($this)) {
@@ -519,23 +507,10 @@ abstract class SOME extends ArrayObject
                 $arr = $importData->getArrayCopy($mask);
                 $this->__construct($arr);
             } elseif ($importData !== null) {
-                $sqlQuery = "SELECT *
-                               FROM `" . static::_tablename() . "`
-                              WHERE " . static::_idN() . " = ?
-                              LIMIT 1";
+                $sqlQuery = "SELECT * FROM `" . static::_tablename() . "` WHERE " . static::_idN() . " = ? LIMIT 1";
                 $sqlResult = static::$SQL->getline([$sqlQuery, array($importData)]);
-                foreach ((array)$sqlResult as $key => $val) {
-                    switch (self::typeof($key)) {
-                        case self::FIELD_ID:
-                            if (!$this->_id) {
-                                $this->_id = $val;
-                            }
-                            break;
-                        case self::FIELD_REGULAR:
-                            $this->properties[$key] = $val;
-                            break;
-                    }
-                }
+                $this->__construct($sqlResult);
+                $this->trust();
             }
         }
     }
@@ -695,6 +670,10 @@ abstract class SOME extends ArrayObject
                     }
                     $this->cognized = [];
                 }
+                break;
+            case self::FIELD_COGNIZABLE:
+                // 2023-10-16, AVS: добавил предустановку cognizable, но непонятно, какие баги могут возникнуть
+                $this->cognized[$key] = $val;
                 break;
             default:
                 $this->meta[$var] = $val;
