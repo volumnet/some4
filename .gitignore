@@ -3,3 +3,4 @@ vendor
 components
 composer.lock
 config.php
+/tests/.phpunit.result.cache

@@ -673,7 +673,7 @@ abstract class SOME extends ArrayObject
                 break;
             case self::FIELD_COGNIZABLE:
                 // 2023-10-16, AVS: добавил предустановку cognizable, но непонятно, какие баги могут возникнуть
-                $this->cognized[$key] = $val;
+                $this->cognized[$var] = $val;
                 break;
             default:
                 $this->meta[$var] = $val;

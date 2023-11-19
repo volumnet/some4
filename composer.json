@@ -1,6 +1,6 @@
 {
     "name": "volumnet/some4",
-    "version": "4.6.10",
+    "version": "4.6.11",
     "description": "SOME Framework",
     "license": "GPL-3.0-or-later",
     "minimum-stability": "dev",
@@ -9,7 +9,7 @@
         "php": ">=7.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "5.*",
+        "phpunit/phpunit": "*",
         "volumnet/raas.cms.shop": "4.*",
         "volumnet/raas.cms.users": "4.*"
     },
@@ -24,5 +24,10 @@
     },
     "autoload-dev": {
         "classmap": ["tests"]
+    },
+    "config": {
+        "allow-plugins": {
+            "robloach/component-installer": false
+        }
     }
 }

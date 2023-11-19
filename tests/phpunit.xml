@@ -2,12 +2,13 @@
 
 <phpunit colors="true" bootstrap="./bootstrap.php">
   <testsuites>
-    <testsuite>
+    <testsuite name="AbstractStrategy">
+      <file>src/AbstractStrategyTest.php</file>
     </testsuite>
   </testsuites>
   <filter>
-    <whitelist>
-      <directory suffix=".php">..</directory>
+    <whitelist addUncoveredFilesFromWhitelist="false">
+      <directory suffix=".php">../src</directory>
     </whitelist>
   </filter>
   <logging>
