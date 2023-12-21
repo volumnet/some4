@@ -1170,7 +1170,7 @@ abstract class SOME extends ArrayObject
             for ($i = 0; $i < count($swapwith); $i++) {
                 $swapId = $swapwith[$i][static::_idN()];
                 $swapPri = (int)($i ? $swapwith[$i - 1][$priorityN] : (int)$this->$priorityN);
-                $ok &= static::$SQL->update(
+                static::$SQL->update(
                     static::_tablename(),
                     [static::_idN() . " = ?", $swapId],
                     [$priorityN => $swapPri]
@@ -2513,7 +2513,7 @@ abstract class SOME extends ArrayObject
     {
         static::init();
         $clearedProp = static::clearVar($prop);
-        if ($prop == self::$classes[static::class]['PRI']) {
+        if (isset(self::$classes[static::class]['PRI']) && ($prop == self::$classes[static::class]['PRI'])) {
             return self::FIELD_ID;
         } elseif (isset(self::$classes[static::class]['fields'][$prop])) {
             return self::FIELD_REGULAR;

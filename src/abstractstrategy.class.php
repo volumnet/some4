@@ -81,7 +81,7 @@ abstract class AbstractStrategy extends Singleton
      * @throws Exception В случае, если стратегия для ключа не задана
      * @return self
      */
-    public static function spawn(string $key = null)
+    public static function spawn(string $key = null): self
     {
         if (!isset(static::$registeredStrategies[$key])) {
             throw new Exception('Strategy for key "' . $key . '" is not registered');
