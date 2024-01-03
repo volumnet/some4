@@ -10,6 +10,8 @@
  * @author Александр В. Сурнин <info@volumnet.ru>
  * @copyright © 2022, «Объемные Сети»
  */
+declare(strict_types=1);
+
 namespace SOME;
 
 use ArrayObject;
@@ -493,7 +495,9 @@ abstract class SOME extends ArrayObject
                     if (isset(static::$aliases[$key])) {
                         $key = static::$aliases[$key];
                     }
-                    $this->__set($key, $val);
+                    if (is_string($key)) {
+                        $this->__set($key, $val);
+                    }
                     // 2023-10-16, AVS: сделал общее присвоение через __set вместо перебора типов полей,
                     // т.к. в ряде случаев (например с RAAS\Attachment) может включаться обработка
                     // Также перенес в __set предыдущую установку cognizable - пока непонятно, чем это может обернуться
@@ -516,7 +520,7 @@ abstract class SOME extends ArrayObject
     }
 
 
-    public function __get($var)
+    public function __get(string $var)
     {
         if (isset(static::$aliases[$var])) {
             $var = static::$aliases[$var];
@@ -646,7 +650,7 @@ abstract class SOME extends ArrayObject
     }
 
 
-    public function __set($var, $val)
+    public function __set(string $var, $val)
     {
         if (isset(static::$aliases[$var])) {
             $var = static::$aliases[$var];
@@ -802,7 +806,8 @@ abstract class SOME extends ArrayObject
      *     string[] Название свойства => mixed
      * ></code></pre>
      */
-    public function getArrayCopy($varType = 0x83)
+    #[\ReturnTypeWillChange]
+    public function getArrayCopy($varType = 0x83): array
     {
         $arr = [];
         if (self::FIELD_ID & $varType) {
@@ -841,6 +846,7 @@ abstract class SOME extends ArrayObject
      * @param string $var наименование динамического свойства
      * @param mixed $val записываемое значение динамического свойства
      */
+    #[\ReturnTypeWillChange]
     final public function offsetSet($var, $val)
     {
         $this->__set($var, $val);
@@ -849,14 +855,12 @@ abstract class SOME extends ArrayObject
 
     /**
      * Интерфейс доступа к классу как к массиву (проверка существования свойства)
-     *
      * Позволяет проверить существование значения какого-либо динамического свойства с помощью выражения
      * isset($object[$var])
-     *
      * @param string $var наименование динамического свойства
      * @return bool true, если свойство определено, false в противном случае
      */
-    final public function offsetExists($var)
+    final public function offsetExists($var): bool
     {
         return $this->__isset($var);
     }
@@ -869,6 +873,7 @@ abstract class SOME extends ArrayObject
      *
      * @param string $var наименование динамического свойства
      */
+    #[\ReturnTypeWillChange]
     final public function offsetUnset($var)
     {
         $this->__unset($var);
@@ -883,6 +888,7 @@ abstract class SOME extends ArrayObject
      * @param string $var наименование динамического свойства
      * @return mixed значение искомого свойства
      */
+    #[\ReturnTypeWillChange]
     final public function offsetGet($var)
     {
         return $this->__get($var);
@@ -1083,9 +1089,15 @@ abstract class SOME extends ArrayObject
      * @return SOME[]|false Индексированный массив родительских объектов от корневого до непосредственного родителя,
      *     либо false, если ссылка не рекурсивная
      */
-    final public function parents($ref = null)
+    final public function parents(string $ref)
     {
-        $reference = static::$references[static::$parents[$ref]];
+        if (!(static::$parents[$ref] ?? null)) {
+            return false;
+        }
+        $reference = static::$references[static::$parents[$ref]] ?? null;
+        if (!$reference) {
+            return false;
+        }
         $classname = $reference['classname'];
         if ($classname != static::class) {
             return false;
@@ -1125,7 +1137,10 @@ abstract class SOME extends ArrayObject
      */
     public function reorder()
     {
-        list($step, $where, $priorityN) = func_get_args();
+        $args = func_get_args();
+        $step = $args[0] ?? null;
+        $where = $args[1] ?? null;
+        $priorityN = $args[2] ?? null;
         $sqlBind = [];
         $bindAssoc = false;
         if ($where === null) {
@@ -1396,7 +1411,7 @@ abstract class SOME extends ArrayObject
                 }
             }
 
-            if (!self::$classes[static::class]['PRI']) {
+            if (!(self::$classes[static::class]['PRI'] ?? null)) {
                 throw new Exception('Cannot initialize class "' . static::class . '": no primary key found.');
             }
 
@@ -1493,6 +1508,7 @@ abstract class SOME extends ArrayObject
      * ></code></pre> дополнительные параметры:
      * @param Pages $Pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
      *     После обработки запроса свойства $Pages устанавливаются в соответствии с полученным результатом.
+     * @return self[]
      */
     public static function getSet()
     {
@@ -2509,7 +2525,7 @@ abstract class SOME extends ArrayObject
      * @param string $prop Имя свойства
      * @return int Константы типов свойств вида self::FIELD_*
      */
-    private static function typeof($prop)
+    private static function typeof(string $prop): int
     {
         static::init();
         $clearedProp = static::clearVar($prop);
@@ -2537,7 +2553,7 @@ abstract class SOME extends ArrayObject
      * @param string $prop Наименование свойства
      * @return string
      */
-    private static function clearVar($prop)
+    private static function clearVar(string $prop): string
     {
         $result = $prop;
         if (substr($result, -4) == '_ids') {

@@ -12,7 +12,7 @@ use RAAS\CMS\Page;
  */
 class AbstractRecursiveCacheTest extends BaseDBTest
 {
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass(): void
     {
         parent::setUpBeforeClass();
     }
@@ -61,7 +61,7 @@ class AbstractRecursiveCacheTest extends BaseDBTest
 
         $this->assertEquals(17, $result['18']);
         $this->assertEquals(0, $result['1']);
-        $this->assertNull($result['0']);
+        $this->assertNull($result['0'] ?? null);
     }
 
 
@@ -78,7 +78,7 @@ class AbstractRecursiveCacheTest extends BaseDBTest
         $this->assertEquals([1, 15, 16, 17], array_keys($result['18']));
         $this->assertEquals(['1' => 1], $result['2']);
         $this->assertEquals([], $result['1']);
-        $this->assertNull($result['0']);
+        $this->assertNull($result['0'] ?? null);
     }
 
 

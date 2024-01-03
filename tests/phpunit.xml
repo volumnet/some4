@@ -12,6 +12,12 @@
     <testsuite name="AbstractStrategy">
       <file>src/AbstractStrategyTest.php</file>
     </testsuite>
+    <testsuite name="AbstractRecursiveCache">
+      <file>src/AbstractRecursiveCacheTest.php</file>
+    </testsuite>
+    <testsuite name="SOME">
+      <file>src/SOMETest.php</file>
+    </testsuite>
   </testsuites>
   <logging/>
 </phpunit>

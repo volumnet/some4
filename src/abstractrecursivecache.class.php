@@ -2,6 +2,8 @@
 /**
  * Файл абстрактного рекурсивного кэша
  */
+declare(strict_types=1);
+
 namespace SOME;
 
 /**
@@ -153,7 +155,7 @@ abstract class AbstractRecursiveCache extends Singleton
             if (is_array($val)) {
                 $result[$key] = $this->getArraySet($val);
             } else {
-                $result[$key] = new $classname($this->cache[$val]);
+                $result[$key] = new $classname($this->cache[$val] ?? null);
             }
         }
         return $result;
@@ -173,7 +175,7 @@ abstract class AbstractRecursiveCache extends Singleton
             if (is_array($val)) {
                 $result[$key] = $this->getCacheSet($val);
             } else {
-                $result[$key] = $this->cache[$val];
+                $result[$key] = $this->cache[$val] ?? null;
             }
         }
         return $result;
@@ -191,7 +193,7 @@ abstract class AbstractRecursiveCache extends Singleton
         $ids = $this->canonizeIds(is_array($data) ? $data : [$data]);
         $result = [];
         foreach ($ids as $id) {
-            $result[(string)$id] = (int)$this->parentId[(string)$id];
+            $result[(string)$id] = (int)($this->parentId[(string)$id] ?? 0);
         }
         if (!is_array($data)) {
             $result = array_shift($result);

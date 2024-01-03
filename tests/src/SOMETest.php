@@ -253,7 +253,8 @@ class SOMETest extends BaseDBTest
     {
         $page = new Page(3);
 
-        $this->assertFalse(isset($page->fields));
+        // 2024-01-03, AVS: isset для осознаваемых переменных с 2023-01-26 всегда true (иначе проблемы с обращением)
+        $this->assertTrue(isset($page->fields));
 
         $result = $page->fields;
 
@@ -266,7 +267,8 @@ class SOMETest extends BaseDBTest
 
         unset($page->fields);
 
-        $this->assertFalse(isset($page->fields));
+        // 2024-01-03, AVS: isset для осознаваемых переменных с 2023-01-26 всегда true (иначе проблемы с обращением)
+        $this->assertTrue(isset($page->fields));
     }
 
 
@@ -787,11 +789,12 @@ class SOMETest extends BaseDBTest
 
     /**
      * Тест перемещения по порядку (случай с отсутствием порядка по умолчанию)
-     * @expectedException Exception
-     * @expectedExceptionMessage You have to define property name
      */
     public function testReorderWithoutDefaultOrderBy()
     {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('You have to define property name (argument #2)');
+
         $sqlQuery = "CREATE TEMPORARY TABLE IF NOT EXISTS tmp_entity (
                          id INT UNSIGNED NOT NULL DEFAULT 0,
                          name VARCHAR(255) NOT NULL DEFAULT '',
@@ -810,11 +813,11 @@ class SOMETest extends BaseDBTest
 
     /**
      * Тест перемещения по порядку (случай с отсутствием шага)
-     * @expectedException Exception
-     * @expectedExceptionMessage You have to define step
      */
     public function testReorderWithoutStep()
     {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('You have to define step');
         $page1 = new Page(4);
         $page1->reorder();
     }
