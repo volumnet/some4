@@ -3,17 +3,11 @@
  * Файл работы с эскизами изображений
  *
  * Этот файл - часть библиотеки, предоставляющий основной функционал работы с графикой, входящей в комплект SOME Framework
- * @package SOME
- * @subpackage Graphics
- * @author Александр В. Сурнин <avs@volumnet.ru>
- * @copyright © 2011, ООО «Объемные Сети»
- * @version 4.0
- * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
 namespace SOME;
 
 /**
- * Подключим необходимую библиотеку \SOME\Graphics
+ * Подключим необходимую библиотеку Graphics
  */
 require_once (__DIR__ . '/graphics.class.php');
 
@@ -299,8 +293,8 @@ class Thumbnail
         }
         // Определим функцию для загрузки изображения
         list($this->wSrc, $this->hSrc, $this->typeSrc) = $size;
-        !($functionSrc = \SOME\Graphics::image_type_to_input_function($this->typeSrc)) ? ($functionSrc = 'imagecreatefromjpeg') : null;
-        $this->imgSrc = $functionSrc($this->_src);
+        !($functionSrc = Graphics::image_type_to_input_function($this->typeSrc)) ? ($functionSrc = 'imagecreatefromjpeg') : null;
+        $this->imgSrc =@ $functionSrc($this->_src);
     }
 
 
@@ -393,7 +387,7 @@ class Thumbnail
      * return bool false в случае ошибки
      */
     public static function make(
-        $src, $dest, $wFrame, $hFrame = -1, $mode = \SOME\Thumbnail::THUMBNAIL_INLINE, $allow_enlarge = false, $create_file = true,
+        $src, $dest, $wFrame, $hFrame = -1, $mode = Thumbnail::THUMBNAIL_INLINE, $allow_enlarge = false, $create_file = true,
         $quality = 75, $background = array(255, 255, 255, 127), $transparency_threshold = 100
     ) {
         $tn = new static($src);
@@ -512,7 +506,7 @@ class Thumbnail
      */
     private function __set_background($val)
     {
-        $temp = \SOME\Graphics::getRGBAFromColor($val);
+        $temp = Graphics::getRGBAFromColor($val);
         for ($i = 0; $i < count($temp); $i++) {
             if ($temp[$i] < 0) {
                 $temp[$i] = 0;
@@ -658,12 +652,12 @@ class Thumbnail
         $pathinfoDest = pathinfo($this->_dest ? $this->_dest : $this->_src);
         $this->extDest = $pathinfoDest['extension'];
         $this->filenameDest = $pathinfoDest['filename'];
-        $this->mimeDest = \SOME\Graphics::extension_to_mime_type($this->extDest);
-        $this->functionDest = \SOME\Graphics::extension_to_output_function($this->extDest);
-        $this->typeDest = \SOME\Graphics::extension_to_image_type($this->extDest);
+        $this->mimeDest = Graphics::extension_to_mime_type($this->extDest);
+        $this->functionDest = Graphics::extension_to_output_function($this->extDest);
+        $this->typeDest = Graphics::extension_to_image_type($this->extDest);
         if (!$this->mimeDest || !$this->functionDest) {
             $this->_dest = $pathinfoDest['dirname'] . ($pathinfoDest['dirname'] && $this->filenameDest ? '/' : '') . $this->filenameDest;
-            foreach (\SOME\Graphics::gettypes() as $key => $val) {
+            foreach (Graphics::gettypes() as $key => $val) {
                 if (strpos($this->extDest, $key) !== false) {
                     $this->typeDest = $val;
                     $this->extDest = $key;
@@ -675,7 +669,7 @@ class Thumbnail
                 $this->extDest = image_type_to_extension($this->typeSrc);
             }
             $this->mimeDest = image_type_to_mime_type($this->typeDest);
-            $this->functionDest = \SOME\Graphics::image_type_to_output_function($this->typeDest);
+            $this->functionDest = Graphics::image_type_to_output_function($this->typeDest);
             $this->_dest .= $this->extDest;
         }
     }

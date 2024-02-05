@@ -466,7 +466,6 @@ final class Text
     public static function beautify($string, $spaceSeparator = '_')
     {
         $string = Text::translit($string, false);
-        $string = iconv(mb_internal_encoding(), 'cp1251//TRANSLIT', $string);
         $string = strtolower($string);
         if ($string == '') {
             $string = preg_replace('/[^a-z0-9]/umis', '', $string);
