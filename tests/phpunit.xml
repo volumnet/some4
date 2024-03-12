@@ -9,8 +9,12 @@
     </report>
   </coverage>
   <testsuites>
-    <testsuite name="AbstractStrategy">
+    <testsuite name="nodb">
       <file>src/AbstractStrategyTest.php</file>
+      <file>src/AbstractTemplateRendererTest.php</file>
+      <file>src/TwigTemplateRendererTest.php</file>
+      <file>src/MustacheTemplateRendererTest.php</file>
+      <file>src/TextTest.php</file>
     </testsuite>
     <testsuite name="AbstractRecursiveCache">
       <file>src/AbstractRecursiveCacheTest.php</file>

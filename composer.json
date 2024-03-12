@@ -1,15 +1,19 @@
 {
     "name": "volumnet/some4",
-    "version": "4.6.14",
+    "version": "4.6.15",
     "description": "SOME Framework",
     "license": "GPL-3.0-or-later",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=7.0"
+        "php": ">=7.0",
+        "twig/twig": "*",
+        "mustache/mustache": "*",
+        "pelago/emogrifier": "*"
     },
     "require-dev": {
         "phpunit/phpunit": "*",
+        "volumnet/raas.cms": "4.*",
         "volumnet/raas.cms.shop": "4.*",
         "volumnet/raas.cms.users": "4.*"
     },

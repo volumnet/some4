@@ -47,6 +47,7 @@
  */
 namespace SOME;
 
+use Exception;
 use PDO;
 use PDOException;
 use SQLite3;

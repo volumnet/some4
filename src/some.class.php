@@ -545,8 +545,8 @@ abstract class SOME extends ArrayObject
             if (!isset($this->linked[$var])) {
                 $linkTable = static::$dbprefix . static::$links[$var]['tablename'];
                 $fieldFrom = static::$links[$var]['field_from'];
-                $fieldTo = static::$links[$var]['field_to'];
-                if (static::$links[$var]['field_to']) {
+                $fieldTo = static::$links[$var]['field_to'] ?? null;
+                if (static::$links[$var]['field_to'] ?? null) {
                     if ($classname) {
                         $orderBy = "";
                         if (isset(static::$links[$var]['orderBy'])) {
@@ -1888,7 +1888,7 @@ abstract class SOME extends ArrayObject
     final public static function _idN()
     {
         static::init();
-        return self::$classes[static::class]['PRI'];
+        return self::$classes[static::class]['PRI'] ?? null;
     }
 
 
@@ -2039,7 +2039,7 @@ abstract class SOME extends ArrayObject
     final protected static function getClassByLink($var)
     {
         $tablename = static::$links[$var]['tablename'];
-        $field = static::$links[$var]['field_to'];
+        $field = static::$links[$var]['field_to'] ?? null;
         foreach (self::$classes as $classname => $class) {
             $classDBPrefix = $classname::$dbprefix;
             $staticDBPrefix = static::$dbprefix;

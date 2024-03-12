@@ -823,13 +823,13 @@ class SOMETest extends BaseDBTest
     }
 
 
-    /**
-     * Тест инициализации
-     * @todo
-     */
-    public function testInit()
-    {
-    }
+    // /**
+    //  * Тест инициализации
+    //  * @todo
+    //  */
+    // public function testInit()
+    // {
+    // }
 
 
     /**

@@ -147,7 +147,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param array $ids <pre><code>array<int|array<int>></code></pre> ID# сущностей или массив таких наборов
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    public function getArraySet(array $ids = [])
+    public function getArraySet(array $ids = []): array
     {
         $classname = static::$classname;
         $result = [];
@@ -167,7 +167,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param array $ids <pre><code>array<int|array<int>></code></pre> ID# сущностей или массив таких наборов
      * @return array
      */
-    public function getCacheSet(array $ids = [])
+    public function getCacheSet(array $ids = []): array
     {
         $classname = static::$classname;
         $result = [];
@@ -188,7 +188,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @return int|int[]
      */
-    public function getParentId($data, $assoc = true)
+    public function getParentId($data, bool $assoc = true)
     {
         $ids = $this->canonizeIds(is_array($data) ? $data : [$data]);
         $result = [];
@@ -210,7 +210,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @return SOME|SOME[]
      */
-    public function getParent($data, $assoc = true)
+    public function getParent($data, bool $assoc = true)
     {
         $pids = (array)$this->getParentId($data, $assoc);
         $result = $this->getArraySet($pids);
@@ -225,9 +225,9 @@ abstract class AbstractRecursiveCache extends Singleton
      * Получает кэш родительской сущности
      * @param SOME|int|SOME[]|int[] $data Дочерняя сущность или ID# дочерней сущности или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
-     * @return array
+     * @return array|null
      */
-    public function getParentCache($data, $assoc = true)
+    public function getParentCache($data, bool $assoc = true)
     {
         $pids = (array)$this->getParentId($data, $assoc);
         $result = $this->getCacheSet($pids);
@@ -244,7 +244,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<int|array<int>></code></pre>
      */
-    public function getParentsIds($data, $assoc = self::ASSOC_NONE)
+    public function getParentsIds($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarIds('parentsIds', $data, $assoc);
     }
@@ -256,7 +256,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<int|array<int>></code></pre>
      */
-    public function getSelfAndParentsIds($data, $assoc = self::ASSOC_NONE)
+    public function getSelfAndParentsIds($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarIds('selfAndParentsIds', $data, $assoc);
     }
@@ -268,7 +268,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    public function getParents($data, $assoc = self::ASSOC_NONE)
+    public function getParents($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVar('parentsIds', $data, $assoc);
     }
@@ -280,7 +280,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array
      */
-    public function getParentsCache($data, $assoc = self::ASSOC_NONE)
+    public function getParentsCache($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarCache('parentsIds', $data, $assoc);
     }
@@ -292,7 +292,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    public function getSelfAndParents($data, $assoc = self::ASSOC_NONE)
+    public function getSelfAndParents($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVar('selfAndParentsIds', $data, $assoc);
     }
@@ -304,7 +304,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array
      */
-    public function getSelfAndParentsCache($data, $assoc = self::ASSOC_NONE)
+    public function getSelfAndParentsCache($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarCache('selfAndParentsIds', $data, $assoc);
     }
@@ -316,7 +316,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<int|array<int>></code></pre>
      */
-    public function getChildrenIds($data, $assoc = self::ASSOC_NONE)
+    public function getChildrenIds($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarIds('childrenIds', $data, $assoc);
     }
@@ -328,7 +328,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    public function getChildren($data, $assoc = self::ASSOC_NONE)
+    public function getChildren($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVar('childrenIds', $data, $assoc);
     }
@@ -340,7 +340,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array
      */
-    public function getChildrenCache($data, $assoc = self::ASSOC_NONE)
+    public function getChildrenCache($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarCache('childrenIds', $data, $assoc);
     }
@@ -352,7 +352,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<int|array<int>></code></pre>
      */
-    public function getAllChildrenIds($data, $assoc = self::ASSOC_NONE)
+    public function getAllChildrenIds($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarIds('allChildrenIds', $data, $assoc);
     }
@@ -364,7 +364,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    public function getAllChildren($data, $assoc = self::ASSOC_NONE)
+    public function getAllChildren($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVar('allChildrenIds', $data, $assoc);
     }
@@ -376,7 +376,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array
      */
-    public function getAllChildrenCache($data, $assoc = self::ASSOC_NONE)
+    public function getAllChildrenCache($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarCache('allChildrenIds', $data, $assoc);
     }
@@ -388,7 +388,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<int|array<int>></code></pre>
      */
-    public function getSelfAndChildrenIds($data, $assoc = self::ASSOC_NONE)
+    public function getSelfAndChildrenIds($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarIds('selfAndChildrenIds', $data, $assoc);
     }
@@ -400,7 +400,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    public function getSelfAndChildren($data, $assoc = self::ASSOC_NONE)
+    public function getSelfAndChildren($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVar('selfAndChildrenIds', $data, $assoc);
     }
@@ -412,7 +412,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array
      */
-    public function getSelfAndChildrenCache($data, $assoc = self::ASSOC_NONE)
+    public function getSelfAndChildrenCache($data, int $assoc = self::ASSOC_NONE): array
     {
         return $this->getVarCache('selfAndChildrenIds', $data, $assoc);
     }
@@ -425,7 +425,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<int|array<int>></code></pre>
      */
-    protected function getVarIds($var, $data, $assoc)
+    protected function getVarIds(string $var, $data, int $assoc): array
     {
         $ids = $this->canonizeIds(is_array($data) ? $data : [$data]);
         $result = [];
@@ -462,7 +462,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    protected function getVar($var, $data, $assoc)
+    protected function getVar(string $var, $data, int $assoc): array
     {
         $pids = $this->getVarIds($var, $data, $assoc);
         $result = $this->getArraySet($pids);
@@ -477,7 +477,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int $assoc Возвращать массив с ассоциацией по ID# (константа из static::ASSOC_...)
      * @return array <pre><code>array<SOME|array<SOME>></code></pre>
      */
-    protected function getVarCache($var, $data, $assoc)
+    protected function getVarCache(string $var, $data, int $assoc): array
     {
         $pids = $this->getVarIds($var, $data, $assoc);
         $result = $this->getCacheSet($pids);
@@ -506,9 +506,9 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int|string|SOME $data Входные данные
      * @return int
      */
-    public function canonizeId($data)
+    public function canonizeId($data): int
     {
-        return ($data instanceof SOME) ? $data->id : $data;
+        return (int)(($data instanceof SOME) ? $data->id : $data);
     }
 
 
@@ -517,7 +517,7 @@ abstract class AbstractRecursiveCache extends Singleton
      * @param int[]|string[]|SOME[] $data Входные данные
      * @return array <pre><code>array<mixed[] => int></code></pre>
      */
-    public function canonizeIds(array $data = [])
+    public function canonizeIds(array $data = []): array
     {
         $result = [];
         foreach ($data as $key => $val) {

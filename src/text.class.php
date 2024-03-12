@@ -1,24 +1,15 @@
 <?php
 /**
  * Файл работы с текстовыми данными
- *
- * Этот файл - часть библиотеки, предоставляющий основной функционал работы с текстом и текстовыми массивами,
- * входящей в комплект SOME Framework
- *
- * @package SOME
- * @subpackage Text
- * @author Александр В. Сурнин <info@volumnet.ru>
- * @copyright © 2022, «Объемные Сети»
- * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
+declare(strict_types=1);
+
 namespace SOME;
+
+use Pelago\Emogrifier\CssInliner;
 
 /**
  * Класс работы с текстом
- *
- * Данный класс предоставляет в виде статических функций основной функционал для работы с текстом и текстовыми массивами
- * @package SOME
- * @subpackage Text
  */
 final class Text
 {
@@ -64,21 +55,6 @@ final class Text
 
 
     /**
-     * Проверяет, является ли строка корректным номером ICQ
-     *
-     * Корректный номер ICQ содержит от 5 до 9 цифр, группы по 3 разряда начиная справа могут быть разделены дефисами
-     * @param string $icq Строка для проверки
-     * @return bool Возвращает true, если строка является корректным (пусть и не существующим) 5-9-значным номером ICQ UIN,
-     *              false в противном случае
-     * @deprecated 2022-10-07 Практически не использовалась
-     */
-    public static function is_icq($icq)
-    {
-        return preg_match('/^(\\d{5,9})|((\\d{1,3}-)?\\d{3}-\\d{3})|(\\d{2}-\\d{3})$/umis', $icq);
-    }
-
-
-    /**
      * Возвращает слово в правильном числе русского языка
      *
      * Возвращает словоформу единственного и множественного (2-4, более 4) числа русского языка
@@ -86,7 +62,7 @@ final class Text
      * !ВНИМАНИЕ! ДЛЯ ЯЗЫКОВ КРОМЕ РУССКОГО ФУНКЦИЯ РАБОТАЕТ НЕПРАВИЛЬНО
      *
      * @param string|int $number Число для образования словоформы
-     * @param array $wordForms Массив словоформ в виде
+     * @param string[] $wordForms Массив словоформ в виде
      *     ['множественное число больше 4', 'единственное число', 'множественное число от 2 до 4'], например:
      *     ['пользователей', 'пользователь', 'пользователя'].
      *     Поскольку индексация массива начинается с 0,
@@ -94,10 +70,11 @@ final class Text
      *     например: [0 => 'пользователей', 1 => 'пользователь', 2 => 'пользователя']
      * @return string Словоформа в корректном числе
      */
-    public static function numTxt($number, $wordForms)
+    public static function numTxt($number, array $wordForms): string
     {
-        if (strlen($number) > 3) {
-            $number = substr($number, -3);
+        $number = (string)$number;
+        if (mb_strlen($number) > 3) {
+            $number = mb_substr($number, -3);
         }
         $e = (int)$number % 10;
         $d = floor((int)$number / 10) % 10;
@@ -116,14 +93,15 @@ final class Text
      *
      * @param string|int $str Число или числовая строка для отображения (цифрами).
      *     Тип string допустим для обхода ограничения на максимальное число типа integer.
-     * Число должно быть целым, положительным, меньшим 10^33
+     *     Число должно быть целым, положительным, меньшим 10^33
      * @param int $gender при значении 0 числительное выдается в женском роде,
      *     при значении 1 - в мужском, при значении 2 - в среднем
      * @return string заданное число прописью в заданном роде,
      *     например для numerals(1231, 0) - "одна тысяча двести тридцать одна"
      */
-    public static function numerals($str, $gender = 1)
+    public static function numerals($str, int $gender = 1): string
     {
+        $str = (string)$str;
         $str = preg_replace('/\\D+/umis', '', $str);
 
         $numerals = [
@@ -152,7 +130,7 @@ final class Text
             40 => 'сорок',
             50 => 'пятьдесят',
             60 => 'шестьдесят',
-            70 => 'семдесят',
+            70 => 'семьдесят',
             80 => 'восемдесят',
             90 => 'девяносто',
             100 => 'сто',
@@ -180,7 +158,7 @@ final class Text
             'дециллион'
         ];
 
-        $str = str_pad($str, ceil(mb_strlen($str) / 3) * 3, '0', STR_PAD_LEFT);
+        $str = str_pad($str, (int)(ceil(mb_strlen($str) / 3) * 3), '0', STR_PAD_LEFT);
         $temp = [];
         for ($i = 0; $i < ceil(mb_strlen($str) / 3); $i++) {
             $x = (int)substr($str, -3 * ($i + 1), 3);
@@ -224,7 +202,7 @@ final class Text
      * @param string $string исходная строка для преобразования - кириллицей
      * @return string преобразованная строка
      */
-    public static function translit($string)
+    public static function translit(string $string): string
     {
         $result = $string;
         $translitFrom = 'АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЫЬЭабвгдеёжзийклмнопрстуфхцыьэ';
@@ -276,7 +254,7 @@ final class Text
      * @param string $string исходная строка для преобразования - кириллицей
      * @return string преобразованная строка
      */
-    public static function convertLayout($string)
+    public static function convertLayout(string $string): string
     {
         $layoutLettersEnRu = [
             'q' => 'й',
@@ -395,7 +373,7 @@ final class Text
      * @param string $overflow строка, добавляемая при превышении лимита
      * @return string результирующая строка
      */
-    public static function cuttext($string, $limit = 256, $overflow = '')
+    public static function cuttext(string $string, int $limit = 256, string $overflow = ''): string
     {
         $string = (string)$string;
         if ($limit && mb_strlen($string) > $limit) {
@@ -420,7 +398,7 @@ final class Text
      * @param mixed $node Данные для представления
      * @return string Возвращает XML-код представления
      */
-    public static function serializeXML($node)
+    public static function serializeXML($node): string
     {
         if (is_object($node)) {
             if ($node instanceof SOME) {
@@ -432,7 +410,7 @@ final class Text
         $text = '';
         if (is_array($node)) {
             foreach ($node as $key => $val) {
-                $key = preg_replace('/\\W/umis', '', $key);
+                $key = preg_replace('/\\W/umis', '', (string)$key);
                 if (is_numeric($key) || !$key) {
                     if ($val instanceof SOME) {
                         $key = str_replace('\\', '.', get_class($val));
@@ -441,14 +419,15 @@ final class Text
                         $key = 'element';
                     }
                 }
-                if (is_resource($val)) {
-                    $text .= '<' . $key . ' />';
-                } else {
+                $innerXML = Text::serializeXML($val);
+                if ($innerXML) {
                     $text .= '<' . $key . '>' . Text::serializeXML($val) . '</' . $key . '>';
+                } else {
+                    $text .= '<' . $key . ' />';
                 }
             }
         } elseif (is_string($node) || is_numeric($node)) {
-            $text .= htmlspecialchars($node);
+            $text .= htmlspecialchars((string)$node);
         }
         return $text;
     }
@@ -463,16 +442,12 @@ final class Text
      * @param string $spaceSeparator заменитель пробела
      * @return string преобразованная строка
      */
-    public static function beautify($string, $spaceSeparator = '_')
+    public static function beautify(string $string, string $spaceSeparator = '_'): string
     {
         $string = Text::translit($string, false);
         $string = strtolower($string);
-        if ($string == '') {
-            $string = preg_replace('/[^a-z0-9]/umis', '', $string);
-        } else {
-            $string = preg_replace('/ /i', $spaceSeparator, $string);
-            $string = preg_replace('/[^\\-\\w]/i', '', $string);
-        }
+        $string = preg_replace('/ /i', $spaceSeparator, $string);
+        $string = preg_replace('/[^\\-\\w]/i', '', $string);
         return $string;
     }
 
@@ -483,7 +458,7 @@ final class Text
      * @param int $nOfDigits Количество значимых цифр в телефоне
      * @return string преобразованная строка
      */
-    public static function beautifyPhone($phone, $nOfDigits = 10)
+    public static function beautifyPhone(string $phone, int $nOfDigits = 10): string
     {
         $phone = preg_replace('/[^\\d]+/i', '', $phone);
         $phone = substr($phone, -1 * $nOfDigits);
@@ -498,7 +473,7 @@ final class Text
      * @param string $mask Маска для номера
      * @return string преобразованная строка, либо пустая строка, если входная пустая
      */
-    public static function formatPhone($phone, $useParentheses = true, $mask = '70000000000')
+    public static function formatPhone(string $phone, bool $useParentheses = true, string $mask = '70000000000'): string
     {
         $phone = static::beautifyPhone($phone, 11);
         if (!$phone) {
@@ -506,7 +481,7 @@ final class Text
         }
         $mask = static::beautifyPhone($mask, 11);
         if (mb_strlen($phone) < 11) {
-            $phone = mb_substr($mask, 0, 11 - mb_strlen($mask)) . $phone;
+            $phone = mb_substr($mask, 0, 11 - mb_strlen($phone)) . $phone;
         }
         $result = '+' . mb_substr($phone, 0, 1) . ' ';
         if ($useParentheses) {
@@ -524,12 +499,48 @@ final class Text
     /**
      * Форматирует цену (отделяет тысячи, убирает нулевую дробь)
      * @param float $price Цена
+     * @param bool $forceRemainder Принудительно выводить остаток
      * @return string
      */
-    public static function formatPrice($price)
+    public static function formatPrice(float $price, bool $forceRemainder = false): string
     {
         $remainder = (float)$price - (float)(int)$price;
-        $result = number_format((float)$price, ($remainder > 0) ? 2 : 0, ',', ' ');
+        $result = number_format((float)$price, (($remainder > 0) || $forceRemainder) ? 2 : 0, ',', ' ');
+        return $result;
+    }
+
+
+    /**
+     * Обрабатывает шаблон
+     * @param string $template Строка шаблона
+     * @param array $data Данные
+     * @param string|null $engine Движок (название) рендерера
+     * @return string
+     */
+    public static function renderTemplate(string $template, array $data = [], string $engine = 'twig'): string
+    {
+        $renderer = AbstractTemplateRenderer::spawn($engine);
+        $result = $renderer->render($template, $data);
+        return $result;
+    }
+
+
+    /**
+     * Встраивает CSS в HTML
+     * @param string $string Исходный текст
+     * @return string
+     */
+    public static function inlineCSS(string $string): string
+    {
+        $result = $string;
+        if (class_exists('Pelago\Emogrifier\CssInliner')) { // Если не поддерживается. @todo Возможно можно убрать
+            $inlineCSS = CssInliner::fromHtml($result)->inlineCss();
+            if (stristr($result, '<body>')) {
+                $result = $inlineCSS->render();
+            } else {
+                $result = $inlineCSS->renderBodyContent();
+            }
+        }
         return $result;
     }
 }
