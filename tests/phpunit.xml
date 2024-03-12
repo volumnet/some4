@@ -14,6 +14,8 @@
       <file>src/AbstractTemplateRendererTest.php</file>
       <file>src/TwigTemplateRendererTest.php</file>
       <file>src/MustacheTemplateRendererTest.php</file>
+    </testsuite>
+    <testsuite name="Text">
       <file>src/TextTest.php</file>
     </testsuite>
     <testsuite name="AbstractRecursiveCache">

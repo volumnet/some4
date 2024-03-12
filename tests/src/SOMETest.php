@@ -18,6 +18,8 @@ use RAAS\CMS\User;
  */
 class SOMETest extends BaseDBTest
 {
+    public static $tables = ['cms_pages', 'cms_redirects'];
+
     /**
      * Тест создания объекта по ID#
      */

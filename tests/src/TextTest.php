@@ -6,7 +6,7 @@ namespace SOME;
 
 use RAAS\CMS\Page;
 
-class TextTest extends BaseTest
+class TextTest extends BaseDBTest
 {
     /**
      * Провайдер данных для метода testNumTxt
@@ -180,6 +180,7 @@ class TextTest extends BaseTest
      */
     public function serializeXMLDataProvider()
     {
+        static::installTables();
         return [
             [
                 ['aaa' => ['bbb' => 'ccc', 'ddd' => (object)['eee' => 'fff']]],

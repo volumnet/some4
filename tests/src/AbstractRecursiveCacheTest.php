@@ -5,12 +5,15 @@
 namespace SOME;
 
 use SOME\Pages;
+use RAAS\CMS\Page;
 
 /**
  * Класс теста абстрактного рекурсивного кэша
  */
-class AbstractRecursiveCacheTest extends BaseTmpDBTest
+class AbstractRecursiveCacheTest extends BaseDBTest
 {
+    public static $tables = ['cms_pages'];
+
     /**
      * Проверяет, является ли переменная индексированным массивом
      * (допускается пустая строка в качестве ключа)
@@ -161,7 +164,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
     {
         $cache = ConcreteRecursiveCache::i();
 
-        $result = $cache->canonizeId(new ConcreteEntity(18));
+        $result = $cache->canonizeId(new Page(18));
 
         $this->assertEquals(18, $result);
     }
@@ -176,8 +179,8 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
 
         $result = $cache->canonizeIds([
             'aaa' => 18,
-            'bbb' => new ConcreteEntity(15),
-            'ccc' => new ConcreteEntity(20),
+            'bbb' => new Page(15),
+            'ccc' => new Page(20),
         ]);
 
         $this->assertEquals(['aaa' => 18, 'bbb' => 15, 'ccc' => 20], $result);
@@ -190,7 +193,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
     public function testRefresh()
     {
         $cache = ConcreteRecursiveCache::i();
-        $entity = new ConcreteEntity(15);
+        $entity = new Page(15);
 
         $entity->urn = 'production';
         $entity->commit();
@@ -246,29 +249,29 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
      */
     public function getParentIdDataProvider()
     {
-        static::checkSetUp();
+        static::installTables();
         return [
             [18, true, 17],
             [18, false, 17],
-            [new ConcreteEntity(18), true, 17],
-            [new ConcreteEntity(18), false, 17],
+            [new Page(18), true, 17],
+            [new Page(18), false, 17],
             [1, true, 0],
             [1, false, 0],
-            [new ConcreteEntity(1), true, 0],
-            [new ConcreteEntity(1), false, 0],
+            [new Page(1), true, 0],
+            [new Page(1), false, 0],
             [0, true, null],
             [0, false, null],
-            [new ConcreteEntity(), true, null],
-            [new ConcreteEntity(), false, null],
+            [new Page(), true, null],
+            [new Page(), false, null],
             [[4, 26, 24, 23], true, ['4' => 3, '26' => 14, '24' => 15, '23' => 15]],
             [[4, 26, 24, 23], false, [3, 14, 15]],
             [
-                [new ConcreteEntity(4), new ConcreteEntity(26), new ConcreteEntity(24), new ConcreteEntity(23)],
+                [new Page(4), new Page(26), new Page(24), new Page(23)],
                 true,
                 ['4' => 3, '26' => 14, '24' => 15, '23' => 15]
             ],
             [
-                [new ConcreteEntity(4), new ConcreteEntity(26), new ConcreteEntity(24), new ConcreteEntity(23)],
+                [new Page(4), new Page(26), new Page(24), new Page(23)],
                 false,
                 [3, 14, 15]
             ],
@@ -350,7 +353,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
      */
     public function getParentsIdsDataProvider()
     {
-        static::checkSetUp();
+        static::installTables();
         return [
             [
                 18,
@@ -433,82 +436,82 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 []
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['1' => 1, '15' => 15, '16' => 16, '17' => 17]
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['1' => 1, '15' => 15, '16' => 16, '17' => 17]
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [1, 15, 16, 17]
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [1, 15, 16, 17]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['1' => 1]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['1' => 1]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [1]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [1]
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 []
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_INNER,
                 []
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 []
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_NONE,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_INNER,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_NONE,
                 []
             ],
@@ -547,7 +550,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '18' => ['1' => 1, '15' => 15, '16' => 16, '17' => 17],
@@ -557,14 +560,14 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_INNER,
                 [
                     '1' => 1, '15' => 15, '16' => 16, '17' => 17
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     '18' => [1, 15, 16, 17],
@@ -574,7 +577,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_NONE,
                 [
                     1, 15, 16, 17
@@ -675,7 +678,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
      */
     public function getSelfAndParentsIdsDataProvider()
     {
-        static::checkSetUp();
+        static::installTables();
         return [
             [
                 18,
@@ -758,82 +761,82 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 []
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18]
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18]
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [1, 15, 16, 17, 18]
             ],
             [
-                new ConcreteEntity(18),
+                new Page(18),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [1, 15, 16, 17, 18]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['1' => 1, '2' => 2]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['1' => 1, '2' => 2]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [1, 2]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [1, 2]
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['1' => 1]
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['1' => 1]
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [1]
             ],
             [
-                new ConcreteEntity(1),
+                new Page(1),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [1]
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_INNER,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_NONE,
                 []
             ],
@@ -872,7 +875,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '18' => ['1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18],
@@ -882,14 +885,14 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_INNER,
                 [
                     '1' => 1, '15' => 15, '16' => 16, '17' => 17, '18' => 18, '2' => 2
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     '18' => [1, 15, 16, 17, 18],
@@ -899,7 +902,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(18), new ConcreteEntity(2), new ConcreteEntity(1), new ConcreteEntity()],
+                [new Page(18), new Page(2), new Page(1), new Page()],
                 AbstractRecursiveCache::ASSOC_NONE,
                 [
                     1, 15, 16, 17, 18, 2
@@ -1000,7 +1003,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
      */
     public function getChildrenIdsDataProvider()
     {
-        static::checkSetUp();
+        static::installTables();
         return [
             [
                 17,
@@ -1091,67 +1094,67 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 [18, 19, 20, 1]
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['18' => 18, '19' => 19, '20' => 20]
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['18' => 18, '19' => 19, '20' => 20]
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [18, 19, 20]
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [18, 19, 20]
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 []
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_INNER,
                 []
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 []
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_NONE,
                 []
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['1' => 1]
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['1' => 1]
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [1]
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [1]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '17' => ['18' => 18, '19' => 19, '20' => 20],
@@ -1160,12 +1163,12 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['18' => 18, '19' => 19, '20' => 20, '1' => 1]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     '17' => [18, 19, 20],
@@ -1174,7 +1177,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_NONE,
                 [18, 19, 20, 1]
             ],
@@ -1271,7 +1274,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
      */
     public function getAllChildrenIdsDataProvider()
     {
-        static::checkSetUp();
+        static::installTables();
         return [
             [
                 17,
@@ -1394,67 +1397,67 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [18, 19, 20],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [18, 19, 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [17, 21, 22, 18, 19, 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [17, 21, 22, 18, 19, 20],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_INNER,
                 [],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '1' => 1,
@@ -1473,7 +1476,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_INNER,
                 [
                     '1' => 1,
@@ -1492,7 +1495,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     1,
@@ -1503,7 +1506,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [
                     1,
@@ -1596,7 +1599,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '17' => ['18' => 18, '19' => 19, '20' => 20],
@@ -1620,7 +1623,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_INNER,
                 [
                     '18' => 18, '19' => 19, '20' => 20,
@@ -1637,7 +1640,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     '17' => [18, 19, 20],
@@ -1661,7 +1664,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_NONE,
                 [
                     18, 19, 20,
@@ -1770,7 +1773,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
      */
     public function getSelfAndChildrenIdsDataProvider()
     {
-        static::checkSetUp();
+        static::installTables();
         return [
             [
                 17,
@@ -1893,67 +1896,67 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [17, 18, 19, 20],
             ],
             [
-                new ConcreteEntity(17),
+                new Page(17),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [17, 18, 19, 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['16' => 16, '17' => 17, '21' => 21, '22' => 22, '18' => 18, '19' => 19, '20' => 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [16, 17, 21, 22, 18, 19, 20],
             ],
             [
-                new ConcreteEntity(16),
+                new Page(16),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [16, 17, 21, 22, 18, 19, 20],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 ['2' => 2],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_INNER,
                 ['2' => 2],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [2],
             ],
             [
-                new ConcreteEntity(2),
+                new Page(2),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [2],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '1' => 1,
@@ -1972,7 +1975,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_INNER,
                 [
                     '1' => 1,
@@ -1991,7 +1994,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     1,
@@ -2002,7 +2005,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ],
             ],
             [
-                new ConcreteEntity(),
+                new Page(),
                 AbstractRecursiveCache::ASSOC_NONE,
                 [
                     1,
@@ -2089,7 +2092,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_BOTH,
                 [
                     '17' => ['17' => 17, '18' => 18, '19' => 19, '20' => 20],
@@ -2113,7 +2116,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_INNER,
                 [
                     '17' => 17,
@@ -2131,7 +2134,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_OUTER,
                 [
                     '17' => [17, 18, 19, 20],
@@ -2155,7 +2158,7 @@ class AbstractRecursiveCacheTest extends BaseTmpDBTest
                 ]
             ],
             [
-                [new ConcreteEntity(17), new ConcreteEntity(16), new ConcreteEntity(2), new ConcreteEntity()],
+                [new Page(17), new Page(16), new Page(2), new Page()],
                 AbstractRecursiveCache::ASSOC_NONE,
                 [
                     17, 18, 19, 20,
