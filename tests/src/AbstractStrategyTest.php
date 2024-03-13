@@ -6,6 +6,10 @@ namespace SOME;
 
 use Exception;
 
+/**
+ * Тест для класса AbstractStrategy
+ * @covers \SOME\AbstractStrategy
+ */
 class AbstractStrategyTest extends BaseTest
 {
     /**

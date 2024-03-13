@@ -4,7 +4,11 @@
  */
 namespace SOME;
 
-class MustacheRendererTest extends BaseTest
+/**
+ * Тест для класса MustacheTemplateRenderer
+ * @covers \SOME\MustacheTemplateRenderer
+ */
+class MustacheTemplateRendererTest extends BaseTest
 {
     /**
      * Провайдер данных для метода render

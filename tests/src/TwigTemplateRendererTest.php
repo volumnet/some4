@@ -4,7 +4,11 @@
  */
 namespace SOME;
 
-class MustacheTemplateRendererTest extends BaseTest
+/**
+ * Тест для класса TwigTemplateRenderer
+ * @covers \SOME\TwigTemplateRenderer
+ */
+class TwigTemplateRendererTest extends BaseTest
 {
     /**
      * Провайдер данных для метода render

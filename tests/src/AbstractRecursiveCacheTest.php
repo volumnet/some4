@@ -9,10 +9,18 @@ use RAAS\CMS\Page;
 
 /**
  * Класс теста абстрактного рекурсивного кэша
+ * @covers \SOME\AbstractRecursiveCache
  */
 class AbstractRecursiveCacheTest extends BaseTest
 {
-    public static $tables = ['cms_pages'];
+    public static $tables = [
+        'cms_fields',
+        'cms_material_types_affected_pages_for_materials_cache',
+        'cms_materials',
+        'cms_materials_affected_pages_cache',
+        'cms_materials_pages_assoc',
+        'cms_pages',
+    ];
 
     /**
      * Проверяет, является ли переменная индексированным массивом

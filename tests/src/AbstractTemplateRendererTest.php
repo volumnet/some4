@@ -4,6 +4,10 @@
  */
 namespace SOME;
 
+/**
+ * Тест для класса AbstractTemplateRenderer
+ * @covers \SOME\AbstractTemplateRenderer
+ */
 class AbstractTemplateRendererTest extends BaseTest
 {
     /**

@@ -6,19 +6,23 @@ namespace SOME;
 
 use RAAS\CMS\Page;
 
+/**
+ * Тест для класса Text
+ * @covers \SOME\Text
+ */
 class TextTest extends BaseTest
 {
     public static $tables = [
-        'cms_pages',
-        'users',
-        'cms_templates',
-        'attachments',
-        'cms_access',
-        'cms_materials',
-        'cms_material_types',
-        'cms_blocks',
-        'cms_users',
-        'cms_groups'
+        // 'cms_pages',
+        // 'users',
+        // 'cms_templates',
+        // 'attachments',
+        // 'cms_access',
+        // 'cms_materials',
+        // 'cms_material_types',
+        // 'cms_blocks',
+        // 'cms_users',
+        // 'cms_groups'
     ];
     /**
      * Провайдер данных для метода testNumTxt

@@ -6,6 +6,8 @@ namespace SOME;
 
 use PHPUnit\Framework\TestCase;
 use RAAS\Application;
+use RAAS\CustomField;
+use RAAS\CMS\Material_Type;
 
 /**
  * Класс базового теста
@@ -47,6 +49,7 @@ class BaseTest extends TestCase
     public static function setUpBeforeClass(): void
     {
         static::installTables();
+        static::watchQueries(static::class);
     }
 
     public static function tearDownAfterClass(): void
@@ -63,11 +66,11 @@ class BaseTest extends TestCase
             echo $logMessage;
         }
         if ($unnecessaryTables) {
-            $logMessage = "\n" . 'Для класса ' . static::class . " следующие таблицы лишние: \n"
+            $logMessage = "\n" . 'Для класса ' . static::class . " следующие таблицы не используются: "
                 . str_replace('"', "'", json_encode($unnecessaryTables)) . "\n";
-            $logMessage = mb_strtoupper($logMessage);
             echo $logMessage;
         }
+        static::watchQueries(null); // Чтобы не писалось в предыдущий класс
     }
 
 
@@ -77,6 +80,7 @@ class BaseTest extends TestCase
     public static function installTables()
     {
         if (!(static::$tablesInstalled[static::class] ?? false)) {
+            static::watchQueries(null); // Чтобы не писалось в предыдущий класс
             if (static::$availableTables) {
                 $tableFiles = array_values(static::$availableTables);
             } else {
@@ -102,6 +106,10 @@ class BaseTest extends TestCase
                     }
                 }
             }
+            if (in_array('cms_fields', static::$tables)) {
+                CustomField::clearCache();
+                Material_Type::clearSelfFieldsCache();
+            }
             if ($filesToUpdate) {
                 foreach ($filesToUpdate as $table) {
                     $newSQL = file_get_contents(__DIR__ . '/../resources/tables/' . $table . '.sql');
@@ -111,12 +119,38 @@ class BaseTest extends TestCase
                     . str_replace('"', "'", json_encode($filesToUpdate)) . "\n";
             }
             static::$tablesInstalled[static::class] = true;
-            Application::i()->SQL->query_handler = function ($query) {
-                $tables = static::getTablesFromQuery($query);
-                if (!(static::$affectedTables[static::class] ?? null)) {
-                    static::$affectedTables[static::class] = [];
+            static::watchQueries(static::class);
+        }
+    }
+
+
+    /**
+     * Отслеживает запросы по классу
+     * @param string|null $classname Название класса, либо null для выключения
+     */
+    public static function watchQueries(string $classname = null)
+    {
+        if ($classname) {
+            Application::i()->SQL->query_handler = function ($query) use ($classname) {
+                $debugBacktrace = array_values(array_filter(array_map(function ($x) {
+                    return $x['class'] ?? null;
+                }, debug_backtrace())));
+                if (!in_array($classname, $debugBacktrace)) {
+                    return;
                 }
-                static::$affectedTables[static::class] = array_merge(static::$affectedTables[static::class], $tables);
+
+                $tables = static::getTablesFromQuery($query);
+                // if (($classname == 'RAAS\\CMS\\Shop\\Sync1CInterfaceTest') && in_array('cms_users', $tables)) {
+                //     var_dump(debug_backtrace()); exit;
+                // }
+                if (!(static::$affectedTables[$classname] ?? null)) {
+                    static::$affectedTables[$classname] = [];
+                }
+                static::$affectedTables[$classname] = array_merge(static::$affectedTables[$classname], $tables);
+            };
+        } else {
+            Application::i()->SQL->query_handler = function ($query) {
+                // Ничего не делаем
             };
         }
     }
@@ -129,6 +163,9 @@ class BaseTest extends TestCase
      */
     protected static function getTablesFromQuery(string $query): array
     {
+        if (stristr($query, "SHOW FIELDS FROM")) { // Чтобы не задействовало классы при инициализации SOME
+            return [];
+        }
         $rx = "/(FROM|JOIN|UPDATE|((INSERT|REPLACE) INTO)) ([`\\w\\-]+)/umis";
         preg_match_all($rx, $query, $regs);
         $result = [];

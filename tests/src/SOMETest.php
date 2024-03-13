@@ -15,6 +15,7 @@ use RAAS\CMS\User;
 
 /**
  * Класс теста сущности SOME
+ * @covers \SOME\SOME
  */
 class SOMETest extends BaseTest
 {
