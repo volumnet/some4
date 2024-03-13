@@ -132,4 +132,9 @@ class BaseTest extends TestCase
         }
         return $result;
     }
+
+    public function getResourcesDir()
+    {
+        return 'resources';
+    }
 }
