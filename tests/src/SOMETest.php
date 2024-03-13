@@ -46,7 +46,6 @@ class SOMETest extends BaseTest
         'cms_users',
         'cms_users_groups_assoc',
         'registry',
-        'users',
     ];
 
     /**
