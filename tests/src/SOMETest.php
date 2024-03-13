@@ -16,9 +16,38 @@ use RAAS\CMS\User;
 /**
  * Класс теста сущности SOME
  */
-class SOMETest extends BaseDBTest
+class SOMETest extends BaseTest
 {
-    public static $tables = ['cms_pages', 'cms_redirects'];
+    public static $tables = [
+        'attachments',
+        'cms_access',
+        'cms_access_blocks_cache',
+        'cms_access_materials_cache',
+        'cms_access_pages_cache',
+        'cms_blocks',
+        'cms_blocks_html',
+        'cms_blocks_material',
+        'cms_blocks_material_filter',
+        'cms_blocks_material_sort',
+        'cms_blocks_pages_assoc',
+        'cms_data',
+        'cms_fields',
+        'cms_groups',
+        'cms_material_types',
+        'cms_material_types_affected_pages_for_materials_cache',
+        'cms_material_types_affected_pages_for_self_cache',
+        'cms_materials',
+        'cms_materials_affected_pages_cache',
+        'cms_materials_pages_assoc',
+        'cms_pages',
+        'cms_redirects',
+        'cms_snippet_folders',
+        'cms_snippets',
+        'cms_users',
+        'cms_users_groups_assoc',
+        'registry',
+        'users',
+    ];
 
     /**
      * Тест создания объекта по ID#

@@ -10,7 +10,7 @@ use RAAS\CMS\Page;
 /**
  * Класс теста абстрактного рекурсивного кэша
  */
-class AbstractRecursiveCacheTest extends BaseDBTest
+class AbstractRecursiveCacheTest extends BaseTest
 {
     public static $tables = ['cms_pages'];
 

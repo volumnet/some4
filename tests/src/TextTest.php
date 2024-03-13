@@ -6,8 +6,20 @@ namespace SOME;
 
 use RAAS\CMS\Page;
 
-class TextTest extends BaseDBTest
+class TextTest extends BaseTest
 {
+    public static $tables = [
+        'cms_pages',
+        'users',
+        'cms_templates',
+        'attachments',
+        'cms_access',
+        'cms_materials',
+        'cms_material_types',
+        'cms_blocks',
+        'cms_users',
+        'cms_groups'
+    ];
     /**
      * Провайдер данных для метода testNumTxt
      * @return array <pre><code>array<[
