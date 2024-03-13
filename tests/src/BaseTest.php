@@ -57,12 +57,16 @@ class BaseTest extends TestCase
         $unnecessaryTables = array_diff(static::$tables, $affectedTables);
         $unnecessaryTables = array_values($unnecessaryTables);
         if ($missingTables) {
-            echo "\n" . 'Для класса ' . static::class . " не хватает таблиц: \n"
+            $logMessage = "\n" . 'Для класса ' . static::class . " не хватает таблиц: \n"
                 . str_replace('"', "'", json_encode($missingTables)) . "\n";
+            $logMessage = mb_strtoupper($logMessage);
+            echo $logMessage;
         }
         if ($unnecessaryTables) {
-            echo "\n" . 'Для класса ' . static::class . " следующие таблицы лишние: \n"
+            $logMessage = "\n" . 'Для класса ' . static::class . " следующие таблицы лишние: \n"
                 . str_replace('"', "'", json_encode($unnecessaryTables)) . "\n";
+            $logMessage = mb_strtoupper($logMessage);
+            echo $logMessage;
         }
     }
 
@@ -90,6 +94,14 @@ class BaseTest extends TestCase
             $filesToUpdate = array_merge($filesToUpdate, static::$tables);
             $filesToUpdate = array_unique($filesToUpdate);
             $filesToUpdate = array_values($filesToUpdate);
+            if (in_array('attachments', static::$tables)) {
+                $glob = glob(Application::i()->baseDir . '/files/cms/common/*.*');
+                foreach ($glob as $file) {
+                    if (is_file($file) && (basename($file) != '.htaccess')) {
+                        unlink($file);
+                    }
+                }
+            }
             if ($filesToUpdate) {
                 foreach ($filesToUpdate as $table) {
                     $newSQL = file_get_contents(__DIR__ . '/../resources/tables/' . $table . '.sql');
