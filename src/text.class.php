@@ -520,7 +520,10 @@ final class Text
     public static function renderTemplate(string $template, array $data = [], string $engine = 'twig'): string
     {
         $renderer = AbstractTemplateRenderer::spawn($engine);
-        $result = $renderer->render($template, $data);
+        // Закомментировал ошибку для совместимости и с PHP 7 и с PHP8
+        // Deprecated: Return type of Twig\Node\Node::count() should either be compatible with Countable::count(): int, or the #[\ReturnTypeWillChange] attribute should be used to temporarily suppress the notice in D:\web\home\marketflower\www\vendor\twig\twig\src\Node\Node.php on line 213
+        $result = @$renderer->render($template, $data);
+        $result = (string)$result;
         return $result;
     }
 
