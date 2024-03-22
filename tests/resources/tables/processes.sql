@@ -39,6 +39,7 @@ CREATE TABLE `processes` (
 
 LOCK TABLES `processes` WRITE;
 /*!40000 ALTER TABLE `processes` DISABLE KEYS */;
+INSERT INTO `processes` VALUES (3788,'2024-03-19 23:11:08','http://test/admin/?p=cms&sub=dev&action=copy_snippet&id=49','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1');
 /*!40000 ALTER TABLE `processes` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -51,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-12 18:17:34
+-- Dump completed on 2024-03-19 23:12:24

@@ -132,7 +132,7 @@ class EventProcessor extends Singleton
             if ($db['args']) {
                 $data['args'] = $db['args'];
             }
-            if (!$object && $db['object']) {
+            if (!$object && ($db['object'] ?? null)) {
                 $object = $db['object'];
             }
         }

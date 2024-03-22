@@ -9,20 +9,26 @@
     </report>
   </coverage>
   <testsuites>
-    <testsuite name="nodb">
+    <testsuite name="AbstractStrategy">
       <file>src/AbstractStrategyTest.php</file>
-      <file>src/AbstractTemplateRendererTest.php</file>
-      <file>src/TwigTemplateRendererTest.php</file>
-      <file>src/MustacheTemplateRendererTest.php</file>
-    </testsuite>
-    <testsuite name="Text">
-      <file>src/TextTest.php</file>
     </testsuite>
     <testsuite name="AbstractRecursiveCache">
       <file>src/AbstractRecursiveCacheTest.php</file>
     </testsuite>
+    <testsuite name="AbstractTemplateRenderer">
+      <file>src/AbstractTemplateRendererTest.php</file>
+    </testsuite>
+    <testsuite name="MustacheTemplateRenderer">
+      <file>src/MustacheTemplateRendererTest.php</file>
+    </testsuite>
     <testsuite name="SOME">
       <file>src/SOMETest.php</file>
+    </testsuite>
+    <testsuite name="Text">
+      <file>src/TextTest.php</file>
+    </testsuite>
+    <testsuite name="TwigTemplateRenderer">
+      <file>src/TwigTemplateRendererTest.php</file>
     </testsuite>
   </testsuites>
   <logging/>

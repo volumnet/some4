@@ -1752,8 +1752,8 @@ abstract class SOME extends ArrayObject
             }
             $temp = static::$SQL->get($sql);
             if ($Pages) {
-                $sqlQuery = "SELECT FOUND_ROWS()";
-                $total = static::$SQL->getvalue($sqlQuery);
+                $foudRowsSQLQuery = "SELECT FOUND_ROWS()";
+                $total = static::$SQL->getvalue($foudRowsSQLQuery);
             }
 
             // Формирование массива сущностей

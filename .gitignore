@@ -4,3 +4,5 @@ components
 composer.lock
 config.php
 /tests/.phpunit.result.cache
+dump.bat
+.phpintel

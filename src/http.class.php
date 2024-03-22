@@ -91,12 +91,8 @@ final class HTTP
      *     1 - если текущий адрес является подразделом искомого;
      *     0 - если адреса разные
      */
-    public static function isActiveURL(
-        $href,
-        $current,
-        $strictURL = false,
-        $strictGET = false
-    ) {
+    public static function isActiveURL($href, $current, $strictURL = false, $strictGET = false)
+    {
         $url1 = parse_url($href);
         $url2 = parse_url($current);
         $r1 = explode('/', trim($url1['path'], '/'));
