@@ -12,6 +12,7 @@ use RAAS\CMS\PageWithAlias;
 use RAAS\CMS\Redirect;
 use RAAS\CMS\Snippet;
 use RAAS\CMS\User;
+use RAAS\CMS\Shop\Cart_Type;
 
 /**
  * Класс теста сущности SOME
@@ -42,10 +43,13 @@ class SOMETest extends BaseTest
         'cms_materials_pages_assoc',
         'cms_pages',
         'cms_redirects',
+        'cms_shop_cart_types',
+        'cms_shop_cart_types_material_types_assoc',
         'cms_snippet_folders',
         'cms_snippets',
         'cms_users',
         'cms_users_groups_assoc',
+        'cms_users_social',
         'registry',
     ];
 
@@ -278,6 +282,101 @@ class SOMETest extends BaseTest
 
 
     /**
+     * Тест получения, удаления и проверки связок - получение ID#
+     */
+    public function testGetLinksIds()
+    {
+        $page = new Page(24);
+
+        $result = $page->materials_ids;
+
+        $this->assertIsArray($result);
+        $this->assertCount(16, $result);
+        $this->assertContains(10, $result);
+        $this->assertContains(15, $result);
+        $this->assertContains(19, $result);
+        $this->assertContains(20, $result);
+        $this->assertContains(25, $result);
+    }
+
+
+    /**
+     * Тест получения, удаления и проверки связок - случай с отсутствием явного сопряженного класса
+     */
+    public function testGetLinksWithNoExplicitClass()
+    {
+        $cart = new Cart_Type(1);
+
+        $result = $cart->material_types_ids;
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertContains(4, $result);
+    }
+
+
+    /**
+     * Тест получения, удаления и проверки связок - случай с явно заданным порядком
+     */
+    public function testGetLinksWithOrder()
+    {
+        $page = new PageWithAlias(24);
+
+        $result = $page->materials_ids;
+
+        $this->assertIsArray($result);
+        $this->assertCount(16, $result);
+        $this->assertEquals(10, $result[0]);
+        $this->assertEquals(25, $result[15]);
+    }
+
+
+    /**
+     * Тест получения, удаления и проверки связок - случай отсутствием класса
+     */
+    public function testGetLinksWithoutClass()
+    {
+        $user = new User(1);
+
+        $result = $user->social;
+
+        $this->assertEquals(['https://facebook.com/test', 'https://vk.com/test'], $result);
+    }
+
+
+    /**
+     * Тест получения, удаления и проверки связок - случай отсутствием класса и наличием порядка
+     */
+    public function testGetLinksWithoutClassWithOrder()
+    {
+        $page = new PageWithAlias(24);
+
+        $result = $page->materialsIds;
+
+        $this->assertIsArray($result);
+        $this->assertCount(16, $result);
+        $this->assertEquals(25, $result[0]);
+        $this->assertEquals(10, $result[15]);
+    }
+
+
+    /**
+     * Тест получения, удаления и проверки связок - случай с отсутствием field_to
+     */
+    public function testGetLinksWithoutFieldTo()
+    {
+        $page = new PageWithAlias(24);
+
+        $result = $page->materialsData;
+
+        $this->assertIsArray($result);
+        $this->assertCount(16, $result);
+        $this->assertEquals(['id' => 25, 'pid' => 24], $result[0]);
+        $this->assertEquals(['id' => 10, 'pid' => 24], $result[15]);
+    }
+
+
+    /**
      * Тест получения, удаления и проверки осознаваемых переменных
      */
     public function testGetUnsetIssetCognizable()
@@ -329,6 +428,23 @@ class SOMETest extends BaseTest
 
 
     /**
+     * Тест получения ID# всех дочерних элементов
+     */
+    public function testGetIssetAllChildrenIds()
+    {
+        $page = new Page(15);
+
+        $this->assertFalse(isset($page->all_children_ids));
+
+        $result = $page->all_children_ids;
+
+        $this->assertTrue(isset($page->all_children_ids));
+        $this->assertIsArray($result);
+        $this->assertEquals([16, 23, 24, 17, 21, 22, 18, 19, 20], $result);
+    }
+
+
+    /**
      * Тест получения, удаления и проверки родительских сущностей
      */
     public function testGetUnsetIssetParents()
@@ -351,6 +467,23 @@ class SOMETest extends BaseTest
         unset($page->parents);
 
         $this->assertFalse(isset($page->parents));
+    }
+
+
+    /**
+     * Тест получения ID# всех родительских элементов
+     */
+    public function testGetIssetParentsIds()
+    {
+        $page = new Page(21);
+
+        $this->assertFalse(isset($page->parents_ids));
+
+        $result = $page->parents_ids;
+
+        $this->assertTrue(isset($page->parents_ids));
+        $this->assertIsArray($result);
+        $this->assertEquals([1, 15, 16], $result);
     }
 
 
@@ -395,6 +528,32 @@ class SOMETest extends BaseTest
 
         $this->assertEquals('Услуги', $page->name);
         $this->assertEquals('Услуги', $page->title);
+    }
+
+
+    /**
+     * Тест получения всех свойств
+     */
+    public function testGetProperties()
+    {
+        $page = new Page(21);
+
+        $result = $page->properties;
+
+        $this->assertEquals('Категория 12', $result['name']);
+    }
+
+
+    /**
+     * Тест получения неизвестного свойства
+     */
+    public function testGetUnknown()
+    {
+        $page = new Page(21);
+
+        $result = $page->aaa;
+
+        $this->assertNull($result);
     }
 
 
@@ -585,6 +744,51 @@ class SOMETest extends BaseTest
 
 
     /**
+     * Тест коммита с задействованными кэшами
+     */
+    public function testCommitWithAffectedCache()
+    {
+        $page = new Page(4);
+
+        $page->pid = 1;
+        $page->commit();
+
+        $this->assertEquals('/service1/', $page->url);
+
+        $page->pid = 3;
+        $page->commit();
+
+        $this->assertEquals('/services/service1/', $page->url);
+    }
+
+
+    /**
+     * Тест коммита с задействованными кэшами
+     */
+    public function testCommitWithDefaultCache()
+    {
+        $parent = new Page(3);
+        $parent->vis = 0;
+        $parent->commit();
+        $page = new Page(4);
+
+        $this->assertEquals(0, $page->pvis);
+
+        $page->pid = 0;
+        $page->commit();
+
+        $this->assertEquals(1, $page->pvis);
+
+        $parent->vis = 1;
+        $parent->commit();
+        $page->pid = 3;
+        $page->commit();
+
+        $this->assertEquals(1, $page->pvis);
+    }
+
+
+    /**
      * Тест отката
      */
     public function testRollback()
@@ -722,14 +926,13 @@ class SOMETest extends BaseTest
 
 
     /**
-     * Проверка получения родительских элементов
-     * случай с некорректной ссылкой для рекурсивного доступа
+     * Проверка получения родительских элементов - случай с несуществующей ссылкой
      */
-    public function testParentsWithInvalidRef()
+    public function testParentsWithNoRef()
     {
-        $page = new Page(18);
+        $page = new PageWithAlias(18);
 
-        $result = $page->parents('author');
+        $result = $page->parents('aaa');
 
         $this->assertFalse($result);
     }
@@ -854,13 +1057,137 @@ class SOMETest extends BaseTest
     }
 
 
-    // /**
-    //  * Тест инициализации
-    //  * @todo
-    //  */
-    // public function testInit()
-    // {
-    // }
+    /**
+     * Тест инициализации
+     */
+    public function testInit()
+    {
+        $oldDb = SOME::_SQL();
+        $db = clone $oldDb;
+        $this->assertNotSame($db, $oldDb);
+
+        SOME::init($db, 'aaa');
+
+        $this->assertSame($db, SOME::_SQL());
+        $this->assertEquals('aaa', SOME::_dbprefix());
+
+        SOME::init($oldDb, '');
+    }
+
+
+    public function testInitWithOverloadedParams()
+    {
+        $class = new class extends Page {
+            protected static $references = [];
+
+            protected static $children = [];
+
+            protected static $parents = [];
+
+            protected static $links = [];
+
+            protected static $caches = [];
+
+            protected static $cognizableVars = [];
+
+            protected static $dbprefix = 'aaa';
+
+            protected static $defaultOrderBy = "";
+
+            protected static $aiPriority = false;
+
+            protected static $objectCascadeUpdate = false;
+
+            protected static $objectCascadeDelete = false;
+
+            public static function _references(string $key = null): array
+            {
+                return [
+                    'parent' => [
+                        'FK' => 'pid',
+                        'classname' => Page::class,
+                        'cascade' => true
+                    ],
+                ];
+            }
+
+            public static function _children(string $key = null): array
+            {
+                return [
+                    'children' => [
+                        'classname' => Page::class,
+                        'FK' => 'pid'
+                    ],
+                ];
+            }
+
+            public static function _parents(string $key = null)
+            {
+                return [
+                    'myParents' => 'parent'
+                ];
+            }
+
+            public static function _links(string $key = null): array
+            {
+                return [
+                    'materials' => [
+                        'tablename' => 'cms_materials_pages_assoc',
+                        'field_from' => 'pid',
+                        'field_to' => 'id',
+                        'classname' => Material::class
+                    ],
+                ];
+            }
+
+            public static function _caches(string $key = null): array
+            {
+                return [
+                    'pvis' => [
+                        'affected' => ['parent'],
+                        'sql' => "IF(parent.id, (parent.vis AND parent.pvis), 1)"
+                    ],
+                ];
+            }
+
+            public static function _cognizableVars(): array
+            {
+                return [
+                    'blocksOrdered',
+                ];
+            }
+
+            public static function _dbprefix(): string
+            {
+                return '';
+            }
+
+            public static function _defaultOrderBy(): string
+            {
+                return "id";
+            }
+
+            public static function _aiPriority(): bool
+            {
+                return true;
+            }
+
+            public static function _objectCascadeUpdate(): bool
+            {
+                return true;
+            }
+
+            public static function _objectCascadeDelete(): bool
+            {
+                return true;
+            }
+
+        };
+
+        $result = $class::init();
+
+        $this->assertIsArray($result);
+    }
 
 
     /**

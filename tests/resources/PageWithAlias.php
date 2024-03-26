@@ -32,4 +32,30 @@ class PageWithAlias extends Page
             'cascade' => false
         ],
     ];
+
+
+    protected static $parents = [
+        'parents' => 'parent',
+    ];
+
+    protected static $links = [
+        'materials' => [
+            'tablename' => 'cms_materials_pages_assoc',
+            'field_from' => 'pid',
+            'field_to' => 'id',
+            'classname' => Material::class,
+            'orderBy' => 'id',
+        ],
+        'materialsIds' => [
+            'tablename' => 'cms_materials_pages_assoc',
+            'field_from' => 'pid',
+            'field_to' => 'id',
+            'orderBy' => "id DESC",
+        ],
+        'materialsData' => [
+            'tablename' => 'cms_materials_pages_assoc',
+            'field_from' => 'pid',
+            'orderBy' => "id DESC",
+        ],
+    ];
 }

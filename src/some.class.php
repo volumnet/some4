@@ -237,7 +237,7 @@ abstract class SOME extends ArrayObject
      *
      * @var string
      */
-    protected static $dbprefix;
+    protected static $dbprefix = "";
 
     /**
      * Параметр для сортировки по умолчанию
@@ -246,7 +246,7 @@ abstract class SOME extends ArrayObject
      *
      * @var string
      */
-    protected static $defaultOrderBy;
+    protected static $defaultOrderBy = "";
 
     /**
      * Авто-инкрементарный порядок отображения
@@ -257,7 +257,7 @@ abstract class SOME extends ArrayObject
      *
      * @var bool
      */
-    protected static $aiPriority;
+    protected static $aiPriority = false;
 
     /**
      * База данных
@@ -538,15 +538,11 @@ abstract class SOME extends ArrayObject
             if ($ids) {
                 $var = substr($var, 0, -4);
             }
-            $classname = static::getClassByLink($var);
-            if (!$classname && isset(static::$links[$var]['classname']) && static::$links[$var]['classname']) {
-                $classname = static::$links[$var]['classname'];
-            }
+            $classname = static::$links[$var]['classname'] ?? null;
             if (!isset($this->linked[$var])) {
                 $linkTable = static::$dbprefix . static::$links[$var]['tablename'];
                 $fieldFrom = static::$links[$var]['field_from'];
-                $fieldTo = static::$links[$var]['field_to'] ?? null;
-                if (static::$links[$var]['field_to'] ?? null) {
+                if ($fieldTo = (static::$links[$var]['field_to'] ?? null)) {
                     if ($classname) {
                         $orderBy = "";
                         if (isset(static::$links[$var]['orderBy'])) {
@@ -560,18 +556,26 @@ abstract class SOME extends ArrayObject
                         $sqlQuery = "SELECT tl.*, te.*
                                        FROM `" . $classname::_tablename() . "` AS te
                                        JOIN " . $linkTable . " AS tl ON tl." . $fieldTo . " = te." . $classname::_idN()
-                                   . " WHERE tl." . $fieldFrom . " = ?"
-                                   . ($orderBy ? " ORDER BY " . $orderBy : "");
+                                   . " WHERE tl." . $fieldFrom . " = ?";
+                        if ($orderBy) {
+                            $sqlQuery .= " ORDER BY " . $orderBy;
+                        }
                         $sqlResult = static::$SQL->get([$sqlQuery, $this->_id]);
                         $this->linked[$var] = array_map(function ($x) use ($classname) {
                             return new $classname($x);
                         }, (array)$sqlResult);
                     } elseif (static::$links[$var]['field_to']) {
                         $sqlQuery = "SELECT " . $fieldTo . " FROM " . $linkTable . " WHERE " . $fieldFrom . " = ?";
+                        if (isset(static::$links[$var]['orderBy'])) {
+                            $sqlQuery .= " ORDER BY " . static::$links[$var]['orderBy'];
+                        }
                         $this->linked[$var] = static::$SQL->getcol([$sqlQuery, $this->_id]);
                     }
                 } else {
                     $sqlQuery = "SELECT * FROM " . $linkTable . " WHERE " . $fieldFrom . " = ?";
+                    if (isset(static::$links[$var]['orderBy'])) {
+                        $sqlQuery .= " ORDER BY " . static::$links[$var]['orderBy'];
+                    }
                     $sqlResult = static::$SQL->get([$sqlQuery, $this->_id]);
                     $this->linked[$var] = $sqlResult;
                 }
@@ -647,7 +651,9 @@ abstract class SOME extends ArrayObject
         }
         switch (self::typeof($var)) {
             case self::FIELD_ID:
-                !$this->_id ? ($this->_id = $val) : null;
+                if (!$this->_id) {
+                    $this->_id = $val;
+                }
                 break;
             case self::FIELD_REGULAR:
                 // 2015-11-29, AVS: поменял на self::__get($var), т.к. __get может быть переопределен
@@ -676,7 +682,7 @@ abstract class SOME extends ArrayObject
     }
 
 
-    public function __isset($var)
+    public function __isset($var): bool
     {
         if (isset(static::$aliases[$var])) {
             $var = static::$aliases[$var];
@@ -775,8 +781,9 @@ abstract class SOME extends ArrayObject
 
     /**
      * Клонировать объект с сохранением ID# и свойств
+     * @return self
      */
-    public function deepClone()
+    public function deepClone(): self
     {
         $new = clone $this;
         $new->_id = $this->_id;
@@ -1033,9 +1040,10 @@ abstract class SOME extends ArrayObject
      * @param int $maxLevel Количество необходимых уровней вложенности дочерних элементов. Значение больше 1
      *                       доступно только по рекурсивной ссылке - в этом случае у каждого элемента
      *                       появляется свойство __level, где хранится уровень вложенности.
-     * @return SOME[] Индексированный массив дочерних объектов.
+     * @return SOME[]|false Индексированный массив дочерних объектов. либо false, если пытаемся получить нерекурсивные
+     *     дочерние элементы глубже 1 уровня
      */
-    final public function children($ref = null, $where = '', $addSQL = '', $maxLevel = 1)
+    final public function children(string $ref = null, string $where = '', string $addSQL = '', int $maxLevel = 1)
     {
         $classname = static::$children[$ref]['classname'];
         if ($maxLevel != 1 && $classname != static::class) {
@@ -1084,14 +1092,9 @@ abstract class SOME extends ArrayObject
         if (!(static::$parents[$ref] ?? null)) {
             return false;
         }
+        // 2024-03-24, AVS: убрал проверки на корректность (существование, рекурсивность) ссылки, т.к. это проверяется в init
         $reference = static::$references[static::$parents[$ref]] ?? null;
-        if (!$reference) {
-            return false;
-        }
         $classname = $reference['classname'];
-        if ($classname != static::class) {
-            return false;
-        }
         $pidN = $reference['FK'];
         $parents = [];
         $p = $this;
@@ -1122,8 +1125,7 @@ abstract class SOME extends ArrayObject
      *
      * @param string $where Дополнительное условие для поиска, например, общность родительских элементов
      * @param string $priorityN Наименование колонки, отвечающей за приоритет
-     * @return bool true, если нет ошибок в сущности (появившихся в процессе выполнения метода либо до него),
-     *              false, если ошибки имеются
+     * @throws Exception
      */
     public function reorder()
     {
@@ -1170,7 +1172,6 @@ abstract class SOME extends ArrayObject
             $sqlBind = array_merge($sqlBind, (array)$whereBind);
         }
         $swapwith = static::$SQL->get([$sqlQuery, $sqlBind]);
-        $ok = true;
         if ($swapwith) {
             for ($i = 0; $i < count($swapwith); $i++) {
                 $swapId = $swapwith[$i][static::_idN()];
@@ -1188,7 +1189,7 @@ abstract class SOME extends ArrayObject
                 [$priorityN => $this->$priorityN]
             );
         }
-        return $ok;
+        return true;
     }
 
 
@@ -1205,7 +1206,7 @@ abstract class SOME extends ArrayObject
      *     При инициализации наследующего класса — запись класса из массива self::$classes
      * @throws Exception Выбрасывает исключение в случае неверных настроек класса
      */
-    public static function init(DB $SQL = null, $dbprefix = null)
+    public static function init(DB $SQL = null, string $dbprefix = null)
     {
         // Установим базу данных
         if ($SQL !== null) {
@@ -1317,7 +1318,9 @@ abstract class SOME extends ArrayObject
                     $err = 'Cannot initialize class "' . static::class . '": '
                         . 'reference "' . $ref . '" used as parent "' . $key . '" doesn\'t exist.';
                     throw new Exception($err);
-                } elseif (static::$references[$ref]['classname'] != static::class) {
+                } elseif ((static::$references[$ref]['classname'] != static::class) &&
+                    !is_subclass_of(static::class, static::$references[$ref]['classname'])
+                ) {
                     $err = 'Cannot initialize class "' . static::class . '": '
                         . 'reference "' . $ref . '" used as parent "' . $key . '" must be recursive.';
                     throw new Exception($err);
@@ -1431,7 +1434,7 @@ abstract class SOME extends ArrayObject
      * Удаляет объекты и их окружения согласно установленным связям
      *
      * ВНИМАНИЕ!!! Объекты должны быть одного типа соответствующего вызову
-     * @param  SOME[] $objects Объекты для удаления
+     * @param SOME[] $objects Объекты для удаления
      */
     public static function batchDelete(array $objects)
     {
@@ -1462,8 +1465,9 @@ abstract class SOME extends ArrayObject
      *
      * @param string $field - поле таблицы
      * @param mixed $value - значение поля
+     * @return self|null
      */
-    final public static function importBy($field, $value)
+    final public static function importBy(string $field, $value)
     {
         if (static::typeof($field) == static::FIELD_REGULAR) {
             $sqlQuery = "SELECT * FROM " . static::_tablename() . " WHERE " . $field . " = ?";
@@ -1500,7 +1504,7 @@ abstract class SOME extends ArrayObject
      *     После обработки запроса свойства $Pages устанавливаются в соответствии с полученным результатом.
      * @return self[]
      */
-    public static function getSet()
+    public static function getSet(): array
     {
         // Распознаем аргументы
         static::getSetParseParams(func_get_args(), $Pages, $params);
@@ -1577,10 +1581,10 @@ abstract class SOME extends ArrayObject
                             }
                             $c = $refclass;
                         } else {
-                            if ($val == 'pages') {
-                                echo $val;
-                                exit;
-                            }
+                            // if ($val == 'pages') {
+                            //     echo $val;
+                            //     exit;
+                            // }
                             break;
                         }
                     }
@@ -1653,6 +1657,7 @@ abstract class SOME extends ArrayObject
      * ></code></pre> - дополнительные параметры (все элементы опциональные):
      * @param Pages $Pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
      *     После обработки запроса свойства $Pages устанавливаются в соответствии с полученным результатом.
+     * @return self[]|null
      */
     final public function getChildSet()
     {
@@ -1705,7 +1710,7 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение первичного ключа
-     * @return string
+     * @return string|int|null
      */
     final public function __id()
     {
@@ -1733,7 +1738,7 @@ abstract class SOME extends ArrayObject
      *     базы данных.
      * @return array
      */
-    final public static function getSQLSet($sqlQuery, $Pages = null, $type = null)
+    final public static function getSQLSet($sqlQuery, Pages $Pages = null, $type = null): array
     {
         static::init();
         // Проверка правильности постраничной разбивки
@@ -1792,7 +1797,7 @@ abstract class SOME extends ArrayObject
      *     созданный от ассоциативного массива-строки из таблицы базы данных.
      *     При указании null из класса SOME, элементом массива является ассоциативный массив-строка из таблицы
      *     базы данных.
-     * @return array
+     * @return mixed
      */
     final public static function getSQLObject($sqlQuery, $type = null)
     {
@@ -1842,7 +1847,7 @@ abstract class SOME extends ArrayObject
      *     При указании null из класса SOME, элементом массива является элемент $array.
      * @return array
      */
-    final public static function getArraySet(&$array, $pages = null, $type = null)
+    final public static function getArraySet(&$array, Pages $pages = null, $type = null): array
     {
         static::init();
         do {
@@ -1874,7 +1879,7 @@ abstract class SOME extends ArrayObject
      * Возвращает наименование таблицы класса (с учетом префикса таблиц)
      * @return string
      */
-    final public static function _tablename()
+    final public static function _tablename(): string
     {
         static::init();
         return self::$classes[static::class]['tablename'];
@@ -1885,7 +1890,7 @@ abstract class SOME extends ArrayObject
      * Возвращает наименование колонки первичного ключа
      * @return string
      */
-    final public static function _idN()
+    final public static function _idN(): string
     {
         static::init();
         return self::$classes[static::class]['PRI'] ?? null;
@@ -1897,7 +1902,7 @@ abstract class SOME extends ArrayObject
      * @param string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _references($key = null)
+    public static function _references(string $key = null): array
     {
         return $key ? static::$references[$key] : static::$references;
     }
@@ -1908,7 +1913,7 @@ abstract class SOME extends ArrayObject
      * @param string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _children($key = null)
+    public static function _children(string $key = null): array
     {
         return $key ? static::$children[$key] : static::$children;
     }
@@ -1917,9 +1922,9 @@ abstract class SOME extends ArrayObject
     /**
      * Возвращает значение статического свойства static::$parents
      * @param string $key ключ для выборки конкретного элемента массива
-     * @return array весь массив или один его элемент (тоже являющийся массивом)
+     * @return array|string весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _parents($key = null)
+    public static function _parents(string $key = null)
     {
         return $key ? static::$parents[$key] : static::$parents;
     }
@@ -1930,7 +1935,7 @@ abstract class SOME extends ArrayObject
      * @param string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _links($key = null)
+    public static function _links(string $key = null): array
     {
         return $key ? static::$links[$key] : static::$links;
     }
@@ -1941,7 +1946,7 @@ abstract class SOME extends ArrayObject
      * @param string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _caches($key = null)
+    public static function _caches(string $key = null): array
     {
         return $key ? static::$caches[$key] : static::$caches;
     }
@@ -1949,9 +1954,9 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$cognizableVars
-     * @return array весь массив или один его элемент (тоже являющийся массивом)
+     * @return array
      */
-    public static function _cognizableVars()
+    public static function _cognizableVars(): array
     {
         return static::$cognizableVars;
     }
@@ -1961,7 +1966,7 @@ abstract class SOME extends ArrayObject
      * Возвращает значение статического свойства static::$dbprefix
      * @return string
      */
-    public static function _dbprefix()
+    public static function _dbprefix(): string
     {
         return static::$dbprefix;
     }
@@ -1971,7 +1976,7 @@ abstract class SOME extends ArrayObject
      * Возвращает значение статического свойства static::$defaultOrderBy
      * @return string
      */
-    public static function _defaultOrderBy()
+    public static function _defaultOrderBy(): string
     {
         return static::$defaultOrderBy;
     }
@@ -1979,9 +1984,9 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$aiPriority
-     * @return string
+     * @return bool
      */
-    public static function _aiPriority()
+    public static function _aiPriority(): bool
     {
         return static::$aiPriority;
     }
@@ -1991,7 +1996,7 @@ abstract class SOME extends ArrayObject
      * Возвращает значение статического свойства static::$SQL
      * @return DB
      */
-    final public static function _SQL()
+    final public static function _SQL(): DB
     {
         return static::$SQL;
     }
@@ -2001,7 +2006,7 @@ abstract class SOME extends ArrayObject
      * Возвращает значение статического свойства static::$objectCascadeUpdate
      * @return bool
      */
-    public static function _objectCascadeUpdate()
+    public static function _objectCascadeUpdate(): bool
     {
         return static::$objectCascadeUpdate;
     }
@@ -2011,7 +2016,7 @@ abstract class SOME extends ArrayObject
      * Возвращает значение статического свойства static::$objectCascadeDelete
      * @return bool
      */
-    public static function _objectCascadeDelete()
+    public static function _objectCascadeDelete(): bool
     {
         return static::$objectCascadeDelete;
     }
@@ -2019,53 +2024,24 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает структуру классов
+     * @return array
      */
-    final public static function _classes()
+    final public static function _classes(): array
     {
         return self::$classes;
     }
 
 
     /**
-     * Возвращает наименование сопряженного класса по именованной связке
-     *
-     * Подразумевается, что будет возвращен класс, имеющий связку с такой же таблицей, что и данный класс,
-     * но с полем field_from, соответствующим полю field_to текущего класса;
-     * либо класс, имеющий данную таблицу в качестве собственной
-     * @param string $var Наименование именованной связки из массива static::$links
-     * @return string
-     * @todo Доделать возвращение классов с собственной таблицей
-     */
-    final protected static function getClassByLink($var)
-    {
-        $tablename = static::$links[$var]['tablename'];
-        $field = static::$links[$var]['field_to'] ?? null;
-        foreach (self::$classes as $classname => $class) {
-            $classDBPrefix = $classname::$dbprefix;
-            $staticDBPrefix = static::$dbprefix;
-            $callback = function ($x) use ($classname, $tablename, $field, $classDBPrefix, $staticDBPrefix) {
-                return isset($x['tablename'], $x['field_from'])
-                        && (($classDBPrefix . $x['tablename']) == ($staticDBPrefix . $tablename))
-                        && $x['field_from'] == $field;
-            };
-            if (array_filter($classname::$links, $callback)) {
-                return $classname;
-            }
-        }
-        return false;
-    }
-
-
-    /**
      * Возвращает (если есть) именованную ссылку по внешнему ключу.
      *
-     * @param string $FK Наименование поля, являющегося внешним ключом
+     * @param string $fk Наименование поля, являющегося внешним ключом
      * @return string|false Именованная ссылка из массива static::$references, либо false в случае отсутствия
      */
-    final public static function getReferenceByFK($FK)
+    final public static function getReferenceByFK(string $fk)
     {
-        $temp = array_filter(static::$references, function ($x) use ($FK) {
-            return $x['FK'] == $FK;
+        $temp = array_filter(static::$references, function ($x) use ($fk) {
+            return $x['FK'] == $fk;
         });
         if ($temp) {
             $result = array_keys($temp);
@@ -2088,7 +2064,7 @@ abstract class SOME extends ArrayObject
      *     >
      * ></code></pre>
      */
-    final protected static function affects()
+    final protected static function affects(): array
     {
         $result = [];
         foreach (self::$classes as $classname => $class) {
@@ -2107,7 +2083,7 @@ abstract class SOME extends ArrayObject
      * @param string $classname имя класса для проверки зависимости
      * @return array массив вида [[имя кэша] => [тело кэша], ...]
      */
-    final protected static function getCachesByClassname($classname)
+    final protected static function getCachesByClassname(string $classname): array
     {
         $aff = [];
         foreach (static::$caches as $FC => $cache) {
@@ -2137,7 +2113,7 @@ abstract class SOME extends ArrayObject
      *     >
      * ></code></pre>
      */
-    final protected static function isReferencedBy($cascade = null)
+    final protected static function isReferencedBy(bool $cascade = null): array
     {
         $temp = [];
         foreach (self::$classes as $classname => $class) {
@@ -2159,7 +2135,7 @@ abstract class SOME extends ArrayObject
      *                  ссылками
      * @return array <pre><code>array<string[] Имя ссылки => array Ссылка>
      */
-    final protected static function getReferencesByClassname($classname, $cascade = null)
+    final protected static function getReferencesByClassname(string $classname, bool $cascade = null): array
     {
         $temp = [];
         foreach (static::$references as $ref => $reference) {
@@ -2181,9 +2157,10 @@ abstract class SOME extends ArrayObject
      * расходования порядковых номеров при больших объемах данных.
      *
      * @param string $priorityN Наименование колонки, отвечающей за приоритет
-     * @return bool true, если упорядочение проведено успешно, false, если возникли ошибки
+     * @return bool true
+     * @throws Exception Если возникли ошибки
      */
-    final public static function priorityRepair($priorityN = null)
+    final public static function priorityRepair(string $priorityN = null): bool
     {
         static::init();
         if (!$priorityN && static::$defaultOrderBy) {
@@ -2224,7 +2201,7 @@ abstract class SOME extends ArrayObject
      * @return bool Возвращает true, если пройден цикл каскадного изменения, либо false в случае, если
      *              отсутствовали первичные ключи изменяемых/удаляемых элементов
      */
-    private static function onupdate(array $ids, $ondelete = false)
+    private static function onupdate(array $ids, bool $ondelete = false): bool
     {
         if (!$ids) {
             return false;
@@ -2330,7 +2307,7 @@ abstract class SOME extends ArrayObject
      * @return bool Возвращает true, если пройден цикл каскадного изменения, либо false в случае, если
      *              отсутствовали первичные ключи изменяемых/удаляемых элементов
      */
-    private static function ondelete(array $ids)
+    private static function ondelete(array $ids): bool
     {
         if (!$ids) {
             return false;
@@ -2464,7 +2441,7 @@ abstract class SOME extends ArrayObject
      * @param string[] $requiredAliases массив ссылаемых псевдонимов
      *     (или при отсутствии псевдонимов имен таблиц) в разных частях запроса
      */
-    private static function getSetCheckTables($params, &$bindAssoc, &$usedAliases, &$requiredAliases)
+    private static function getSetCheckTables(array $params, &$bindAssoc, &$usedAliases, &$requiredAliases)
     {
         $bindAssoc = false;
         $usedAliases = [];
