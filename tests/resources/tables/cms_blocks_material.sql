@@ -43,7 +43,7 @@ CREATE TABLE `cms_blocks_material` (
 
 LOCK TABLES `cms_blocks_material` WRITE;
 /*!40000 ALTER TABLE `cms_blocks_material` DISABLE KEYS */;
-INSERT INTO `cms_blocks_material` VALUES (13,1,'page',0,'','','post_date','asc',0),(16,2,'page',0,'','','post_date','asc',0),(22,3,'page',20,'','','16','desc!',0),(23,3,'',3,'','','16','desc!',0),(34,4,'page',20,'','','name','asc',0),(35,4,'',0,'','','price','asc',0),(49,2,'page',20,'','','name','asc!',0),(50,6,'page',20,'','','50','asc!',0),(51,7,'page',20,'','','name','asc!',0);
+INSERT INTO `cms_blocks_material` VALUES (13,1,'page',0,'','','post_date','asc',0),(16,2,'page',0,'','','post_date','asc',0),(22,3,'page',20,'','','16','desc!',0),(23,3,'',3,'','','16','desc!',0),(34,4,'page',20,'','','26','asc',0),(35,4,'',0,'','','price','asc',0),(49,2,'page',20,'','','name','asc!',0),(50,6,'page',20,'','','50','asc!',0),(51,7,'page',20,'','','name','asc!',0);
 /*!40000 ALTER TABLE `cms_blocks_material` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -56,4 +56,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-19 23:12:17
+-- Dump completed on 2024-03-29 15:46:32

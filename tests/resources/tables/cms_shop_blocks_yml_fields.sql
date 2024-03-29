@@ -27,7 +27,7 @@ CREATE TABLE `cms_shop_blocks_yml_fields` (
   `mtype` int unsigned NOT NULL DEFAULT '0' COMMENT 'Material type ID#',
   `field_name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field name',
   `field_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field ID#',
-  `field_callback` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field callback',
+  `field_callback` text CHARACTER SET utf8mb3 COLLATE utf8_general_ci COMMENT 'Field callback',
   `field_static_value` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field static value',
   PRIMARY KEY (`id`,`mtype`,`field_name`),
   KEY `id` (`id`),
@@ -56,4 +56,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-19 23:12:21
+-- Dump completed on 2024-03-29 15:46:35
