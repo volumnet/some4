@@ -4,19 +4,29 @@
  */
 namespace SOME;
 
+use RAAS\Application;
 use RAAS\CMS\Block;
 use RAAS\CMS\Field;
+use RAAS\CMS\Form;
+use RAAS\CMS\Form_Field;
 use RAAS\CMS\Material;
+use RAAS\CMS\Material_Field;
+use RAAS\CMS\Material_Type;
 use RAAS\CMS\Page;
 use RAAS\CMS\PageWithAlias;
+use RAAS\CMS\PageWithCascadeUpdate;
+use RAAS\CMS\PageWithoutCascadeDelete;
+use RAAS\CMS\PageWithoutCascadeUpdate;
 use RAAS\CMS\Redirect;
 use RAAS\CMS\Snippet;
 use RAAS\CMS\User;
+use RAAS\CMS\User_Field;
+use RAAS\CMS\Shop\Block_Cart;
 use RAAS\CMS\Shop\Cart_Type;
 
 /**
  * Класс теста сущности SOME
- * @covers \SOME\SOME
+ * @covers SOME\SOME
  */
 class SOMETest extends BaseTest
 {
@@ -27,13 +37,17 @@ class SOMETest extends BaseTest
         'cms_access_materials_cache',
         'cms_access_pages_cache',
         'cms_blocks',
+        'cms_blocks_form',
         'cms_blocks_html',
         'cms_blocks_material',
         'cms_blocks_material_filter',
         'cms_blocks_material_sort',
         'cms_blocks_pages_assoc',
+        'cms_blocks_search_pages_assoc',
         'cms_data',
         'cms_fields',
+        'cms_fields_form_vis',
+        'cms_forms',
         'cms_groups',
         'cms_material_types',
         'cms_material_types_affected_pages_for_materials_cache',
@@ -43,15 +57,104 @@ class SOMETest extends BaseTest
         'cms_materials_pages_assoc',
         'cms_pages',
         'cms_redirects',
+        'cms_shop_blocks_cart',
+        'cms_shop_blocks_yml_pages_assoc',
         'cms_shop_cart_types',
         'cms_shop_cart_types_material_types_assoc',
         'cms_snippet_folders',
         'cms_snippets',
+        'cms_templates',
         'cms_users',
+        'cms_users_blocks_register',
         'cms_users_groups_assoc',
         'cms_users_social',
         'registry',
     ];
+
+
+    /**
+     * Проверка ошибки от 2024-05-02 11:18
+     * При удалении формы №123 удаляются поля типа материалов №123
+     */
+    public function testError202405021118()
+    {
+        $form = new Form(['id' => 123, 'name' => 'Тестовая форма']);
+        $form->commit();
+        $materialType = new Material_Type(['id' => 123, 'name' => 'Тестовый тип материалов']);
+        $materialType->commit();
+        $formField = new Form_Field(['classname' => Form::class, 'pid' => 123, 'urn' => 'testformfield']);
+        $formField->commit();
+        $formFieldId = $formField->id;
+        $materialField = new Material_Field(['classname' => Material_Type::class, 'pid' => 123, 'urn' => 'testmaterialfield']);
+        $materialField->commit();
+        $materialFieldId = $materialField->id;
+
+        Form::delete($form);
+        $formField = new Form_Field($formFieldId);
+        $materialField = new Material_Field($materialFieldId);
+
+        $this->assertEmpty($formField->id);
+        $this->assertEquals($materialFieldId, $materialField->id);
+        $this->assertEquals(Material_Type::class, $materialField->classname);
+        $this->assertEquals(123, $materialField->pid);
+
+        Material_Type::delete($materialType);
+
+        $materialField = new Material_Field($materialFieldId);
+        $this->assertEmpty($materialField->id);
+    }
+
+
+    /**
+     * Проверка ошибки от 2024-04-19, 14:41
+     * При удалении пользователя обнуляется колонка pid поля формы
+     */
+    public function testError202404191441()
+    {
+        User_Field::init();
+        $user = new User();
+        $user->commit();
+        User::delete($user);
+
+        $field = new Field(72);
+
+        $this->assertEquals(72, $field->id);
+        $this->assertEquals(Form::class, $field->classname);
+        $this->assertEquals(3, $field->pid);
+    }
+
+
+    /**
+     * Проверка ошибки от 2024-04-19 09:24
+     * При удалении сниппета, связанного по второй таблице у блока возникает ошибка типа
+     * PDOException: SQLSTATE[42S22]: Column not found: 1054 Unknown column '__SOME__.epay_interface_id' in 'where clause'
+     * D:\web\home\libs\some4\src\db.class.php:263
+     * D:\web\home\libs\some4\src\db.class.php:382
+     * D:\web\home\libs\some4\src\some.class.php:2300
+     * D:\web\home\libs\some4\src\some.class.php:1443
+     * D:\web\home\libs\some4\src\some.class.php:1413
+     * D:\web\home\libs\raas.cms\classes\semantic\snippet.class.php:303
+     * D:\web\home\libs\raas.cms.shop\tests\src\interfaces\PriceloaderInterfaceTest.php:781
+     */
+    public function testError202404190924()
+    {
+        Block_Cart::init();
+        $snippet = new Snippet(['urn' => 'testpreprocessor']);
+        $snippet->commit();
+        $snippetId = $snippet->id;
+        $block = new Block_Cart(['epay_interface_id' => $snippetId, 'cats' => 1]);
+        $block->commit();
+        $blockId = $block->id;
+        Snippet::delete($snippet);
+        $block = Block::spawn($blockId);
+
+        // Поскольку epay_interface_id находится во вторичной таблице, оно не меняется
+        // Такие случаи нужно обрабатывать вручную
+        $this->assertEquals($snippetId, $block->epay_interface_id);
+
+        Block::delete($block);
+    }
+
 
     /**
      * Тест создания объекта по ID#
@@ -394,6 +497,10 @@ class SOMETest extends BaseTest
         $field = $result['_description_'];
         $this->assertInstanceOf(Field::class, $field);
         $this->assertEquals(1, $field->id);
+
+        $page->fields = ['aaa'];
+
+        $this->assertEquals(['aaa'], $page->fields);
 
         unset($page->fields);
 
@@ -1191,6 +1298,319 @@ class SOMETest extends BaseTest
 
 
     /**
+     * Тест метода init() - случай с битой базой данных
+     */
+    public function testInitWithInvalidDatabase()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('no active database');
+
+        $db = new DB('mysql:notexistinghost;notexistingdatabase');
+        $class = new class extends Page {
+            protected static $SQL;
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с пустой таблицей
+     */
+    public function testInitWithEmptyTablename()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('no table name');
+
+        $class = new class extends SOME {
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной ссылкой (не массив)
+     */
+    public function testInitWithInvalidReference()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('reference');
+        $this->expectExceptionMessage('must be an');
+
+        $class = new class extends SOME {
+            public static $tablename = 'cms_pages';
+
+            public static $references = [
+                'aaa' => 'bbb'
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной ссылкой (нет внешнего ключа)
+     */
+    public function testInitWithInvalidReferenceFK()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('reference');
+        $this->expectExceptionMessage('must have foreign key');
+
+        $class = new class extends SOME {
+            public static $tablename = 'cms_pages';
+
+            public static $references = [
+                'aaa' => []
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной ссылкой (нет указателя класса)
+     */
+    public function testInitWithInvalidReferenceClassname()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('reference');
+        $this->expectExceptionMessage('must have class name');
+
+        $class = new class extends SOME {
+            public static $tablename = 'cms_pages';
+
+            public static $references = [
+                'aaa' => [
+                    'FK' => 'author_id',
+                ]
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной дочерней ссылкой (не массив)
+     */
+    public function testInitWithInvalidChild()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('child');
+        $this->expectExceptionMessage('must be an');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $children = [
+                'aaa' => 'bbb'
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной дочерней ссылкой (нет внешнего ключа)
+     */
+    public function testInitWithInvalidChildFK()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('child');
+        $this->expectExceptionMessage('must have foreign key');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $children = [
+                'aaa' => []
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной дочерней ссылкой (нет указателя класса)
+     */
+    public function testInitWithInvalidChildClassname()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('child');
+        $this->expectExceptionMessage('must have class name');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $children = [
+                'aaa' => [
+                    'FK' => 'pid',
+                ]
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной дочерней ссылкой (класс не ссылается на данный)
+     */
+    public function testInitWithInvalidChildReference()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('is not its child');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $children = [
+                'aaa' => [
+                    'FK' => 'pid',
+                    'classname' => Snippet::class
+                ]
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной родительской ссылкой (не существует)
+     */
+    public function testInitWithInvalidParent()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('used as parent');
+        $this->expectExceptionMessage("doesn't exist");
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $parents = [
+                'aaa' => 'bbb'
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной родительской ссылкой (не рекурсивна)
+     */
+    public function testInitWithNoRecursiveParent()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('used as parent');
+        $this->expectExceptionMessage('must be recursive');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $parents = [
+                'aaa' => 'author'
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной связкой (не массив)
+     */
+    public function testInitWithInvalidLink()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('link');
+        $this->expectExceptionMessage('must be an');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $links = [
+                'aaa' => 'bbb'
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной связкой (не указана таблица)
+     */
+    public function testInitWithInvalidLinkTablename()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('link');
+        $this->expectExceptionMessage('must have table name');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $links = [
+                'aaa' => []
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректной связкой (не указано исходное поле)
+     */
+    public function testInitWithInvalidLinkFieldFrom()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('link');
+        $this->expectExceptionMessage('must have field_from parameter');
+
+        $class = new class extends Page {
+            public static $tablename = 'cms_pages';
+
+            public static $links = [
+                'aaa' => [
+                    'tablename' => 'cms_materials_pages_assoc'
+                ]
+            ];
+        };
+    }
+
+
+    /**
+     * Тест метода init() - случай с некорректным первичным ключом
+     */
+    public function testInitWithNoPrimaryKey()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('no primary key found');
+
+        $sqlQuery = "CREATE TEMPORARY TABLE tmp (name VARCHAR(255) NOT NULL DEFAULT '');";
+        Application::i()->SQL->query($sqlQuery);
+
+        $class = new class extends SOME {
+            public static $tablename = 'tmp';
+        };
+
+        $result = $class::init();
+
+        $sqlQuery = "DROP TABLE tmp;";
+        Application::i()->SQL->query($sqlQuery);
+    }
+
+
+    /**
+     * Тест метода init() - случай SQLite
+     */
+    public function testInitWithSQLite()
+    {
+        $oldDb = SOME::_SQL();
+        $filename = $this->getResourcesDir() . '/test.sqlite';
+        $db = new DB('sqlite:' . $filename);
+        SOME::init($db);
+
+        $class = new class extends SOME {
+            public static $tablename = 'test';
+        };
+
+        $result = $class::init($db);
+
+        $this->assertEquals('test', $result['tablename']);
+        $this->assertIsArray($result);
+        $this->assertIsArray($result['fields']);
+        $this->assertEquals('name', $result['fields']['name']);
+        $this->assertEquals('id', $result['PRI']);
+        $this->assertTrue($result['AI']);
+
+        SOME::init($oldDb, '');
+    }
+
+
+    /**
      * Тест удаления
      */
     public function testDelete()
@@ -1208,6 +1628,88 @@ class SOMETest extends BaseTest
 
         $this->assertEmpty($page->id);
         $this->assertEmpty($page2->id);
+    }
+
+
+    /**
+     * Тест удаления - случай без каскадного удаления
+     * для проверки ondelete и onupdate
+     */
+    public function testDeleteWithoutCascadeDelete()
+    {
+        $parent = new PageWithoutCascadeDelete(['name' => 'testParent']);
+        $parent->commit();
+        $parentId = $parent->id;
+
+        $child = new PageWithoutCascadeDelete(['pid' => $parent->id, 'name' => 'testChild']);
+        $child->commit();
+        $childId = $child->id;
+
+        $this->assertNotEmpty($parentId);
+        $this->assertNotEmpty($childId);
+
+        PageWithoutCascadeDelete::delete($parent);
+
+        $child = new PageWithoutCascadeDelete($childId);
+
+        $this->assertEmpty($child->id);
+    }
+
+
+    /**
+     * Тест удаления - случай с каскадным обновлением
+     * для проверки ondelete и onupdate
+     */
+    public function testDeleteWithCascadeUpdate()
+    {
+        $parent = new PageWithCascadeUpdate(['name' => 'testParent', 'urn' => 'testparent']);
+        $parent->commit();
+        $parentId = $parent->id;
+
+        $child = new PageWithCascadeUpdate(['pid' => $parent->id, 'name' => 'testChild', 'urn' => 'testchild']);
+        $child->commit();
+        $childId = $child->id;
+
+        $this->assertNotEmpty($parentId);
+        $this->assertNotEmpty($childId);
+
+        PageWithCascadeUpdate::delete($parent);
+
+        $child = new PageWithCascadeUpdate($childId);
+
+        $this->assertEquals(0, $child->pid);
+        $this->assertEquals(1, $child->pvis);
+        $this->assertEquals('/', $child->cache_url);
+
+        PageWithCascadeUpdate::delete($child);
+    }
+
+
+    /**
+     * Тест удаления - случай с некаскадным обновлением
+     */
+    public function testDeleteWithoutCascadeUpdate()
+    {
+        $parent = new PageWithoutCascadeUpdate(['name' => 'testParent', 'urn' => 'testparent']);
+        $parent->commit();
+        $parentId = $parent->id;
+
+        $child = new PageWithoutCascadeUpdate(['pid' => $parent->id, 'name' => 'testChild', 'urn' => 'testchild']);
+        $child->commit();
+        $childId = $child->id;
+
+        $this->assertNotEmpty($parentId);
+        $this->assertNotEmpty($childId);
+
+        PageWithoutCascadeUpdate::delete($parent);
+
+        $child = new PageWithoutCascadeUpdate($childId);
+
+        $this->assertEquals(0, $child->pid);
+        $this->assertEquals(1, $child->pvis);
+        $this->assertEquals('/', $child->cache_url);
+
+        PageWithoutCascadeUpdate::delete($child);
     }
 
 
@@ -1253,6 +1755,111 @@ class SOMETest extends BaseTest
 
 
     /**
+     * Тест метода getSet() - случай без условий where
+     */
+    public function testGetSetWithoutWhere()
+    {
+        $result = Cart_Type::getSet([
+            'orderBy' => "id ASC"
+        ]);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertEquals(1, $result[0]->id);
+        $this->assertEquals(2, $result[1]->id);
+    }
+
+
+    /**
+     * Тест метода getSet() - случай со ссылками
+     */
+    public function testGetSetWithReferences()
+    {
+        $result = Page::getSet([
+            'where' => "parent.id = 3",
+            'orderBy' => "Page.id ASC",
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(3, $result);
+        $this->assertEquals(4, $result[0]->id);
+        $this->assertEquals(5, $result[1]->id);
+        $this->assertEquals(6, $result[2]->id);
+    }
+
+
+    /**
+     * Тест метода getSet() - случай с дочерними сущностями
+     */
+    public function testGetSetWithChildren()
+    {
+        $result = Page::getSet([
+            'where' => "children.id = 4",
+            'orderBy' => "Page.id ASC",
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals(3, $result[0]->id);
+    }
+
+
+    /**
+     * Тест метода getSet() - случай со связками
+     */
+    public function testGetSetWithLinks()
+    {
+        $result = Page::getSet([
+            'where' => "blocks.id = 19",
+            'orderBy' => "Page.id ASC",
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals(4, $result[0]->id);
+    }
+
+
+    /**
+     * Тест метода getSet() - случай со связками без класса
+     */
+    public function testGetSetWithLinksWithoutClassname()
+    {
+        $result = PageWithAlias::getSet([
+            'where' => [
+                "materialsIds___LINK.id = 10",
+                "PageWithAlias.id IN (23, 24)", // Ограничиваем этими, т.к. ранее было удаление страниц
+            ],
+            'orderBy' => "PageWithAlias.id ASC",
+        ]);
+
+        $this->assertIsArray($result);
+        $this->assertCount(2, $result);
+        $this->assertEquals(23, $result[0]->id);
+        $this->assertEquals(24, $result[1]->id);
+    }
+
+    /**
+     * Тест метода getSet() - случай с дополнительными полями
+     */
+    public function testGetSetWithAdditional()
+    {
+        $result = Page::getSet([
+            'select' => ["Page.*", "COUNT(DISTINCT tMPA.id) AS c"],
+            'from' => ["cms_materials_pages_assoc AS tMPA ON tMPA.pid = Page.id"],
+            'where' => ["Page.id IN (24)", "tMPA.id IN (10, 11, 12)"],
+            'groupBy' => "tMPA.pid",
+            'orderBy' => "Page.id DESC"
+        ]);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(1, $result);
+        $this->assertEquals(24, $result[0]->id);
+        $this->assertEquals(3, $result[0]->c);
+    }
+
+
+    /**
      * Тест получения массива дочерних объектов
      */
     public function testGetChildSet()
@@ -1267,6 +1874,84 @@ class SOMETest extends BaseTest
         $this->assertCount(2, $result);
         $this->assertEquals(6, $result[0]->id);
         $this->assertEquals(4, $result[1]->id);
+    }
+
+
+    /**
+     * Тест получения массива дочерних объектов - случай с ассоциативной подстановкой
+     */
+    public function testGetChildSetWithBindAssoc()
+    {
+        $page = new Page(3);
+        $result = $page->getChildSet('children', [
+            'where' => [
+                ["id = :pageId", ['pageId' => 4]]
+            ],
+            'orderBy' => "id DESC"
+        ]);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(1, $result);
+        $this->assertEquals(4, $result[0]->id);
+    }
+
+
+    /**
+     * Тест получения массива связок
+     */
+    public function testGetChildSetWithLinks()
+    {
+        $page = new Page(24);
+        $result = $page->getChildSet('materials', [
+            'where' => "Material.id IN (10, 11)",
+            'orderBy' => "Material.id ASC"
+        ]);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(Material::class, $result[0]);
+        $this->assertEquals(10, $result[0]->id);
+        $this->assertInstanceOf(Material::class, $result[1]);
+        $this->assertEquals(11, $result[1]->id);
+    }
+
+
+    /**
+     * Тест получения массива связок с ассоциативной подстановкой
+     */
+    public function testGetChildSetWithLinksAndBindAssoc()
+    {
+        $page = new Page(24);
+        $result = $page->getChildSet('materials', [
+            'where' => [
+                ["Material.id IN (:materialId1, :materialId2)", ['materialId1' => 10, 'materialId2' => 11]],
+            ],
+            'orderBy' => "Material.id ASC"
+        ]);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(Material::class, $result[0]);
+        $this->assertEquals(10, $result[0]->id);
+        $this->assertInstanceOf(Material::class, $result[1]);
+        $this->assertEquals(11, $result[1]->id);
+    }
+
+
+    /**
+     * Тест метода getChildSet() - случай с некорректным запросом
+     */
+    public function testGetChildSetWithInvalid()
+    {
+        $page = new Page(24);
+        $result = $page->getChildSet('invalid', [
+            'where' => [
+                ["Material.id IN (:materialId1, :materialId2)", ['materialId1' => 10, 'materialId2' => 11]],
+            ],
+            'orderBy' => "Material.id ASC"
+        ]);
+
+        $this->assertNull($result);
     }
 
 
@@ -1298,9 +1983,79 @@ class SOMETest extends BaseTest
 
         $this->assertTrue(is_array($result));
         $this->assertCount(2, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
         $this->assertEquals(9, $result[0]->id);
+        $this->assertInstanceOf(Page::class, $result[1]);
         $this->assertEquals(8, $result[1]->id);
         $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест метода getSQLSet() - случай с callable
+     */
+    public function testGetSQLSetWithCallable()
+    {
+        $sqlQuery = "SELECT *
+                       FROM cms_pages
+                      WHERE id IN (4, 5, 6)
+                   ORDER BY id ASC";
+        $result = SOME::getSQLSet($sqlQuery, null, function ($sqlRow) {
+            return new Page($sqlRow);
+        });
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(3, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(4, $result[0]->id);
+        $this->assertInstanceOf(Page::class, $result[1]);
+        $this->assertEquals(5, $result[1]->id);
+        $this->assertInstanceOf(Page::class, $result[2]);
+        $this->assertEquals(6, $result[2]->id);
+    }
+
+
+    /**
+     * Тест метода getSQLSet() - случай с явным типом
+     */
+    public function testGetSQLSetWithType()
+    {
+        $sqlQuery = "SELECT *
+                       FROM cms_pages
+                      WHERE id IN (4, 5, 6)
+                   ORDER BY id ASC";
+        $result = SOME::getSQLSet($sqlQuery, null, Page::class);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(3, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(4, $result[0]->id);
+        $this->assertInstanceOf(Page::class, $result[1]);
+        $this->assertEquals(5, $result[1]->id);
+        $this->assertInstanceOf(Page::class, $result[2]);
+        $this->assertEquals(6, $result[2]->id);
+    }
+
+
+    /**
+     * Тест метода getSQLSet() - случай с сырыми данными
+     */
+    public function testGetSQLSetWithRaw()
+    {
+        $sqlQuery = "SELECT *
+                       FROM cms_pages
+                      WHERE id IN (4, 5, 6)
+                   ORDER BY id ASC";
+        $result = SOME::getSQLSet($sqlQuery);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(3, $result);
+        $this->assertIsArray($result[0]);
+        $this->assertEquals(4, $result[0]['id']);
+        $this->assertIsArray($result[1]);
+        $this->assertEquals(5, $result[1]['id']);
+        $this->assertIsArray($result[2]);
+        $this->assertEquals(6, $result[2]['id']);
     }
 
 
@@ -1314,6 +2069,60 @@ class SOMETest extends BaseTest
 
         $this->assertInstanceOf(Page::class, $result);
         $this->assertEquals(3, $result->id);
+    }
+
+
+    /**
+     * Тест метода getSQLObject - случай простого текстового запроса
+     */
+    public function testGetSQLObjectWithPlain()
+    {
+        $sqlQuery = "SELECT * FROM cms_pages WHERE id = 3";
+        $result = Page::getSQLObject($sqlQuery);
+
+        $this->assertInstanceOf(Page::class, $result);
+        $this->assertEquals(3, $result->id);
+    }
+
+
+    /**
+     * Тест метода getSQLObject - случай с callable
+     */
+    public function testGetSQLObjectWithCallable()
+    {
+        $sqlQuery = "SELECT * FROM cms_pages WHERE id = 3";
+        $result = SOME::getSQLObject($sqlQuery, function ($sqlRow) {
+            return new Page($sqlRow);
+        });
+
+        $this->assertInstanceOf(Page::class, $result);
+        $this->assertEquals(3, $result->id);
+    }
+
+
+    /**
+     * Тест метода getSQLObject - случай с явным заданием типа
+     */
+    public function testGetSQLObjectWithType()
+    {
+        $sqlQuery = "SELECT * FROM cms_pages WHERE id = 3";
+        $result = SOME::getSQLObject($sqlQuery, Page::class);
+
+        $this->assertInstanceOf(Page::class, $result);
+        $this->assertEquals(3, $result->id);
+    }
+
+
+    /**
+     * Тест метода getSQLObject - случай с сырыми данными
+     */
+    public function testGetSQLObjectWithRaw()
+    {
+        $sqlQuery = "SELECT * FROM cms_pages WHERE id = 3";
+        $result = SOME::getSQLObject($sqlQuery);
+
+        $this->assertIsArray($result);
+        $this->assertEquals(3, $result['id']);
     }
 
 
@@ -1341,6 +2150,111 @@ class SOMETest extends BaseTest
         $this->assertEquals(4, $result[1]->id);
         $this->assertEquals('test4', $result[1]->name);
         $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест метода getArraySet() - случай с объектами
+     */
+    public function testGetArraySetWithObjects()
+    {
+        $pages = new Pages(2, 2);
+        $arr = [
+            new Page(['id' => 1, 'name' => 'test1']),
+            new Page(['id' => 2, 'name' => 'test2']),
+            new Page(['id' => 3, 'name' => 'test3']),
+            new Page(['id' => 4, 'name' => 'test4']),
+            new Page(['id' => 5, 'name' => 'test5']),
+            new Page(['id' => 6, 'name' => 'test6']),
+        ];
+        $result = Page::getArraySet($arr, $pages);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(3, $result[0]->id);
+        $this->assertEquals('test3', $result[0]->name);
+        $this->assertEquals(4, $result[1]->id);
+        $this->assertEquals('test4', $result[1]->name);
+        $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест метода getArraySet() - случай с callable
+     */
+    public function testGetArraySetWithCallable()
+    {
+        $pages = new Pages(2, 2);
+        $arr = [
+            ['id' => 1, 'name' => 'test1'],
+            ['id' => 2, 'name' => 'test2'],
+            ['id' => 3, 'name' => 'test3'],
+            ['id' => 4, 'name' => 'test4'],
+            ['id' => 5, 'name' => 'test5'],
+            ['id' => 6, 'name' => 'test6'],
+        ];
+        $result = SOME::getArraySet($arr, $pages, function ($x) {
+            return new Page($x);
+        });
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(3, $result[0]->id);
+        $this->assertEquals('test3', $result[0]->name);
+        $this->assertEquals(4, $result[1]->id);
+        $this->assertEquals('test4', $result[1]->name);
+        $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест метода getArraySet() - случай с явно заданным типом
+     */
+    public function testGetArraySetWithType()
+    {
+        $pages = new Pages(2, 2);
+        $arr = [
+            ['id' => 1, 'name' => 'test1'],
+            ['id' => 2, 'name' => 'test2'],
+            ['id' => 3, 'name' => 'test3'],
+            ['id' => 4, 'name' => 'test4'],
+            ['id' => 5, 'name' => 'test5'],
+            ['id' => 6, 'name' => 'test6'],
+        ];
+        $result = SOME::getArraySet($arr, $pages, Page::class);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(Page::class, $result[0]);
+        $this->assertEquals(3, $result[0]->id);
+        $this->assertEquals('test3', $result[0]->name);
+        $this->assertEquals(4, $result[1]->id);
+        $this->assertEquals('test4', $result[1]->name);
+        $this->assertEquals(6, $pages->count);
+    }
+
+
+    /**
+     * Тест метода getArraySet() - случай с сырыми данными
+     */
+    public function testGetArraySetWithRaw()
+    {
+        $arr = [
+            ['id' => 3, 'name' => 'test3'],
+            ['id' => 4, 'name' => 'test4'],
+        ];
+        $result = SOME::getArraySet($arr);
+
+        $this->assertTrue(is_array($result));
+        $this->assertCount(2, $result);
+        $this->assertIsArray($result[0]);
+        $this->assertEquals(3, $result[0]['id']);
+        $this->assertEquals('test3', $result[0]['name']);
+        $this->assertIsArray($result[1]);
+        $this->assertEquals(4, $result[1]['id']);
+        $this->assertEquals('test4', $result[1]['name']);
     }
 
 
@@ -1571,6 +2485,22 @@ class SOMETest extends BaseTest
 
         $this->assertLessThan($page2->priority, $page1->priority);
         $this->assertLessThan($page3->priority, $page2->priority);
+    }
+
+
+    /**
+     * Тест метода priorityRepair - случай без указания поля приоритета
+     */
+    public function testPriorityRepairWithoutPriorityName()
+    {
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('You have to define property name');
+
+        $page = new class extends Page {
+            protected static $defaultOrderBy = '';
+        };
+
+        $page::priorityRepair();
     }
 
 

@@ -2,6 +2,8 @@
 /**
  * Абстрактная стратегия
  */
+declare(strict_types=1);
+
 namespace SOME;
 
 use ReflectionClass;

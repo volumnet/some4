@@ -48,7 +48,7 @@ final class HTTP
         $appendDirsToEmptyString = false
     ) {
         if ($initialPath === null) {
-            $initialPath = $_SERVER['REQUEST_URI'];
+            $initialPath = $_SERVER['REQUEST_URI'] ?? '';
         }
         if (substr($changeQuery, 0, 1) == '?') {
             $changeQuery = substr($changeQuery, 1);

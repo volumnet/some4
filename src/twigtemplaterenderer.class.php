@@ -2,6 +2,8 @@
 /**
  * Рендерер шаблонов Twig
  */
+declare(strict_types=1);
+
 namespace SOME;
 
 use Twig\Environment;

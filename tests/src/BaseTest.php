@@ -7,7 +7,10 @@ namespace SOME;
 use PHPUnit\Framework\TestCase;
 use RAAS\Application;
 use RAAS\CustomField;
+use RAAS\CMS\CMSAccess;
 use RAAS\CMS\Material_Type;
+use RAAS\CMS\Package;
+use RAAS\CMS\PageRecursiveCache;
 
 /**
  * Класс базового теста
@@ -15,13 +18,29 @@ use RAAS\CMS\Material_Type;
 class BaseTest extends TestCase
 {
     /**
+     * Цвета терминала
+     * @var array <pre><code>string[] URN цвета => mixed Код цвета></code></pre>
+     */
+    protected static $terminalColors = [
+        'default' => 0,
+        'red' => 31,
+        'green' => 32,
+        'yellow' => 33,
+        'blue' => 34,
+        'magenta' => 35,
+        'cyan' => 36,
+        'white' => 37,
+        'gray' => '38;2;88;88;88'
+    ];
+
+    /**
      * Задействованные таблицы
      * @var string[]
      */
     public static $tables = [];
 
     /**
-     * Доступные таблицы
+     * Все доступные таблицы
      * @var array <pre><code>array<string[] Название таблицы => string Название таблицы></code></pre>
      */
     protected static $availableTables = [];
@@ -35,14 +54,26 @@ class BaseTest extends TestCase
     ];
 
     /**
-     * Таблицы установлены
-     * @var array <pre><code>array<string[] Имя класса => true></code></pre>
+     * Задействованные таблицы на чтение
+     * @var array <pre><code>array<string[] Название класса => array<
+     *     string[] Название таблицы => string Название таблицы
+     * >></code></pre>
      */
-    protected static $tablesInstalled = [];
+    protected static $tablesToRead = [];
 
     /**
-     * Задействованные запросы
-     * @var array <pre><code>array<string[] Название таблицы => string Название таблицы></code></pre>
+     * Задействованные таблицы на запись
+     * @var array <pre><code>array<string[] Название класса => array<
+     *     string[] Название таблицы => string Название таблицы
+     * >></code></pre>
+     */
+    protected static $tablesToWrite = [];
+
+    /**
+     * Задействованные таблицы
+     * @var array <pre><code>array<
+     *     string[] Название таблицы => bool Изменялась ли таблица
+     * ></code></pre>
      */
     protected static $affectedTables = [];
 
@@ -54,23 +85,30 @@ class BaseTest extends TestCase
 
     public static function tearDownAfterClass(): void
     {
-        $affectedTables = array_values(static::$affectedTables[static::class] ?? []);
-        $missingTables = array_diff($affectedTables, static::$tables);
-        $missingTables = array_values($missingTables);
-        $unnecessaryTables = array_diff(static::$tables, $affectedTables);
-        $unnecessaryTables = array_values($unnecessaryTables);
+        $tablesToRead = static::$tablesToRead[static::class] ?? [];
+        $tablesToWrite = static::$tablesToWrite[static::class] ?? [];
+        $affectedTables = array_values(array_merge($tablesToRead, $tablesToWrite));
+        $missingTables = array_values(array_diff($affectedTables, static::$tables));
+        $unnecessaryTables = array_values(array_diff(static::$tables, $affectedTables));
         if ($missingTables) {
-            $logMessage = "\n" . 'Для класса ' . static::class . " не хватает таблиц: \n"
-                . str_replace('"', "'", json_encode($missingTables)) . "\n";
-            $logMessage = mb_strtoupper($logMessage);
-            echo $logMessage;
+            $logMessage = mb_strtoupper('Для класса ' . static::class . " не хватает таблиц: ")
+                . static::displayTables($missingTables);
+            static::doLog($logMessage, 'red');
         }
-        if ($unnecessaryTables) {
-            $logMessage = "\n" . 'Для класса ' . static::class . " следующие таблицы не используются: "
-                . str_replace('"', "'", json_encode($unnecessaryTables)) . "\n";
-            echo $logMessage;
-        }
+        // if ($unnecessaryTables) {
+        //     $logMessage = 'Для класса ' . static::class . " следующие таблицы не используются: "
+        //         . static::displayTables($unnecessaryTables);
+        //     static::doLog($logMessage, 'gray');
+        // }
         static::watchQueries(null); // Чтобы не писалось в предыдущий класс
+        if ($tablesToWrite) {
+            foreach ($tablesToWrite as $table) {
+                static::installTable($table);
+            }
+            // $logMessage = 'Для класса ' . static::class . ' восстановлены измененные таблицы '
+            //     . static::displayTables($tablesToWrite);
+            // static::doLog($logMessage, 'cyan');
+        }
     }
 
 
@@ -79,48 +117,111 @@ class BaseTest extends TestCase
      */
     public static function installTables()
     {
-        if (!(static::$tablesInstalled[static::class] ?? false)) {
-            static::watchQueries(null); // Чтобы не писалось в предыдущий класс
-            if (static::$availableTables) {
-                $tableFiles = array_values(static::$availableTables);
-            } else {
-                $glob = glob(__DIR__ . '/../resources/tables/*.sql');
-                $tableFiles = array_map(function ($x) {
-                    return pathinfo($x, PATHINFO_FILENAME);
-                }, $glob);
-                foreach ($tableFiles as $table) {
-                    static::$availableTables[$table] = $table;
-                }
-            }
-            $existingTables = Application::i()->SQL->getcol("SHOW TABLES");
+        static::watchQueries(null); // Чтобы не писалось в предыдущий класс
 
-            $filesToUpdate = array_diff($tableFiles, $existingTables);
-            $filesToUpdate = array_merge($filesToUpdate, static::$tables);
-            $filesToUpdate = array_unique($filesToUpdate);
-            $filesToUpdate = array_values($filesToUpdate);
-            if (in_array('attachments', static::$tables)) {
+        // Установим отсутствующие таблицы (которые доступны, но не установлены)
+        $missingTables = array_diff(static::getAvailableTables(), Application::i()->SQL->getcol("SHOW TABLES"));
+        $missingTables = array_values($missingTables);
+        if ($missingTables) {
+            foreach ($missingTables as $table) {
+                static::installTable($table);
+            }
+            // $logMessage = 'Установлены отсутствующие таблицы: ' . static::displayTables($missingTables);
+            // static::doLog($logMessage, 'green');
+        }
+
+        // Установим
+        $filesToUpdate = $filesToPass = [];
+        foreach (static::$tables as $table) {
+            if (!isset(static::$affectedTables[$table]) || (static::$affectedTables[$table] == true)) {
+                $filesToUpdate[$table] = $table;
+            } else {
+                $filesToPass[$table] = $table;
+            }
+        }
+
+        if ($filesToUpdate) {
+            foreach ($filesToUpdate as $table) {
+                static::installTable($table);
+            }
+            // $logMessage = 'Для класса ' . static::class . ' установлены таблицы '
+            //     . static::displayTables($filesToUpdate);
+            // static::doLog($logMessage, 'green');
+        }
+        // if ($filesToPass) {
+        //     $logMessage = 'Для класса ' . static::class . ' пропущены (не менялись) таблицы '
+        //         . static::displayTables($filesToPass);
+        //     static::doLog($logMessage, 'gray');
+        // }
+        static::watchQueries(static::class);
+    }
+
+
+    /**
+     * Устанавливает таблицу
+     * @param string $tablename Имя таблицы
+     */
+    public static function installTable($tablename)
+    {
+        $newSQL = file_get_contents(__DIR__ . '/../resources/tables/' . $tablename . '.sql');
+        Application::i()->SQL->query($newSQL);
+        static::$affectedTables[$tablename] = false;
+
+        switch ($tablename) {
+            case 'attachments':
+                // Очистим файлы вложений
                 $glob = glob(Application::i()->baseDir . '/files/cms/common/*.*');
                 foreach ($glob as $file) {
                     if (is_file($file) && (basename($file) != '.htaccess')) {
                         unlink($file);
                     }
                 }
-            }
-            if (in_array('cms_fields', static::$tables)) {
+                break;
+            case 'cms_access':
+                CMSAccess::refreshPagesAccessCache();
+                break;
+            case 'cms_pages':
+                $filename = Package::i()->cacheDir . '/system/pagerecursivecache.php';
+                if (file_exists($filename)) {
+                    File::unlink($filename);
+                }
+                PageRecursiveCache::i()->refresh();
+                PageRecursiveCache::i()->save();
+                break;
+            case 'cms_fields':
+                // Очистим кэш полей
                 CustomField::clearCache();
                 Material_Type::clearSelfFieldsCache();
-            }
-            if ($filesToUpdate) {
-                foreach ($filesToUpdate as $table) {
-                    $newSQL = file_get_contents(__DIR__ . '/../resources/tables/' . $table . '.sql');
-                    Application::i()->SQL->query($newSQL);
+                break;
+            case 'cms_snippets':
+                $glob = glob(Package::i()->cacheDir . '/system/snippets/*.*');
+                foreach ($glob as $file) {
+                    if (is_file($file) && (basename($file) != '.htaccess')) {
+                        unlink($file);
+                    }
                 }
-                echo "\n" . 'Для класса ' . static::class . ' установлены таблицы '
-                    . str_replace('"', "'", json_encode($filesToUpdate)) . "\n";
-            }
-            static::$tablesInstalled[static::class] = true;
-            static::watchQueries(static::class);
+                break;
         }
+    }
+
+
+    /**
+     * Устанавливает и получает список доступных таблиц
+     * @return string[]
+     */
+    public static function getAvailableTables(): array
+    {
+        if (!static::$availableTables) {
+            $glob = glob(__DIR__ . '/../resources/tables/*.sql');
+            $tableFiles = array_map(function ($x) {
+                return pathinfo($x, PATHINFO_FILENAME);
+            }, $glob);
+            foreach ($tableFiles as $table) {
+                static::$availableTables[$table] = $table;
+            }
+        }
+        $result = array_values(static::$availableTables);
+        return $result;
     }
 
 
@@ -139,14 +240,21 @@ class BaseTest extends TestCase
                     return;
                 }
 
-                $tables = static::getTablesFromQuery($query);
+                list($tables, $queryToChange) = static::getTablesFromQuery($query);
                 // if (($classname == 'RAAS\\CMS\\Shop\\Sync1CInterfaceTest') && in_array('cms_users', $tables)) {
                 //     var_dump(debug_backtrace()); exit;
                 // }
-                if (!(static::$affectedTables[$classname] ?? null)) {
-                    static::$affectedTables[$classname] = [];
+                if (!(static::$tablesToWrite[$classname] ?? null)) {
+                    static::$tablesToWrite[$classname] = [];
                 }
-                static::$affectedTables[$classname] = array_merge(static::$affectedTables[$classname], $tables);
+                if (!(static::$tablesToRead[$classname] ?? null)) {
+                    static::$tablesToRead[$classname] = [];
+                }
+                if ($queryToChange) {
+                    static::$tablesToWrite[$classname] = array_merge(static::$tablesToWrite[$classname], $tables);
+                } else {
+                    static::$tablesToRead[$classname] = array_merge(static::$tablesToRead[$classname], $tables);
+                }
             };
         } else {
             Application::i()->SQL->query_handler = function ($query) {
@@ -159,29 +267,71 @@ class BaseTest extends TestCase
     /**
      * Получает список таблиц из SQL-запроса
      * @param string $query Запрос
-     * @return string[] <pre><code>array<string[] Название таблицы => string Название таблицы></code></pre>
+     * @return array <pre><code>[
+     *     array<string[] Название таблицы => string Название таблицы>
+     *     bool Запрос на изменение
+     * ]</code></pre>
      */
     protected static function getTablesFromQuery(string $query): array
     {
         if (stristr($query, "SHOW FIELDS FROM")) { // Чтобы не задействовало классы при инициализации SOME
-            return [];
+            return [[], false];
         }
         $rx = "/(FROM|JOIN|UPDATE|((INSERT|REPLACE) INTO)) ([`\\w\\-]+)/umis";
         preg_match_all($rx, $query, $regs);
-        $result = [];
+        $tables = [];
         if ($regs && $regs[0]) {
             for ($i = 0; $i < count($regs[0]); $i++) {
                 $table = $regs[4][$i];
                 $table = str_replace('`', '', $table);
                 $table = trim($table);
                 if ((static::$availableTables[$table] ?? false) && !(static::$ignoredTables[$table] ?? false)) {
-                    $result[$table] = $table;
+                    $tables[$table] = $table;
                 }
             }
         }
+        $queryToChange = preg_match('/(^| )(INSERT|REPLACE|UPDATE|DELETE|ALTER) /umis', $query);
+        if ($queryToChange) {
+            static::$affectedTables[$table] = true;
+        }
+        return [$tables, $queryToChange];
+    }
+
+
+    /**
+     * Выводит через запятую названия таблиц
+     * @param string[] $tables Названия таблиц
+     */
+    public static function displayTables(array $tables): string
+    {
+        sort($tables);
+        $result = array_map(function ($x) {
+            return "'" . $x . "',";
+        }, $tables);
+        $result = "\n" . implode("\n", $result);
         return $result;
     }
 
+
+    /**
+     * Выводит сообщение
+     * @param string $message Сообщение
+     * @param string|null $color Цвет из массива static::$terminalColors
+     */
+    public static function doLog(string $message, string $color = null)
+    {
+        $coloredStart = $coloredEnd = '';
+        if ($color && (static::$terminalColors[$color] ?? null)) {
+            $coloredStart = "\033[" . static::$terminalColors[$color] . "m";
+            $coloredEnd = "\033[" . static::$terminalColors['default'] . "m";
+        }
+        echo "\n" . $coloredStart . $message . $coloredEnd . "\n";
+    }
+
+
+    /**
+     * Получение папки ресурсов
+     */
     public function getResourcesDir()
     {
         return 'resources';

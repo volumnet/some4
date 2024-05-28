@@ -328,9 +328,13 @@ class DB
             return false;
         }
         $temp = [];
-        do {
-            $temp[] = $result->fetchAll($resultType);
-        } while (@$result->nextRowset());
+        if (in_array($this->dbtype, ['sqlite', 'sqlite2'])) {
+            $temp = [$result->fetchAll($resultType)];
+        } else {
+            do {
+                $temp[] = $result->fetchAll($resultType);
+            } while (@$result->nextRowset());
+        }
         $result->closeCursor();
         return $multiple ? $temp : array_reduce($temp, 'array_merge', []);
     }

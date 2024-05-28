@@ -42,7 +42,7 @@ CREATE TABLE `cms_users_blocks_register` (
 
 LOCK TABLES `cms_users_blocks_register` WRITE;
 /*!40000 ALTER TABLE `cms_users_blocks_register` DISABLE KEYS */;
-INSERT INTO `cms_users_blocks_register` VALUES (45,4,0,0,0,1,0,'');
+INSERT INTO `cms_users_blocks_register` VALUES (45,4,1,0,0,1,0,'');
 /*!40000 ALTER TABLE `cms_users_blocks_register` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -55,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-03-29 15:46:37
+-- Dump completed on 2024-04-04 10:40:31

@@ -2,6 +2,8 @@
 /**
  * Рендерер шаблонов Mustache
  */
+declare(strict_types=1);
+
 namespace SOME;
 
 use Mustache_Engine;

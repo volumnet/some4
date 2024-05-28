@@ -7,6 +7,7 @@ declare(strict_types=1);
 namespace SOME;
 
 use ArrayObject;
+use PDOException;
 
 /**
  * Класс сущности SOME
@@ -1256,8 +1257,10 @@ abstract class SOME extends ArrayObject
 
         // Запишем информацию о классе
         if (!isset(self::$classes[static::class])) {
+            $isSQLite = static::$SQL && in_array(static::$SQL->dbtype, ['sqlite', 'sqlite2']);
             // Проверим все настройки класса
-            if (!static::$SQL || !static::$SQL->connection) {
+            // 2024-04-08, AVS: в случае SQLite не проверяем connection, т.к. он пустой
+            if (!static::$SQL || (!$isSQLite && !static::$SQL->connection)) {
                 $err = 'Cannot initialize class "' . static::class . '": no active database engine is set.';
                 throw new Exception($err);
             }
@@ -1270,7 +1273,7 @@ abstract class SOME extends ArrayObject
             foreach (static::$references as $ref => $reference) {
                 if (!is_array($reference)) {
                     $err = 'Cannot initialize class "' . static::class . '": '
-                        . 'reference "' . $ref . '" must be an [\'FK\' => string, \'classname\' => string].';
+                        . 'reference "' . $ref . '"' . " must be an ['FK' => string, 'classname' => string].";
                     throw new Exception($err);
                 } elseif (!isset($reference['FK'])) {
                     $err = 'Cannot initialize class "' . static::class . '": '
@@ -1287,15 +1290,15 @@ abstract class SOME extends ArrayObject
             foreach (static::$children as $ref => $reference) {
                 if (!is_array($reference)) {
                     $err = 'Cannot initialize class "' . static::class . '": '
-                        . 'children "' . $ref . '" must be an [\'classname\' => string, \'FK\' => string].';
+                        . 'child "' . $ref . '" must be an [\'classname\' => string, \'FK\' => string].';
                     throw new Exception($err);
                 } elseif (!isset($reference['FK'])) {
                     $err = 'Cannot initialize class "' . static::class . '": '
-                        . 'children "' . $ref . '" must have foreign key.';
+                        . 'child "' . $ref . '" must have foreign key.';
                     throw new Exception($err);
                 } elseif (!isset($reference['classname'])) {
                     $err = 'Cannot initialize class "' . static::class . '": '
-                        . 'children "' . $ref . '" must have class name.';
+                        . 'child "' . $ref . '" must have class name.';
                     throw new Exception($err);
                 } else {
                     $classname = $reference['classname'];
@@ -1305,7 +1308,7 @@ abstract class SOME extends ArrayObject
                         !is_subclass_of(static::class, $classname::$references[$remoteRef]['classname'])
                     ) {
                         $err = 'Cannot initialize class "' . static::class . '": '
-                            . 'class "' . $classname . '" is not its children with the foreign key "'
+                            . 'class "' . $classname . '" is not its child with the foreign key "'
                             . $reference['FK'] . '".';
                         throw new Exception($err);
                     }
@@ -1316,7 +1319,7 @@ abstract class SOME extends ArrayObject
             foreach (static::$parents as $key => $ref) {
                 if (!isset(static::$references[$ref])) {
                     $err = 'Cannot initialize class "' . static::class . '": '
-                        . 'reference "' . $ref . '" used as parent "' . $key . '" doesn\'t exist.';
+                        . 'reference "' . $ref . '" used as parent "' . $key . '"' . " doesn't exist.";
                     throw new Exception($err);
                 } elseif ((static::$references[$ref]['classname'] != static::class) &&
                     !is_subclass_of(static::class, static::$references[$ref]['classname'])
@@ -1350,48 +1353,28 @@ abstract class SOME extends ArrayObject
                 'fields' => [],
                 'AI' => false
             ];
-            $isSQLite = in_array(static::$SQL->dbtype, ['sqlite', 'sqlite2']);
             if ($isSQLite) {
+                $tablename = self::$classes[static::class]['tablename'];
+                $sqlQuery = "PRAGMA table_info(" . $tablename . ")";
+                $sqlResult = static::$SQL->get($sqlQuery);
+                foreach ($sqlResult as $row) {
+                    $field = trim($row['name']);
+                    self::$classes[static::class]['fields'][$field] = $field;
+                    if ((!static::$idN && $row['pk']) || (static::$idN == $field)) {
+                        self::$classes[static::class]['PRI'] = $field;
+                    }
+                }
                 $sqlQuery = "SELECT sql
                                FROM sqlite_master
                               WHERE type = 'table'
-                                AND tbl_name = '" . static::$SQL->real_escape_string(self::$classes[static::class]['tablename']) . "'";
-            } else {
-                $sqlQuery = "SHOW FIELDS FROM `" . self::$classes[static::class]['tablename'] . "`";
-            }
-
-            $sqlResult = static::$SQL->uget($sqlQuery);
-            if (!$sqlResult) {
-                $err = 'Cannot initialize class "' . static::class . '": '
-                    . 'cannot connect to the "' . self::$classes[static::class]['tablename'] . '" table.';
-                throw new Exception($err);
-            }
-
-            if ($isSQLite) {
-                preg_match('/^[^\\(]+\\((.*)\\)[^\\)]*$/ims', $sqlResult, $regs);
-                $regs = explode(',', $regs[1]);
-                $regs = array_map('trim', $regs);
-                foreach ($regs as $row) {
-                    if (preg_match('/^PRIMARY KEY\\((.*?)\\)/i', $row, $regs2)) {
-                        $field = trim($regs2[1]);
-                        self::$classes[static::class]['PRI'] = $field;
-                    } elseif ((stripos($row, 'PRIMARY KEY') === false) &&
-                        (stripos($row, 'UNIQUE') === false) &&
-                        (stripos($row, 'CHECK') === false) &&
-                        (stripos($row, 'FOREIGN') === false)
-                    ) {
-                        $regs2 = explode(' ', $row);
-                        $field = trim($regs2[0]);
-                        self::$classes[static::class]['fields'][$field] = $field;
-                        if (stripos($row, 'PRIMARY KEY') !== false) {
-                            self::$classes[static::class]['PRI'] = $field;
-                            if (stripos($row, 'AUTOINCREMENT') !== false) {
-                                self::$classes[static::class]['AI'] = true;
-                            }
-                        }
-                    }
+                                AND tbl_name = '" . static::$SQL->real_escape_string($tablename) . "'";
+                $sqlResult = static::$SQL->getvalue($sqlQuery);
+                if (strpos($sqlResult, 'AUTOINCREMENT') !== false) {
+                    self::$classes[static::class]['AI'] = true;
                 }
             } else {
+                $sqlQuery = "SHOW FIELDS FROM `" . self::$classes[static::class]['tablename'] . "`";
+                $sqlResult = static::$SQL->get($sqlQuery);
                 foreach ($sqlResult as $row) {
                     $field = trim($row['Field']);
                     self::$classes[static::class]['fields'][$field] = $field;
@@ -1403,6 +1386,9 @@ abstract class SOME extends ArrayObject
                     }
                 }
             }
+
+            // 2024-04-08, AVS: Убрал проверку на !$sqlResult, т.к. либо если таблицы нет - то будет
+            // выброшено исключение, либо если она есть - то она не пустая (пустые таблицы SQL не даст создать)
 
             if (!(self::$classes[static::class]['PRI'] ?? null)) {
                 throw new Exception('Cannot initialize class "' . static::class . '": no primary key found.');
@@ -1444,13 +1430,16 @@ abstract class SOME extends ArrayObject
         }, $objects)));
         if ($objectsIds) {
             static::ondelete($objectsIds);
-            static::onupdate($objectsIds);
             // 2017-02-10, AVS: переместили удаление текущей сущности в конец, т.к. логичнее удалять ее последней,
             // к тому же возникали проблемы с "висящими" ссылками в RAAS\CMS\Pages при каскадном удалении
             $sqlQuery = "DELETE FROM " . static::_tablename()
                       . " WHERE " . static::_idN() . " IN (" . implode(", ", array_fill(0, count($objectsIds), "?")) . ")";
             $sqlBind = $objectsIds;
             static::$SQL->query([$sqlQuery, $sqlBind]);
+            // 2024-04-18, AVS: как раз некаскадные ссылки лучше обновлять в конце после удаления, т.к. кэши
+            // могут глючить при наличии оригинальных элементов
+            // Также добавил параметр ondelete, т.к. мы удаляем оригинальные элементы
+            static::onupdate($objectsIds, true);
         }
         EventProcessor::emit('batchdelete', $objects);
     }
@@ -1534,6 +1523,7 @@ abstract class SOME extends ArrayObject
                         ])) {
                             $oldAlias = $i ? implode('__', array_slice($refTree, 0, $i)) : Namespaces::getClass($c);
                             $alias = implode('__', array_slice($refTree, 0, $i + 1));
+                            $refclass = null;
                             if ($typeOfKey == static::FIELD_REFERENCE) {
                                 $reference = $c::$references[$refTree[$i]];
                                 $refclass = $reference['classname'];
@@ -1569,7 +1559,7 @@ abstract class SOME extends ArrayObject
                                     $params['from'][] = "`" . $dbprefix . $link['tablename'] . "`
                                         AS `" . $alias . "___LINK`
                                         ON `" . $alias . "___LINK`.`" . $link['field_from'] . "` = `" . $oldAlias . "`.`" . $c::_idN() . "`";
-                                    $usedAliases[] = $alias . '';
+                                    $usedAliases[] = $alias . '___LINK';
                                     if (isset($c::$links[$refTree[$i]]['classname'])) {
                                         $refclass = $link['classname'];
                                         $usedAliases[] = $alias;
@@ -1579,7 +1569,11 @@ abstract class SOME extends ArrayObject
                                     }
                                 }
                             }
-                            $c = $refclass;
+                            if ($refclass) {
+                                $c = $refclass;
+                            } else {
+                                break;
+                            }
                         } else {
                             // if ($val == 'pages') {
                             //     echo $val;
@@ -1893,7 +1887,7 @@ abstract class SOME extends ArrayObject
     final public static function _idN(): string
     {
         static::init();
-        return self::$classes[static::class]['PRI'] ?? null;
+        return self::$classes[static::class]['PRI'] ?? '';
     }
 
 
@@ -2058,11 +2052,9 @@ abstract class SOME extends ArrayObject
      * При изменении текущего класса будут затронуты классы, содержащие внешние кэши с использованием
      * ссылок на текущий класс.
      *
-     * @return array <pre><code>array<
-     *     string[] Имя класса => array<
-     *         string[] Имя кэша класса => mixed Тело кэша класса
-     *     >
-     * ></code></pre>
+     * @return array <pre><code>array<string[] Имя затронутого класса => array<
+     *     string[] Имя кэша класса => mixed Тело кэша класса
+     * >></code></pre>
      */
     final protected static function affects(): array
     {
@@ -2081,15 +2073,17 @@ abstract class SOME extends ArrayObject
      * Определяет, есть ли в данном классе кэши, зависимые от класса $classname
      *
      * @param string $classname имя класса для проверки зависимости
-     * @return array массив вида [[имя кэша] => [тело кэша], ...]
+     * @return array <pre><code>array<
+     *     string[] Имя кэша => array Тело кэша
+     * ></code></pre>
      */
     final protected static function getCachesByClassname(string $classname): array
     {
         $aff = [];
-        foreach (static::$caches as $FC => $cache) {
-            foreach ($cache['affected'] as $ref) {
+        foreach (static::$caches as $cacheName => $cacheData) {
+            foreach ($cacheData['affected'] as $ref) {
                 if (static::$references[$ref]['classname'] == $classname) {
-                    $aff[$FC] = $cache;
+                    $aff[$cacheName] = $cacheData;
                     break;
                 }
             }
@@ -2137,15 +2131,22 @@ abstract class SOME extends ArrayObject
      */
     final protected static function getReferencesByClassname(string $classname, bool $cascade = null): array
     {
-        $temp = [];
+        $result = [];
         foreach (static::$references as $ref => $reference) {
-            if (($reference['classname'] == $classname) &&
-                (($cascade === null) || ($reference['cascade'] == $cascade))
-            ) {
-                $temp[$ref] = $reference;
+            if ((
+                ($reference['classname'] == $classname) ||
+                // 2024-02-18, AVS: добавил наследование с проверкой таблицы
+                // Действительно, если B extends A и C ссылается с каскадом на A,
+                // то при удалении B (по сути он же A), C тоже должен быть удален
+                (
+                    is_subclass_of($classname, $reference['classname']) &&
+                    ($classname::_tablename() == ($reference['classname'])::_tablename())
+                )
+            ) && (($cascade === null) || ($reference['cascade'] == $cascade))) {
+                $result[$ref] = $reference;
             }
         }
-        return $temp;
+        return $result;
     }
 
 
@@ -2209,76 +2210,113 @@ abstract class SOME extends ArrayObject
         $ids = array_map(function ($x) {
             return static::$SQL->quote($x);
         }, $ids);
-        // 2023-03-13, AVS: потеряно объявление $eventClass, но судя по названию, наверное это текущий класс
+        // 2023-03-13, AVS: потеряно объявление $eventClass, но судя по названию, наверное это текущий класс,
         // Возможно, придется поправить, назначил интуитивно
-        $eventClass = static::class;
-        $classes = array_keys(array_merge(static::affects(), $ondelete ? static::isReferencedBy(false) : []));
-        foreach ($classes as $classname) {
-            $sqlSelect = ["__SOME__." . ($classname::$objectCascadeUpdate ? "*" : $classname::_idN())];
-            $sqlFrom = [$classname::_tablename() . " AS __SOME__"];
-            $sqlWhere = $sqlUpdate = [];
-            foreach ($classname::getCachesByClassname($eventClass) as $cacheURN => $cache) {
-                if ($classname::$objectCascadeUpdate) {
-                    $sqlSelect[$cacheURN] = "(" . $classname::$caches[$cacheURN]['sql'] . ") AS __SOME__" . $cacheURN;
-                }
-                $sqlUpdate[$cacheURN] = "__SOME__." . $cacheURN . " = (" . $classname::$caches[$cacheURN]['sql'] . ")";
-                foreach ($classname::$caches[$cacheURN]['affected'] as $ref) {
-                    $reference = $classname::$references[$ref];
-                    $referenceClass = $reference['classname'];
-                    $sqlFrom[$ref] = "LEFT JOIN " . $referenceClass::_tablename()
-                        . " AS " . $ref
-                        . " ON " . $ref . "." . $referenceClass::_idN() . " = __SOME__." . $reference['FK'];
-                }
-                $sqlWhereRow = "(( 0 ";
-                foreach ($classname::$caches[$cacheURN]['affected'] as $ref) {
-                    $cls = $classname::$references[$ref]['classname'];
-                    if ($cls == $classname) {
-                        $sqlWhereRow .= " OR " . $ref . "." . $cls::_idN() . " IN (" . implode(", ", $ids) . ")";
-                    }
-                }
-                $sqlWhereRow .= " ) AND (
-                                    __SOME__." . $cacheURN . " != (" . $classname::$caches[$cacheURN]['sql'] . "))
-                                  )";
-                $sqlWhere[] = $sqlWhereRow;
-            }
+        // 2024-04-19, AVS: окончательно заменил на static::class
 
-            if ($ondelete) {
-                foreach ($classname::getReferencesByClassname($eventClass, false) as $ref => $reference) {
-                    if ($classname::$objectCascadeUpdate) {
-                        $sqlSelect[$reference['FK']] = "IFNULL(
-                                                            " . $ref . "." . $eventClass::_idN() . ",
-                                                            DEFAULT(__SOME__." . $reference['FK'] . ")
-                                                        ) AS __SOME__" . $reference['FK'];
-                    }
-                    $sqlUpdate[$reference['FK']] = "__SOME__." . $classname::$references[$ref]['FK'] . " = IFNULL(
-                                                        " . $ref . "." . $eventClass::_idN() . ",
-                                                        DEFAULT(__SOME__." . $classname::$references[$ref]['FK'] . ")
-                                                    )";
-                    $sqlFrom[$ref] = "LEFT JOIN " . $eventClass::_tablename()
-                                   . "  AS " . $ref
-                                   . "  ON " . $ref . "." . $eventClass::_idN() . " = __SOME__." . $reference['FK'];
-                    $sqlWhere[] = "(__SOME__." . $reference['FK'] . " != " . $ref . "." . $eventClass::_idN() . "
-                                        AND (" . $ref . "." . $eventClass::_idN() . " IN (" . implode(", ", $ids) . ")
-                                            OR " . $ref . "." . $eventClass::_idN() . " IS NULL
-                                        )
-                                    )";
-                }
-            }
-
-            if ($sqlSelect && $sqlFrom && $sqlWhere && $sqlUpdate) {
-                $sqlQuery = "SELECT " . implode(", ", $sqlSelect)
-                           . " FROM " . implode(" ", $sqlFrom)
-                          . " WHERE " . implode(" OR ", $sqlWhere);
-                $sqlUpdate = "UPDATE " . implode(" ", $sqlFrom)
-                             . " SET " . implode(", ", $sqlUpdate)
-                           . " WHERE " . implode(" OR ", $sqlWhere);
-                // print_r ([$sqlQuery, $sqlUpdate]); exit;
+        $affectedClassesByCache = array_keys(static::affects()); // Классы, затрагиваемые данным по кэшу
+        if ($ondelete) {
+            // При удалении также нужно обновить классы, некаскадно ссылающиеся на данный, поскольку эти ссылки должны
+            // поменяться на 0
+            $nonCascadeReferers = array_keys(static::isReferencedBy(false)); // Классы, некаскадно ссылающиеся на данный
+            $classes = array_values(array_unique(array_merge($affectedClassesByCache, $nonCascadeReferers)));
+        } else {
+            $classes = $affectedClassesByCache;
+        }
+        foreach ($classes as $refererClassname) {
+            if ($refererClassname::$objectCascadeUpdate) {
+                // При каскадном обновлении мы получаем полные записи, чтобы сформировать набор объектов для дальнейшего
+                // использования
+                $sqlSelect = ["__SOME__.*"];
             } else {
+                // При некаскадном обновлении мы получаем
+                $sqlSelect = ["__SOME__." . $refererClassname::_idN()];
+            }
+            // В данном случае __SOME__ это ссылающийся класс
+            $sqlFrom = [$refererClassname::_tablename() . " AS __SOME__"];
+            $sqlWhere = $sqlUpdate = [];
+
+            $cachesToCurrentClass = $refererClassname::getCachesByClassname(static::class); // Кэши на текущий класс
+            foreach ($cachesToCurrentClass as $cacheURN => $cacheData) {
+                if ($refererClassname::$objectCascadeUpdate) { // Поскольку без него получаем только список ID#
+                    $sqlSelect[$cacheURN] = "(" . $cacheData['sql'] . ") AS __SOME__" . $cacheURN;
+                } else {
+                    $sqlUpdate[$cacheURN] = "__SOME__." . $cacheURN . " = (" . $cacheData['sql'] . ")";
+                }
+                $sqlWhereRowArr = [];
+                foreach ($cacheData['affected'] as $refName) {
+                    $refData = $refererClassname::$references[$refName];
+                    $referenceClass = $refData['classname'];
+                    $refIdNColumn = $refName . "." . $referenceClass::_idN(); // SQL-ссылка на id-колонку ссылающегося класса
+                    $sqlFrom[$refName] = $referenceClass::_tablename()
+                        . " AS " . $refName
+                        . " ON " . $refIdNColumn . " = __SOME__." . $refData['FK'];
+                    // 2024-04-19, AVS: поменял с ссылающегося класса $referenceClass на текущий
+                    // Действительно, поскольку мы работаем с $ids текущего класса, логично что фильтруем по нему
+                    if ($referenceClass == static::class) {
+                        $sqlWhereRowArr[] = $refIdNColumn . " IN (" . implode(", ", $ids) . ")";
+                    }
+                }
+                // 2024-04-19, AVS: убрал проверку if ($sqlWhereRowArr) {
+                // Действительно, $ids задано (пероверяется в начале), цикл по ссылкам на текущий класс - значит где-то
+                // в задействованных ссылках он точно есть, значит ограничение по id точно установлено
+                // Отказываться от массива нельзя, т.к. у класса могут быть разные ссылки на один и тот же класс
+                $sqlWhere[] = "(
+                    (" . implode(" OR ", $sqlWhereRowArr) . ") AND
+                    (__SOME__." . $cacheURN . " != (" . $cacheData['sql'] . "))
+                )";
+            }
+
+            if ($ondelete) { // При удалении также проверим ссылки на удаляемый текущий класс
+                $nonCascadeReferences = $refererClassname::getReferencesByClassname(static::class, false);
+                foreach ($nonCascadeReferences as $refName => $refData) {
+                    if (!(static::$classes[$refererClassname]['fields'][$refData['FK']] ?? null)) {
+                        // 2024-04-19, AVS: Ключ ссылки не является полем основной таблицы ссылающегося класса
+                        // (например meta, или вторичная таблица у блоков)
+                        // Тогда чтобы не выдало ошибку SQL, пропускаем -
+                        // ТАКИЕ СЛУЧАИ НУЖНО БУДЕТ ОБРАБАТЫВАТЬ ВРУЧНУЮ!!!
+                        continue;
+                    }
+                    // В данном случае $refData['classname'] всегда равно static::class
+                    // 2024-04-19, AVS: так как мы удаляем ($ondelete) объекты данного класса,
+                    // то нет смысла проверять $refName . "." . static::_idN() на NULL - оно по идее должно быть
+                    // всегда верным
+                    if ($refererClassname::$objectCascadeUpdate) { // Поскольку без него получаем только список ID#
+                        $sqlSelect[$refData['FK']] = "DEFAULT(__SOME__." . $refData['FK'] . ") AS __SOME__" . $refData['FK'];
+                    } else {
+                        $sqlUpdate[$refData['FK']] = "__SOME__." . $refData['FK'] . " = DEFAULT(__SOME__." . $refData['FK'] . ")";
+                    }
+                    $sqlFrom[$refName] = static::_tablename()
+                                   . "  AS " . $refName
+                                   . "  ON " . $refName . "." . static::_idN() . " = __SOME__." . $refData['FK'];
+                    // 2024-04-19, AVS: заменил,
+                    // т.к. из императивного $sqlFrom[$refName] следует, что __SOME__." . $refData['FK'] либо равно
+                    // $refName . "." . static::_idN(), либо равно NULL, при этом во втором случае любое сравнение
+                    // тоже даст NULL
+                    // $sqlWhere[] = "(__SOME__." . $refData['FK'] . " != " . $refName . "." . static::_idN() . "
+                    //                     AND (" . $refName . "." . static::_idN() . " IN (" . implode(", ", $ids) . ")
+                    //                         OR " . $refName . "." . static::_idN() . " IS NULL
+                    //                     )
+                    //                 )";
+                    $sqlWhere[] = "(__SOME__." . $refData['FK'] . " IN (" . implode(", ", $ids) . "))";
+                }
+            }
+
+            // 2024-04-19, AVS: $sqlSelect и $sqlFrom можно не проверять, т.к. для каждого класса они устанавливаются
+            // императивно
+            // $sqlUpdate - тоже, т.к. он имеет смысл только без $refererClassname::$objectCascadeUpdate
+            if (!$sqlWhere) {
                 return false;
             }
+            $sqlSelectText = implode(", ", $sqlSelect);
+            $sqlFromText = implode(" LEFT JOIN ", $sqlFrom);
+            $sqlWhereText = implode(" OR ", $sqlWhere);
+            $sqlUpdateText = implode(", ", $sqlUpdate);
+            $sqlQuery = "SELECT " . $sqlSelectText . " FROM " . $sqlFromText . " WHERE " . $sqlWhereText;
+            $sqlUpdate = "UPDATE " . $sqlFromText . " SET " . $sqlUpdateText . " WHERE " . $sqlWhereText;
 
-            if ($classname::$objectCascadeUpdate) {
-                $sqlResult = $classname::getSQLSet($sqlQuery);
+            if ($refererClassname::$objectCascadeUpdate) {
+                $sqlResult = $refererClassname::getSQLSet($sqlQuery);
                 foreach ($sqlResult as $row) {
                     $row->trust();
                     $affected = array_filter(array_keys($row->meta), function ($x) {
@@ -2290,9 +2328,16 @@ abstract class SOME extends ArrayObject
                     $row->commit();
                 }
             } else {
-                $newIds = $classname::$SQL->getcol($sqlQuery);
-                $classname::$SQL->query($sqlUpdate);
-                $classname::onupdate($newIds);
+                $newIds = [];
+                try { // Для работы с временными таблицами, которые остались в кэше SOME
+                    $newIds = $refererClassname::$SQL->getcol($sqlQuery);
+                    $refererClassname::$SQL->query($sqlUpdate);
+                // @codeCoverageIgnoreStart
+                // В рамках тестирования не будем проверять заведомо ошибочные случаи
+                } catch (PDOException $e) {
+                }
+                // @codeCoverageIgnoreEnd
+                $refererClassname::onupdate($newIds);
             }
         }
         return true;
@@ -2309,9 +2354,13 @@ abstract class SOME extends ArrayObject
      */
     private static function ondelete(array $ids): bool
     {
+        // @codeCoverageIgnoreStart
+        // В приватном методе не могу проверить это условие, т.к. в вызывающих методах стоит защита
+        // Однако при рефакторинге это может быть защитой SQL-запроса
         if (!$ids) {
             return false;
         }
+        // @codeCoverageIgnoreEnd
         $SQL = static::$SQL;
         $ids = array_map(function ($x) use ($SQL) {
             return $SQL->quote($x);
@@ -2321,29 +2370,25 @@ abstract class SOME extends ArrayObject
         // возникали проблемы с "висящими" ссылками в RAAS\CMS\Pages при каскадном удалении
         $childrenClasses = static::isReferencedBy(true);
         foreach ($childrenClasses as $classname => $refs) {
-            $sqlQuery = "SELECT " . (static::$objectCascadeDelete ? "*" : $classname::_idN())
-                       . " FROM " . $classname::_tablename()
-                       . " WHERE 0 ";
-            foreach ($refs as $ref => $reference) {
-                $sqlQuery .= " OR " . $reference['FK'] . " IN (" . implode(", ", $ids) . ") ";
-            }
+            $sqlWhere = array_values(array_map(function ($reference) use ($ids) {
+                return $reference['FK'] . " IN (" . implode(", ", $ids) . ") ";
+            }, $refs));
 
-            $sqlResult = static::$SQL->get($sqlQuery);
-            if ($sqlResult) {
-                if ($classname::$objectCascadeDelete) {
-                    $objectsToDelete = array_map(function ($row) use ($classname) {
-                        return new $classname($row);
-                    }, $sqlResult);
-                    $classname::batchDelete($objectsToDelete);
-                } else {
-                    $idN = $classname::_idN();
-                    $newIds = array_map(function ($x) use ($idN) {
-                        return $x[$idN];
-                    }, $sqlResult);
+            if ($classname::$objectCascadeDelete) {
+                $objectsToDelete = $classname::getSet([
+                    'where' => implode(" OR ", $sqlWhere),
+                    'orderBy' => $classname::_idN()
+                ]);
+                $classname::batchDelete($objectsToDelete);
+            } else {
+                $sqlQuery = "SELECT " . $classname::_idN()
+                           . " FROM " . $classname::_tablename()
+                           . " WHERE " . implode(" OR ", $sqlWhere);
+                $newIds = static::$SQL->getcol($sqlQuery);
+                if ($newIds) {
                     $sqlQuery = "DELETE FROM " . $classname::_tablename()
                               . " WHERE " . $classname::_idN() . " IN (" . implode(", ", array_fill(0, count($newIds), "?")) . ")";
-                    $sqlBind = $newIds;
-                    $classname::$SQL->query([$sqlQuery, $sqlBind]);
+                    $classname::$SQL->query([$sqlQuery, $newIds]);
                     $classname::ondelete($newIds);
                     $classname::onupdate($newIds, true);
                 }
@@ -2352,7 +2397,7 @@ abstract class SOME extends ArrayObject
         // Удаляем связки, где текущий класс найден как сопряженный по поиску
         foreach (static::$links as $key => $link) {
             $sqlQuery = "DELETE FROM " . static::$dbprefix . $link['tablename']
-                       . " WHERE " . $link['field_from'] . " IN (" . implode(", ", $ids) . ") ";
+                      . " WHERE " . $link['field_from'] . " IN (" . implode(", ", $ids) . ") ";
             static::$SQL->query($sqlQuery);
         }
         // Удаляем связки, где текущий класс объявлен как сопряженный в явном виде
@@ -2373,7 +2418,7 @@ abstract class SOME extends ArrayObject
      * Распознает аргументы для метода getSet и getChildSet
      * @param array $args массив переданных аргументов в getSet и getChildSet
      * @param Pages|null обработчик страниц при постраничной разбивке
-     * @param array $params <ljcnre><code>array<[
+     * @param array $params <pre><code>array<[
      *    'select' => array(string[]|array[]), Условия для подстановки в выражение SELECT. Условия объединяются запятой
      *        Допускаются как строчные значения, так и массивы запросов с подстановками
      *        По умолчанию равно [имя класса].*
