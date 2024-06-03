@@ -28,23 +28,29 @@ class ZipArchive extends \ZipArchive
      * В отличие от стандартного \ZipArchive, позволяет рекурсивно добавлять папки
      *
      * @param string $filename Путь к файлу для добавления
-     * @param string|null $localname Имя файла внутри ZIP-архива. Если указано, то переопределит filename
+     * @param string $localname Имя файла внутри ZIP-архива. Если указано, то переопределит filename
      * @param int $start Этот параметр не используется, но необходим для будущего развития ZipArchive
      * @param int $length Этот параметр не используется, но необходим для будущего развития ZipArchive
      */
-    public function addFile($filename, $localname = null, $start = 0, $length = 0)
-    {
+    public function addFile(
+        string $filename,
+        string $localname = '',
+        int $start = 0,
+        int $length = 0,
+        int $flags = \ZipArchive::FL_OVERWRITE
+    ): bool {
         if (is_file($filename)) {
-            parent::addFile($filename, $localname, $start, $length);
+            $result = parent::addFile($filename, $localname, $start, $length);
         } elseif (is_dir($filename)) {
+            $result = true;
             $filename = rtrim($filename, '\\/');
             if (!$localname) {
-                $localname = \basename($filename);
+                $localname = basename($filename);
             }
             $dir = File::scandir($filename);
-            $this->addEmptyDir($localname);
+            $result &= $this->addEmptyDir($localname);
             foreach ($dir as $f) {
-                $this->addFile($filename . '/' . $f, $localname . '/' . $f);
+                $result &= $this->addFile($filename . '/' . $f, $localname . '/' . $f);
             }
         }
     }
