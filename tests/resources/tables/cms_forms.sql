@@ -34,7 +34,8 @@ CREATE TABLE `cms_forms` (
   `antispam_field_name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Anti-spam field name',
   `interface_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Interface ID#',
   PRIMARY KEY (`id`),
-  KEY `urn` (`urn`)
+  KEY `urn` (`urn`),
+  KEY `interface_id` (`interface_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COMMENT='Forms';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -57,4 +58,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-04-04 10:40:26
+-- Dump completed on 2024-06-11 13:27:31

@@ -427,4 +427,15 @@ class TextTest extends BaseTest
 
         $this->assertEquals($expected, $result);
     }
+
+
+    /**
+     * Тест метода getClassCaption
+     */
+    public function testGetClassCaption()
+    {
+        $result = Text::getClassCaption(Text::class);
+
+        $this->assertEquals('Класс работы с текстом', $result);
+    }
 }

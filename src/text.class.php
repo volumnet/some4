@@ -6,7 +6,10 @@ declare(strict_types=1);
 
 namespace SOME;
 
+use Exception;
+use ReflectionClass;
 use Pelago\Emogrifier\CssInliner;
+use phpDocumentor\Reflection\DocBlockFactory;
 
 /**
  * Класс работы с текстом
@@ -545,5 +548,26 @@ final class Text
             }
         }
         return $result;
+    }
+
+
+    /**
+     * Получает описание класса из docBlock'а
+     * @param string $classname Класс для получения описания
+     * @return string
+     */
+    public static function getClassCaption(string $classname): string
+    {
+        $reflectionClass = new ReflectionClass($classname);
+        try {
+            $docBlockFactory  = DocBlockFactory::createInstance();
+            $docBlock = $docBlockFactory->create($reflectionClass->getDocComment());
+            $summary = $docBlock->getSummary();
+            if ($summary && ($summary != $classname)) {
+                return $summary;
+            }
+        } catch (Exception $e) {
+        }
+        return '';
     }
 }

@@ -37,7 +37,7 @@ class ZipArchive extends \ZipArchive
         string $localname = '',
         int $start = 0,
         int $length = 0,
-        int $flags = \ZipArchive::FL_OVERWRITE
+        int $flags = self::FL_OVERWRITE
     ): bool {
         if (is_file($filename)) {
             $result = parent::addFile($filename, $localname, $start, $length);
@@ -53,5 +53,6 @@ class ZipArchive extends \ZipArchive
                 $result &= $this->addFile($filename . '/' . $f, $localname . '/' . $f);
             }
         }
+        return (bool)$result;
     }
 }

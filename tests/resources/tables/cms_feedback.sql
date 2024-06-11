@@ -31,7 +31,7 @@ CREATE TABLE `cms_feedback` (
   `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Post date',
   `vis` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Visited',
   `ip` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'IP address',
-  `user_agent` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'User Agent',
+  `user_agent` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT 'User Agent',
   PRIMARY KEY (`id`),
   KEY `uid` (`uid`),
   KEY `pid` (`pid`),
@@ -58,4 +58,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-04-04 10:40:25
+-- Dump completed on 2024-06-11 13:27:30
