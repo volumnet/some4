@@ -36,7 +36,7 @@ CREATE TABLE `cms_forms` (
   PRIMARY KEY (`id`),
   KEY `urn` (`urn`),
   KEY `interface_id` (`interface_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COMMENT='Forms';
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb3 COMMENT='Forms';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -45,7 +45,7 @@ CREATE TABLE `cms_forms` (
 
 LOCK TABLES `cms_forms` WRITE;
 /*!40000 ALTER TABLE `cms_forms` DISABLE KEYS */;
-INSERT INTO `cms_forms` VALUES (1,'Обратная связь','feedback',0,1,'',1,'hidden','_name',5),(2,'Заказать звонок','order_call',0,1,'',1,'hidden','_name',5),(3,'Форма заказа','order',0,1,'',1,'hidden','_name',25),(4,'Форма для регистрации','forma_dla_registracii',0,1,'',1,'hidden','_name',49),(5,'Вопрос-ответ к товарам','goods_faq',6,1,'',1,'hidden','_name',5),(6,'Отзывы к товарам','goods_reviews',7,1,'',1,'hidden','_name',5);
+INSERT INTO `cms_forms` VALUES (1,'Обратная связь','feedback',0,1,'',1,'hidden','_name',5),(2,'Заказать звонок','order_call',0,1,'',1,'hidden','_name',5),(3,'Форма заказа','order',0,1,'',1,'hidden','_name',25),(4,'Форма для регистрации','forma_dla_registracii',0,1,'',1,'hidden','_name',49),(5,'Вопрос-ответ к товарам','goods_faq',6,1,'',1,'hidden','_name',5),(6,'Отзывы к товарам','goods_reviews',7,1,'',1,'hidden','_name',5),(7,'Форма для регистрации','register',0,1,'',1,'smart','_question',49),(8,'Редактирование профиля','edit_profile',0,1,'',1,'smart','_question',49);
 /*!40000 ALTER TABLE `cms_forms` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -58,4 +58,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-11 13:27:31
+-- Dump completed on 2024-06-13 16:59:20

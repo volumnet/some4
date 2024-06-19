@@ -33,7 +33,7 @@ CREATE TABLE `cms_users_blocks_register` (
   `redirect_url` varchar(255) NOT NULL DEFAULT '' COMMENT 'Redirect unallowable users to',
   PRIMARY KEY (`id`),
   KEY `form_id` (`form_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=46 DEFAULT CHARSET=utf8mb3 COMMENT='Register blocks';
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8mb3 COMMENT='Register blocks';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +42,7 @@ CREATE TABLE `cms_users_blocks_register` (
 
 LOCK TABLES `cms_users_blocks_register` WRITE;
 /*!40000 ALTER TABLE `cms_users_blocks_register` DISABLE KEYS */;
-INSERT INTO `cms_users_blocks_register` VALUES (45,4,1,0,0,1,0,'');
+INSERT INTO `cms_users_blocks_register` VALUES (45,4,1,0,0,1,0,''),(54,8,1,0,1,1,0,'');
 /*!40000 ALTER TABLE `cms_users_blocks_register` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -55,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-11 13:27:35
+-- Dump completed on 2024-06-13 16:59:24

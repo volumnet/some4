@@ -49,9 +49,9 @@ class ClassImporter
                 }
                 $text = strtr($text, $mapping);
             } elseif ($as) {
-                $text = preg_replace('/(class|interface|trait) (\\w+)/umis', '$1 ' . $as, $text);
+                $text = preg_replace('/(class|interface|trait) (\\w+)/ums', '$1 ' . $as, $text);
             } else {
-                $text = preg_replace('/(class|interface|trait) (\\w+)/umis', '$1 $2Original', $text);
+                $text = preg_replace('/(class|interface|trait) (\\w+)/ums', '$1 $2Original', $text);
             }
             file_put_contents($tmpFilepath, $text);
         }

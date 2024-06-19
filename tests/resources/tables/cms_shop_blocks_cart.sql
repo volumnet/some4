@@ -25,6 +25,7 @@ DROP TABLE IF EXISTS `cms_shop_blocks_cart`;
 CREATE TABLE `cms_shop_blocks_cart` (
   `id` int unsigned NOT NULL DEFAULT '0' COMMENT 'ID#',
   `cart_type` int unsigned NOT NULL DEFAULT '0' COMMENT 'Cart type ID#',
+  `epay_interface_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay interface classname',
   `epay_interface_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'E-pay interface ID#',
   `epay_login` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay login',
   `epay_pass1` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay pass1',
@@ -33,7 +34,8 @@ CREATE TABLE `cms_shop_blocks_cart` (
   `epay_currency` varchar(255) NOT NULL DEFAULT '' COMMENT 'Currency',
   PRIMARY KEY (`id`),
   KEY `cart_type` (`cart_type`),
-  KEY `epay_interface_id` (`epay_interface_id`)
+  KEY `epay_interface_id` (`epay_interface_id`),
+  KEY `epay_interface_classname` (`epay_interface_classname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='Cart blocks';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -43,7 +45,7 @@ CREATE TABLE `cms_shop_blocks_cart` (
 
 LOCK TABLES `cms_shop_blocks_cart` WRITE;
 /*!40000 ALTER TABLE `cms_shop_blocks_cart` DISABLE KEYS */;
-INSERT INTO `cms_shop_blocks_cart` VALUES (38,1,0,'','','',0,''),(40,1,0,'','','',0,''),(41,2,0,'','','',0,''),(43,2,0,'','','',0,'');
+INSERT INTO `cms_shop_blocks_cart` VALUES (38,1,'',0,'','','',0,''),(40,1,'',0,'','','',0,''),(41,2,'',0,'','','',0,''),(43,2,'',0,'','','',0,'');
 /*!40000 ALTER TABLE `cms_shop_blocks_cart` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -56,4 +58,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-11 13:27:32
+-- Dump completed on 2024-06-13 16:59:21

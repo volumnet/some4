@@ -30,9 +30,10 @@ CREATE TABLE `cms_shop_orders` (
   `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Post date',
   `vis` int unsigned NOT NULL DEFAULT '0' COMMENT 'Visited',
   `ip` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'IP address',
-  `user_agent` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'User Agent',
+  `user_agent` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT 'User Agent',
   `status_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Status ID#',
   `paid` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Payment status',
+  `payment_interface_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'Payment interface classname',
   `payment_interface_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Payment interface ID#',
   `payment_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'Payment ID#',
   `payment_url` varchar(255) NOT NULL DEFAULT '' COMMENT 'Payment URL',
@@ -42,7 +43,8 @@ CREATE TABLE `cms_shop_orders` (
   KEY `page_id` (`page_id`),
   KEY `status_id` (`status_id`),
   KEY `paid` (`paid`),
-  KEY `payment_id` (`payment_id`)
+  KEY `payment_id` (`payment_id`),
+  KEY `payment_interface_classname` (`payment_interface_classname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COMMENT='Orders';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -64,4 +66,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-11 13:27:33
+-- Dump completed on 2024-06-13 16:59:22

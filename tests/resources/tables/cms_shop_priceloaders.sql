@@ -28,6 +28,7 @@ CREATE TABLE `cms_shop_priceloaders` (
   `ufid` varchar(255) NOT NULL DEFAULT '' COMMENT 'Unique field ID#',
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Name',
   `urn` varchar(255) NOT NULL DEFAULT '' COMMENT 'URN',
+  `interface_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'Interface classname',
   `interface_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Interface ID#',
   `rows` int unsigned NOT NULL DEFAULT '0' COMMENT 'Rows from top',
   `cols` int unsigned NOT NULL DEFAULT '0' COMMENT 'Cols from left',
@@ -43,7 +44,8 @@ CREATE TABLE `cms_shop_priceloaders` (
   KEY `ufid` (`ufid`),
   KEY `interface_id` (`interface_id`),
   KEY `cat_id` (`cat_id`),
-  KEY `urn` (`urn`)
+  KEY `urn` (`urn`),
+  KEY `interface_classname` (`interface_classname`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COMMENT='Price loaders';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -53,7 +55,7 @@ CREATE TABLE `cms_shop_priceloaders` (
 
 LOCK TABLES `cms_shop_priceloaders` WRITE;
 /*!40000 ALTER TABLE `cms_shop_priceloaders` DISABLE KEYS */;
-INSERT INTO `cms_shop_priceloaders` VALUES (1,4,'25','Стандартный загрузчик прайсов','default',27,0,0,15,0,1,1,0,0,0);
+INSERT INTO `cms_shop_priceloaders` VALUES (1,4,'25','Стандартный загрузчик прайсов','default','RAAS\\CMS\\Shop\\PriceloaderInterface',0,0,0,15,0,1,1,0,0,0);
 /*!40000 ALTER TABLE `cms_shop_priceloaders` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -66,4 +68,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-11 13:27:34
+-- Dump completed on 2024-06-13 16:59:23

@@ -30,13 +30,15 @@ CREATE TABLE `cms_shop_imageloaders` (
   `name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Name',
   `urn` varchar(255) NOT NULL DEFAULT '' COMMENT 'URN',
   `sep_string` varchar(255) NOT NULL DEFAULT '' COMMENT 'Separator string',
+  `interface_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'Interface classname',
   `interface_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Interface ID#',
   PRIMARY KEY (`id`),
   KEY `mtype` (`mtype`),
   KEY `ufid` (`ufid`),
   KEY `ifid` (`ifid`),
   KEY `interface_id` (`interface_id`),
-  KEY `urn` (`urn`)
+  KEY `urn` (`urn`),
+  KEY `interface_classname` (`interface_classname`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COMMENT='Image loaders';
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -46,7 +48,7 @@ CREATE TABLE `cms_shop_imageloaders` (
 
 LOCK TABLES `cms_shop_imageloaders` WRITE;
 /*!40000 ALTER TABLE `cms_shop_imageloaders` DISABLE KEYS */;
-INSERT INTO `cms_shop_imageloaders` VALUES (1,4,'25','27','Стандартный загрузчик изображений','default','_',26);
+INSERT INTO `cms_shop_imageloaders` VALUES (1,4,'25','27','Стандартный загрузчик изображений','default','_','RAAS\\CMS\\Shop\\ImageloaderInterface',0);
 /*!40000 ALTER TABLE `cms_shop_imageloaders` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -59,4 +61,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-11 13:27:33
+-- Dump completed on 2024-06-13 16:59:22
