@@ -39,7 +39,7 @@ CREATE TABLE `cms_material_types_affected_pages_for_materials_cache` (
 
 LOCK TABLES `cms_material_types_affected_pages_for_materials_cache` WRITE;
 /*!40000 ALTER TABLE `cms_material_types_affected_pages_for_materials_cache` DISABLE KEYS */;
-INSERT INTO `cms_material_types_affected_pages_for_materials_cache` VALUES (1,1,0),(2,1,0),(2,20,0),(3,1,0),(3,2,0),(3,3,0),(3,4,0),(3,5,0),(3,6,0),(3,8,0),(3,9,0),(3,10,0),(3,15,0),(3,16,0),(3,17,0),(3,18,0),(3,19,0),(3,20,0),(3,21,0),(3,22,0),(3,23,0),(3,24,0),(3,25,0),(3,27,0),(3,30,0),(3,31,0),(3,32,0),(3,33,0),(3,34,0),(3,35,0),(3,36,0),(4,1,0),(5,1,0),(3,7,1),(4,15,1),(4,16,1),(4,17,1),(4,18,1),(4,19,1),(4,20,1),(4,21,1),(4,23,1),(5,15,1),(5,16,1),(5,17,1),(5,18,1),(5,19,1),(5,20,1),(5,21,1),(5,23,1);
+INSERT INTO `cms_material_types_affected_pages_for_materials_cache` VALUES (1,1,0),(2,1,0),(2,20,0),(3,1,0),(3,2,0),(3,3,0),(3,4,0),(3,5,0),(3,6,0),(3,8,0),(3,9,0),(3,10,0),(3,15,0),(3,16,0),(3,17,0),(3,18,0),(3,19,0),(3,20,0),(3,21,0),(3,22,0),(3,23,0),(3,24,0),(3,25,0),(3,27,0),(3,30,0),(3,31,0),(3,32,0),(3,33,0),(4,1,0),(5,1,0),(3,7,1),(4,15,1),(4,16,1),(4,17,1),(4,18,1),(4,19,1),(4,20,1),(4,21,1),(4,23,1),(5,15,1),(5,16,1),(5,17,1),(5,18,1),(5,19,1),(5,20,1),(5,21,1),(5,23,1);
 /*!40000 ALTER TABLE `cms_material_types_affected_pages_for_materials_cache` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-13 16:59:20
+-- Dump completed on 2024-06-26 19:20:36

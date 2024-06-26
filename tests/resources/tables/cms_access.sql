@@ -48,7 +48,7 @@ CREATE TABLE `cms_access` (
 
 LOCK TABLES `cms_access` WRITE;
 /*!40000 ALTER TABLE `cms_access` DISABLE KEYS */;
-INSERT INTO `cms_access` VALUES (1,4,0,0,0,0,0,0,0),(2,4,0,0,1,4,0,1,1),(3,0,0,19,0,0,0,0,0),(4,0,0,19,1,3,2,0,1),(5,0,7,0,0,0,0,0,0),(6,0,7,0,1,3,1,0,1),(7,34,0,0,0,0,0,0,0),(8,34,0,0,1,2,0,0,1),(9,36,0,0,0,0,0,0,0),(10,36,0,0,1,2,0,0,1);
+INSERT INTO `cms_access` VALUES (1,4,0,0,0,0,0,0,0),(2,4,0,0,1,4,0,1,1),(3,0,0,19,0,0,0,0,0),(4,0,0,19,1,3,2,0,1),(5,0,7,0,0,0,0,0,0),(6,0,7,0,1,3,1,0,1);
 /*!40000 ALTER TABLE `cms_access` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -61,4 +61,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-06-13 16:59:17
+-- Dump completed on 2024-06-26 19:20:32
