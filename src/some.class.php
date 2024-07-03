@@ -521,21 +521,28 @@ abstract class SOME extends ArrayObject
 
         if (($type == self::FIELD_ID) || ($var == '_id')) {
             return $this->_id;
-        } elseif ($type == self::FIELD_REGULAR) {
+        }
+        if ($type == self::FIELD_REGULAR) {
             if (isset($this->updates[$var])) {
                 return $this->updates[$var];
             } elseif (isset($this->properties[$var])) {
                 return $this->properties[$var];
             }
             return null;
-        } elseif ($type == self::FIELD_REFERENCE) {
+        }
+        // 2024-07-02, AVS: перенес сюда, поскольку в meta можно переопределять всё что угодно из последующих
+        if (isset($this->meta[$var])) {
+            return $this->meta[$var];
+        }
+        if ($type == self::FIELD_REFERENCE) {
             if (!isset($this->referenced[$var])) {
                 $classname = static::$references[$var]['classname'];
                 $id = static::$references[$var]['FK'];
                 $this->referenced[$var] = new $classname($this->$id);
             }
             return $this->referenced[$var];
-        } elseif ($type == self::FIELD_LINK) {
+        }
+        if ($type == self::FIELD_LINK) {
             if ($ids) {
                 $var = substr($var, 0, -4);
             }
@@ -588,7 +595,8 @@ abstract class SOME extends ArrayObject
                 }, $result);
             }
             return $result;
-        } elseif ($type == self::FIELD_COGNIZABLE) {
+        }
+        if ($type == self::FIELD_COGNIZABLE) {
             if (!isset($this->cognized[$var]) &&
                 in_array($var, static::$cognizableVars) &&
                 is_callable([$this, '_' . $var])
@@ -596,7 +604,8 @@ abstract class SOME extends ArrayObject
                 $this->cognized[$var] = $this->{'_' . $var}($this);
             }
             return $this->cognized[$var];
-        } elseif ($type == self::FIELD_CHILDREN) {
+        }
+        if ($type == self::FIELD_CHILDREN) {
             $ref = self::clearVar($var);
             $all = (substr($var, 0, 4) == 'all_');
             $var2 = ($all ? 'all_' : '') . $ref;
@@ -622,7 +631,8 @@ abstract class SOME extends ArrayObject
                 }, $result);
             }
             return $result;
-        } elseif ($type == self::FIELD_PARENTS) {
+        }
+        if ($type == self::FIELD_PARENTS) {
             $ref = self::clearVar($var);
             if (!isset($this->_parents[$ref])) {
                 $this->_parents[$ref] = $this->parents($ref);
@@ -634,9 +644,6 @@ abstract class SOME extends ArrayObject
                 }, $result);
             }
             return $result;
-        }
-        if (isset($this->meta[$var])) {
-            return $this->meta[$var];
         }
         if (in_array($var, ['meta', 'properties', 'updates'])) {
             return $this->$var;
@@ -674,7 +681,9 @@ abstract class SOME extends ArrayObject
                 break;
             case self::FIELD_COGNIZABLE:
                 // 2023-10-16, AVS: добавил предустановку cognizable, но непонятно, какие баги могут возникнуть
-                $this->cognized[$var] = $val;
+                // 2024-07-02, AVS: заменил на meta, поскольку cognizable чистится при малейшем изменении,
+                // в совокупности с порядком __get логичнее так
+                $this->meta[$var] = $val;
                 break;
             default:
                 $this->meta[$var] = $val;
@@ -2537,7 +2546,7 @@ abstract class SOME extends ArrayObject
      * @param string $prop Имя свойства
      * @return int Константы типов свойств вида self::FIELD_*
      */
-    private static function typeof(string $prop): int
+    public static function typeof(string $prop): int
     {
         static::init();
         $clearedProp = static::clearVar($prop);

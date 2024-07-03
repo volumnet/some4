@@ -194,7 +194,7 @@ class BaseTest extends TestCase
                 Material_Type::clearSelfFieldsCache();
                 break;
             case 'cms_snippets':
-                $glob = glob(Package::i()->cacheDir . '/system/snippets/*.*');
+                $glob = glob(Application::i()->baseDir . '/inc/snippets/*.tmp.php');
                 foreach ($glob as $file) {
                     if (is_file($file) && (basename($file) != '.htaccess')) {
                         unlink($file);

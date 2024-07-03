@@ -566,8 +566,11 @@ final class Text
             if ($summary && ($summary != $classname)) {
                 return $summary;
             }
+        // @codeCoverageIgnoreStart
+        // Не могу у существующих классов проверять ошибку
         } catch (Exception $e) {
         }
         return '';
+        // @codeCoverageIgnoreEnd
     }
 }
