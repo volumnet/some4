@@ -7,11 +7,6 @@
 namespace SOME;
 
 /**
- * Подключим необходимую библиотеку Graphics
- */
-require_once (__DIR__ . '/graphics.class.php');
-
-/**
  * Класс работы с эскизами
  *
  * Данный класс предоставляет обработчик уменьшенных копий изображений (эскизов, thumbnails)
@@ -19,20 +14,20 @@ require_once (__DIR__ . '/graphics.class.php');
  * @subpackage Graphics
  * @property-read string $src путь к исходному файлу
  * @property int $wFrame ширина ограничивающей рамки для создания эскиза.
- *               Должно быть положительным значением, либо INF для отсутствия ограничения.
+ *     Должно быть положительным значением, либо INF для отсутствия ограничения.
  * @property int $hFrame высота ограничивающей рамки для создания эскиза.
- *               Должно быть положительным значением, либо INF для отсутствия ограничения.
+ *     Должно быть положительным значением, либо INF для отсутствия ограничения.
  * @property int $mode режим создания эскиза - берется из собственных констант вида THUMBNAIL_... (см. описание там)
  * @property bool $allowEnlarge если установлен в true, изображения меньшие рамки будут растягиваться до рамки,
- *                если false - останутся как есть
+ *     если false - останутся как есть
  * @property bool $createFile если установлен в true, в $src будет создан файл эскиза,
- *                в противном случае эскиз будет выведен в stdout
+ *     в противном случае эскиз будет выведен в stdout
  * @property int $quality качество изображения / параметр сжатия - число от 0 до 100.
- *               Чем выше число, тем изображение качественней, но выходной файл больше
+ *     Чем выше число, тем изображение качественней, но выходной файл больше
  * @property array $background Фон для прозрачных изображений.
- *                 Задается четырьмя (красный, зеленый, иний, прозрачность) каналами.
+ *     Задается четырьмя (красный, зеленый, иний, прозрачность) каналами.
  * @param int $transparencyThreshold Порог прозрачности. Цвета в GIF-картинке, с прозрачностью большей или равной
- *            данному порогу, считаются прозрачным цветом. Число от 0 до 127
+ *     данному порогу, считаются прозрачным цветом. Число от 0 до 127
  */
 class Thumbnail
 {
@@ -54,7 +49,7 @@ class Thumbnail
     /**
      * Размер эскиза по умолчанию.
      */
-    const tn_size = 128;
+    const TN_SIZE = 128;
 
     /**
      * Путь к исходному файлу.
@@ -75,7 +70,7 @@ class Thumbnail
      * Ширина ограничивающей рамки для создания эскиза.
      * @var int Положительное значение, либо INF для отсутствия ограничения.
      */
-    private $_wFrame = self::tn_size;
+    private $_wFrame = self::TN_SIZE;
 
     /**
      * Высота ограничивающей рамки для создания эскиза.
@@ -111,10 +106,10 @@ class Thumbnail
 
     /**
      * Фон для прозрачных изображений.
-     * @var array Массив вида array(красный, зеленый, синий, прозрачность),
+     * @var array Массив вида [красный, зеленый, синий, прозрачность],
      *            где каждый цветовой канал - число от 0 до 255, прозрачность - от 0 до 127
      */
-    private $_background = array(255, 255, 255, 127);
+    private $_background = [255, 255, 255, 127];
 
     /**
      * Порог прозрачности.
@@ -138,7 +133,7 @@ class Thumbnail
 
     /**
      * Тип исходного изображения.
-     * @var int Константы вида \IMAGETYPE_XXX
+     * @var int Константы вида IMAGETYPE_XXX
      */
     private $typeSrc;
 
@@ -262,7 +257,7 @@ class Thumbnail
 
     /**
      * Тип результирующего файла.
-     * @var int Константы вида \IMAGETYPE_XXX
+     * @var int Константы вида IMAGETYPE_XXX
      */
     private $typeDest;
 
@@ -280,33 +275,33 @@ class Thumbnail
 
     /**
      * Конструктор класса
-     *
      * @param string $src путь к исходному файлу
-     * return bool false в случае ошибки
+     * @return bool false в случае ошибки
      */
     public function __construct($src)
     {
         $this->_src = $src;
-        if (!is_file($this->_src) || !($size = \getimagesize($this->_src))) {
+        if (!is_file($this->_src) || !($size = getimagesize($this->_src))) {
             // Если файл не определен или не является графическим, вернем false
             return;
         }
         // Определим функцию для загрузки изображения
         list($this->wSrc, $this->hSrc, $this->typeSrc) = $size;
-        !($functionSrc = Graphics::image_type_to_input_function($this->typeSrc)) ? ($functionSrc = 'imagecreatefromjpeg') : null;
+        $functionSrc = Graphics::image_type_to_input_function($this->typeSrc);
+        if (!$functionSrc) {
+            $functionSrc = 'imagecreatefromjpeg';
+        }
         $this->imgSrc =@ $functionSrc($this->_src);
     }
 
 
     /**
-     * Возвращает изображение в файл или в поток.
-     * @param string $dest путь к будущему файлу эскиза. Метод сам определяет расширение файла и применяет соответствующую функцию.
-     *                     Если параметр не указан или не указано расширение, используется JPEG.
+     * Возвращает изображение в виде GDImage/resource
+     * @return GDImage|resource|null null, если не задан источник
      */
-    public function output($dest = '')
+    public function outputGD(string $dest = '')
     {
         if ($this->imgSrc) {
-            $this->_dest = $dest;
             $this->calculateRelativeParams();
             $this->calculateGeometry();
             $this->checkOutputFormat();
@@ -314,21 +309,43 @@ class Thumbnail
             $this->setBackground();
             $this->copyImage();
             $this->restoreTransparency();
+            return $this->imgDest;
+        }
+        return null;
+    }
+
+
+    /**
+     * Возвращает изображение в файл или в поток.
+     * @param string $dest путь к будущему файлу эскиза. Метод сам определяет расширение файла и применяет
+     * соответствующую функцию. Если параметр не указан или не указано расширение, используется JPEG.
+     */
+    public function output(string $dest = '')
+    {
+        $this->_dest = $dest;
+        $gdImage = $this->outputGD();
+        if ($gdImage) {
             if (!$this->_createFile) {
                 header('Content-Type: ' . $this->mimeDest . '; name="' . $this->filenameDest . '.' . $this->extDest . '"');
                 header('Content-Disposition: inline; filename="' . $this->filenameDest . '.' . $this->extDest . '"');
             }
             $this->outputImage();
         }
-        return false;
     }
 
 
     public function __get($var)
     {
         switch ($var) {
-            case 'src': case 'wFrame': case 'hFrame': case 'mode': case 'allowEnlarge':
-            case 'createFile': case 'quality': case 'background': case 'transparencyThreshold':
+            case 'src':
+            case 'wFrame':
+            case 'hFrame':
+            case 'mode':
+            case 'allowEnlarge':
+            case 'createFile':
+            case 'quality':
+            case 'background':
+            case 'transparencyThreshold':
                 return $this->{'_' . $var};
                 break;
         }
@@ -338,15 +355,55 @@ class Thumbnail
     public function __set($var, $val)
     {
         switch ($var) {
-            case 'wFrame':  case 'hFrame':
-                $this->__set_frame($var, $val);
+            case 'wFrame':
+            case 'hFrame':
+                $this->setFrame($var, $val);
                 break;
-            case 'mode': case 'quality': case 'transparencyThreshold': case 'allowEnlarge': case 'background':
-                $f = '__set_' . $var;
-                $this->$f($val);
+            case 'mode':
+                if (is_numeric($val)) {
+                    $this->_mode = (int)$val;
+                }
+                break;
+            case 'quality':
+                if (is_numeric($val)) {
+                    if ($val < 0) {
+                        $this->_quality = 0;
+                    } elseif ($val > 100) {
+                        $this->_quality = 100;
+                    } else {
+                        $this->_quality = (int)$val;
+                    }
+                }
+                break;
+            case 'transparencyThreshold':
+                if (is_numeric($val)) {
+                    if ($val < 0) {
+                        $this->_transparencyThreshold = 0;
+                    } elseif ($val > 127) {
+                        $this->_transparencyThreshold = 127;
+                    } else {
+                        $this->_transparencyThreshold = (int)$val;
+                    }
+                }
+                break;
+            case 'allowEnlarge':
+                if (!($this->_wFrame == INF || $this->_hFrame == INF)) {
+                    $this->_allowEnlarge = (bool)$val;
+                }
+                break;
+            case 'background':
+                $temp = Graphics::getRGBAFromColor($val);
+                for ($i = 0; $i < count($temp); $i++) {
+                    if ($temp[$i] < 0) {
+                        $temp[$i] = 0;
+                    } elseif ($temp[$i] > ($i == 3 ? 127 : 255)) {
+                        $temp[$i] = ($i == 3 ? 127 : 255);
+                    }
+                }
+                $this->_background = [(int)$temp[0], (int)$temp[1], (int)$temp[2], (int)$temp[3]];
                 break;
             case 'createFile':
-                $this->{'_' . $var} = (bool)$val;
+                $this->_createFile = (bool)$val;
                 break;
         }
     }
@@ -357,48 +414,60 @@ class Thumbnail
      *
      * Метод создает эскиз и выводит его в stdout, либо в файл
      * @param string $src путь к исходному файлу
-     * @param string $dest путь к будущему файлу эскиза. Метод сам определяет расширение файла и применяет соответствующую функцию.
-     *                     Если не указано расширение, используется JPEG
-     * @param int $wFrame ширина ограничивающей рамки для создания эскиза.
-     *                    Должно быть положительным значением, либо 0 или INF для отсутствия ограничения.
+     * @param string $dest путь к будущему файлу эскиза. Метод сам определяет расширение файла и применяет
+     *     соответствующую функцию. Если не указано расширение, используется JPEG
+     * @param int $wFrame ширина ограничивающей рамки для создания эскиза. Должно быть положительным значением,
+     *     либо 0 или INF для отсутствия ограничения.
      * @param int $hFrame высота ограничивающей рамки для создания эскиза.
-     *                    При значении -1 используется то же значение, что и $wFrame (рамка квадратная).
-     *                    INF или 0 обозначает отстутствие ограничения.
+     *     При значении -1 используется то же значение, что и $wFrame (рамка квадратная).
+     *     INF или 0 обозначает отстутствие ограничения.
      * @param int $mode режим создания эскиза - берется из собственных констант вида THUMBNAIL_... (см. описание там)
-     * @param bool $allow_enlarge если установлен в true, изображения меньшие рамки будут растягиваться до рамки, если false - останутся как есть
-     * @param bool $create_file если установлен в true, в $src будет создан файл эскиза, в противном случае эскиз будет выведен в stdout
-     * @param int $quality качество изображения / параметр сжатия. Чем выше число, тем изображение качественней, но выходной файл больше
-     * @param array|int|string $background задает фон для прозрачных изображений. Может задаваться тремя (красный, зеленый, синий), либо четырьмя
-     *                                     (красный, зеленый, синий, прозрачность) каналами. Может быть представлен в следующих видах:
-     *                                     array([красный(0-255)], [зеленый(0-255)], [синий(0-255)]);
-     *                                     array([красный(0-255)], [зеленый(0-255)], [синий(0-255)], [прозрачность(0-127)]);
-     *                                     int 0x[красный(00-FF)][зеленый(00-FF)][синий(00-FF)]
-     *                                     int 0x[красный(00-FF)][зеленый(00-FF)][синий(00-FF)][прозрачность(00-7F)]
-     *                                     string #[красный(0-F)][зеленый(0-F)][синий(0-F)]
-     *                                     string #[красный(0-F)][зеленый(0-F)][синий(0-F)][прозрачность(0-7)]
-     *                                     string #[красный(00-FF)][зеленый(00-FF)][синий(00-FF)]
-     *                                     string #[красный(00-FF)][зеленый(00-FF)][синий(00-FF)][прозрачность(00-7F)]
-     *                                     При указании в прозрачности значения 127 (7F) в результирующих форматах PNG и GIF фон
-     *                                     будет объявлен прозрачным цветом.
-     *                                     При наличии в исходном изображении прозрачного цвета, если результирующий формат GIF,
-     *                                     прозрачный цвет сохранится
-     * @param int $transparency_threshold Порог прозрачности. Цвета в GIF-картинке, с прозрачностью большей или равной данному порогу,
+     * @param bool $allowEnlarge если установлен в true, изображения меньшие рамки будут растягиваться до рамки,
+     *     если false - останутся как есть
+     * @param bool $createFile если установлен в true, в $src будет создан файл эскиза, в противном случае эскиз
+     *     будет выведен в stdout
+     * @param int $quality качество изображения / параметр сжатия. Чем выше число, тем изображение качественней,
+     *     но выходной файл больше
+     * @param array|int|string $background задает фон для прозрачных изображений.
+     *     Может задаваться тремя (красный, зеленый, синий), либо четырьмя (красный, зеленый, синий, прозрачность)
+     *     каналами. Может быть представлен в следующих видах:
+     *     - [[красный(0-255)], [зеленый(0-255)], [синий(0-255)]];
+     *     - [[красный(0-255)], [зеленый(0-255)], [синий(0-255)], [прозрачность(0-127)]];
+     *     - int 0x[красный(00-FF)][зеленый(00-FF)][синий(00-FF)]
+     *     - int 0x[красный(00-FF)][зеленый(00-FF)][синий(00-FF)][прозрачность(00-7F)]
+     *     - string #[красный(0-F)][зеленый(0-F)][синий(0-F)]
+     *     - string #[красный(0-F)][зеленый(0-F)][синий(0-F)][прозрачность(0-7)]
+     *     - string #[красный(00-FF)][зеленый(00-FF)][синий(00-FF)]
+     *     - string #[красный(00-FF)][зеленый(00-FF)][синий(00-FF)][прозрачность(00-7F)]
+     *     При указании в прозрачности значения 127 (7F) в результирующих форматах PNG и GIF фон
+     *     будет объявлен прозрачным цветом.
+     *     При наличии в исходном изображении прозрачного цвета, если результирующий формат GIF,
+     *     прозрачный цвет сохранится
+     * @param int $transparencyThreshold Порог прозрачности. Цвета в GIF-картинке, с прозрачностью большей или равной данному порогу,
      *                                    считаются прозрачным цветом.
      * return bool false в случае ошибки
      */
     public static function make(
-        $src, $dest, $wFrame, $hFrame = -1, $mode = Thumbnail::THUMBNAIL_INLINE, $allow_enlarge = false, $create_file = true,
-        $quality = 75, $background = array(255, 255, 255, 127), $transparency_threshold = 100
+        $src,
+        $dest,
+        $wFrame,
+        $hFrame = -1,
+        $mode = Thumbnail::THUMBNAIL_INLINE,
+        $allowEnlarge = false,
+        $createFile = true,
+        $quality = 75,
+        $background = [255, 255, 255, 127],
+        $transparencyThreshold = 100
     ) {
         $tn = new static($src);
         $tn->wFrame = $wFrame;
         $tn->hFrame = ($hFrame != -1 ? $hFrame : $wFrame);
         $tn->mode = $mode;
-        $tn->allowEnlarge = $allow_enlarge;
-        $tn->createFile = $create_file;
+        $tn->allowEnlarge = $allowEnlarge;
+        $tn->createFile = $createFile;
         $tn->quality = $quality;
         $tn->background = $background;
-        $tn->transparencyThreshold = $transparency_threshold;
+        $tn->transparencyThreshold = $transparencyThreshold;
         $tn->output($dest);
     }
 
@@ -409,7 +478,7 @@ class Thumbnail
      * @param string $var Наименование параметра (wFrame или hFrame)
      * @param int $val Должно быть положительным значением, либо INF для отсутствия ограничения.
      */
-    private function __set_frame($var, $val)
+    private function setFrame($var, $val)
     {
         if (is_numeric($val) && ($val > 0)) {
             if (is_infinite($val)) {
@@ -422,99 +491,6 @@ class Thumbnail
             // Если нет ограничивающей рамки, запрещаем растягивание изображения
             $this->_allowEnlarge = false;
         }
-    }
-
-
-    /**
-     * Устанавливает параметры создания эскиза для использования в методе $this->__set().
-     * @param int $val Значение берется из собственных констант вида THUMBNAIL_... (см. описание там)
-     */
-    private function __set_mode($val)
-    {
-        if (is_numeric($val)) {
-            $this->_mode = (int)$val;
-        }
-    }
-
-
-    /**
-     * Устанавливает качество результирующего изображения для использования в методе $this->__set().
-     * @param int $val Число от 0 до 100
-     */
-    private function __set_quality($val)
-    {
-        if (is_numeric($val)) {
-            if ($val < 0) {
-                $this->_quality = 0;
-            } elseif ($val > 100) {
-                $this->_quality = 100;
-            } else {
-                $this->_quality = (int)$val;
-            }
-        }
-    }
-
-
-    /**
-     * Устанавливает порог прозрачности для использования в методе $this->__set().
-     * @param int $val Число от 0 до 127
-     */
-    private function __set_transparencyThreshold($val)
-    {
-        if (is_numeric($val)) {
-            if ($val < 0) {
-                $this->_transparencyThreshold = 0;
-            } elseif ($val > 127) {
-                $this->_transparencyThreshold = 127;
-            } else {
-                $this->_transparencyThreshold = (int)$val;
-            }
-        }
-    }
-
-
-    /**
-     * Устанавливает возможность растягивать изображение до рамки, для использования в методе $this->__set()
-     *
-     * Растягивание возможно только тогда, когда ширина и высота рамки конечны
-     * @param bool $val Если установлен в true, разрешается увеличивать маленькие изображения до вписания в рамку
-     */
-    private function __set_allowEnlarge($val)
-    {
-        if (!($this->_wFrame == INF || $this->_hFrame == INF)) {
-            $this->_allowEnlarge = (bool)$val;
-        }
-    }
-
-
-    /**
-     * Устанавливает фон для прозрачных изображений.
-     * @param array|int|string $background задает фон для прозрачных изображений. Может задаваться тремя (красный, зеленый, синий), либо четырьмя
-     *                         (красный, зеленый, синий, прозрачность) каналами. Может быть представлен в следующих видах:
-     *                         array([красный(0-255)], [зеленый(0-255)], [синий(0-255)]);
-     *                         array([красный(0-255)], [зеленый(0-255)], [синий(0-255)], [прозрачность(0-127)]);
-     *                         int 0x[красный(00-FF)][зеленый(00-FF)][синий(00-FF)]
-     *                         int 0x[красный(00-FF)][зеленый(00-FF)][синий(00-FF)][прозрачность(00-7F)]
-     *                         string #[красный(0-F)][зеленый(0-F)][синий(0-F)]
-     *                         string #[красный(0-F)][зеленый(0-F)][синий(0-F)][прозрачность(0-7)]
-     *                         string #[красный(00-FF)][зеленый(00-FF)][синий(00-FF)]
-     *                         string #[красный(00-FF)][зеленый(00-FF)][синий(00-FF)][прозрачность(00-7F)]
-     *                         При указании в прозрачности значения 127 (7F) в результирующих форматах PNG и GIF фон
-     *                         будет объявлен прозрачным цветом.
-     *                         При наличии в исходном изображении прозрачного цвета, если результирующий формат GIF,
-     *                         прозрачный цвет сохранится
-     */
-    private function __set_background($val)
-    {
-        $temp = Graphics::getRGBAFromColor($val);
-        for ($i = 0; $i < count($temp); $i++) {
-            if ($temp[$i] < 0) {
-                $temp[$i] = 0;
-            } elseif ($temp[$i] > ($i == 3 ? 127 : 255)) {
-                $temp[$i] = ($i == 3 ? 127 : 255);
-            }
-        }
-        $this->_background = array((int)$temp[0], (int)$temp[1], (int)$temp[2], (int)$temp[3]);
     }
 
 
@@ -543,101 +519,63 @@ class Thumbnail
      * Вычисляет геометрические параметры будущего эскиза
      *
      * Расчет начальных и конечных точек изображения, взятых из исходного изображения и помещаемых в результирующее
-     * используемых для преобразования координат ((u|v)In, (v|u)In, (l|d)In, (d|l)In) -> ((u|v)Out, (v|u)Out, (l|d)Out, (d|l)Out)
+     * используемых для преобразования координат
+     * ((u|v)In, (v|u)In, (l|d)In, (d|l)In) -> ((u|v)Out, (v|u)Out, (l|d)Out, (d|l)Out)
      * (см. описание соответствующих свойств)
      */
     private function calculateGeometry()
     {
         switch ($this->_mode) {
             case self::THUMBNAIL_INLINE:
-                $this->calculateGeometry_inline();
+                $this->lIn = $this->lSrc;
+                $this->dIn = $this->dSrc;
+                $this->uIn = ($this->lSrc - $this->lIn) / 2;
+                $this->vIn = ($this->dSrc - $this->dIn) / 2;
+
+                $this->uOut = 0;
+                $this->vOut = 0;
+                if ($this->_allowEnlarge) {
+                    $this->lOut =  $this->lFrame;
+                } else {
+                    $this->lOut = min($this->lFrame, $this->lSrc);
+                }
+                $this->dOut = $this->lOut * $this->dSrc / $this->lSrc;
                 break;
             case self::THUMBNAIL_FRAME:
-                $this->calculateGeometry_frame();
+                $this->lIn = $this->lSrc;
+                $this->dIn = $this->dSrc;
+                $this->uIn = ($this->lSrc - $this->lIn) / 2;
+                $this->vIn = ($this->dSrc - $this->dIn) / 2;
+
+                if ($this->_allowEnlarge) {
+                    $this->lOut =  $this->lFrame;
+                } else {
+                    $this->lOut = min($this->lFrame, $this->lSrc);
+                }
+                $this->dOut = $this->lOut * $this->dSrc / $this->lSrc;
+                $this->uOut = ($this->lFrame - $this->lOut) / 2;
+                $this->vOut = ($this->dFrame - $this->dOut) / 2;
                 break;
             case self::THUMBNAIL_CROP:
-                $this->calculateGeometry_crop();
+                if ($this->_allowEnlarge) {
+                    $this->lOut = $this->lFrame;
+                    $this->dOut = $this->dFrame;
+                } else {
+                    $this->lOut = min($this->lFrame, $this->lSrc);
+                    $this->dOut = min($this->dFrame, $this->dSrc);
+                }
+                $this->uOut = 0;
+                $this->vOut = 0;
+
+                $this->lIn = $this->dSrc * $this->lOut / $this->dOut;
+                $this->dIn = $this->dSrc;
+                $this->uIn = ($this->lSrc - $this->lIn) / 2;
+                $this->vIn = ($this->dSrc - $this->dIn) / 2;
                 break;
         }
-        foreach (array('uIn', 'vIn', 'lIn', 'dIn', 'uOut', 'vOut', 'lOut', 'dOut') as $var) {
+        foreach (['uIn', 'vIn', 'lIn', 'dIn', 'uOut', 'vOut', 'lOut', 'dOut'] as $var) {
             $this->$var = (int)$this->$var;
         }
-    }
-
-
-    /**
-     * Расчет геометрических параметров для режима self::THUMBNAIL_INLINE
-     *
-     * Расчет начальных и конечных точек изображения, взятых из исходного изображения и помещаемых в результирующее
-     * используемых для преобразования координат ((u|v)In, (v|u)In, (l|d)In, (d|l)In) -> ((u|v)Out, (v|u)Out, (l|d)Out, (d|l)Out)
-     * (см. описание соответствующих свойств) для использования в методе $this->calculateGeometry
-     */
-    private function calculateGeometry_inline()
-    {
-        $this->lIn = $this->lSrc;
-        $this->dIn = $this->dSrc;
-        $this->uIn = ($this->lSrc - $this->lIn) / 2;
-        $this->vIn = ($this->dSrc - $this->dIn) / 2;
-
-        $this->uOut = 0;
-        $this->vOut = 0;
-        if ($this->_allowEnlarge) {
-            $this->lOut =  $this->lFrame;
-        } else {
-            $this->lOut = min($this->lFrame, $this->lSrc);
-        }
-        $this->dOut = $this->lOut * $this->dSrc / $this->lSrc;
-    }
-
-
-    /**
-     * Расчет геометрических параметров для режима self::THUMBNAIL_FRAME
-     *
-     * Расчет начальных и конечных точек изображения, взятых из исходного изображения и помещаемых в результирующее
-     * используемых для преобразования координат ((u|v)In, (v|u)In, (l|d)In, (d|l)In) -> ((u|v)Out, (v|u)Out, (l|d)Out, (d|l)Out)
-     * (см. описание соответствующих свойств) для использования в методе $this->calculateGeometry
-     */
-    private function calculateGeometry_frame()
-    {
-        $this->lIn = $this->lSrc;
-        $this->dIn = $this->dSrc;
-        $this->uIn = ($this->lSrc - $this->lIn) / 2;
-        $this->vIn = ($this->dSrc - $this->dIn) / 2;
-
-        if ($this->_allowEnlarge) {
-            $this->lOut =  $this->lFrame;
-        } else {
-            $this->lOut = min($this->lFrame, $this->lSrc);
-        }
-        $this->dOut = $this->lOut * $this->dSrc / $this->lSrc;
-        $this->uOut = ($this->lFrame - $this->lOut) / 2;
-        $this->vOut = ($this->dFrame - $this->dOut) / 2;
-    }
-
-
-    /**
-     * Расчет геометрических параметров для режима self::THUMBNAIL_CROP
-     *
-     * Расчет начальных и конечных точек изображения, взятых из исходного изображения и помещаемых в результирующее
-     * используемых для преобразования координат ((u|v)In, (v|u)In, (l|d)In, (d|l)In) -> ((u|v)Out, (v|u)Out, (l|d)Out, (d|l)Out)
-     * (см. описание соответствующих свойств) для использования в методе $this->calculateGeometry
-     */
-    private function calculateGeometry_crop()
-    {
-        if ($this->_allowEnlarge) {
-            $this->lOut = $this->lFrame;
-            $this->dOut = $this->dFrame;
-        } else {
-            $this->lOut = min($this->lFrame, $this->lSrc);
-            $this->dOut = min($this->dFrame, $this->dSrc);
-        }
-        $this->uOut = 0;
-        $this->vOut = 0;
-
-        $this->lIn = $this->dSrc * $this->lOut / $this->dOut;
-        $this->dIn = $this->dSrc;
-        $this->uIn = ($this->lSrc - $this->lIn) / 2;
-        $this->vIn = ($this->dSrc - $this->dIn) / 2;
     }
 
 
@@ -649,14 +587,16 @@ class Thumbnail
      */
     private function checkOutputFormat()
     {
-        $pathinfoDest = pathinfo($this->_dest ? $this->_dest : $this->_src);
+        $pathinfoDest = pathinfo($this->_dest ?: $this->_src);
         $this->extDest = $pathinfoDest['extension'];
         $this->filenameDest = $pathinfoDest['filename'];
         $this->mimeDest = Graphics::extension_to_mime_type($this->extDest);
         $this->functionDest = Graphics::extension_to_output_function($this->extDest);
         $this->typeDest = Graphics::extension_to_image_type($this->extDest);
         if (!$this->mimeDest || !$this->functionDest) {
-            $this->_dest = $pathinfoDest['dirname'] . ($pathinfoDest['dirname'] && $this->filenameDest ? '/' : '') . $this->filenameDest;
+            $this->_dest = $pathinfoDest['dirname']
+                . (($pathinfoDest['dirname'] && $this->filenameDest) ? '/' : '')
+                . $this->filenameDest;
             foreach (Graphics::gettypes() as $key => $val) {
                 if (strpos($this->extDest, $key) !== false) {
                     $this->typeDest = $val;
@@ -703,18 +643,20 @@ class Thumbnail
     private function setBackground()
     {
         imagealphablending($this->imgDest, true);
-        if (in_array($this->typeDest, array(\IMAGETYPE_GIF, \IMAGETYPE_PNG))) {
-            imagesavealpha($this->imgDest, true);
-            $bg = imagecolorallocatealpha(
-                $this->imgDest, $this->_background[0], $this->_background[1], $this->_background[2], $this->_background[3]
-            );
+        imagesavealpha($this->imgDest, true);
+        if (!in_array($this->typeDest, [IMAGETYPE_GIF, IMAGETYPE_PNG, IMAGETYPE_WEBP])) {
+            $this->_background[3] = 0; //
+        }
+        $bg = imagecolorallocatealpha(
+            $this->imgDest,
+            $this->_background[0],
+            $this->_background[1],
+            $this->_background[2],
+            $this->_background[3]
+        );
+        if ($this->typeDest == IMAGETYPE_GIF && $this->_background[3] >= $this->_transparencyThreshold) {
             // В случае объявления фона более прозрачным, чем порог прозрачности, он становится прозрачным цветом
-            if ($this->typeDest == \IMAGETYPE_GIF && $this->_background[3] >= $this->_transparencyThreshold) {
-                imagecolortransparent($this->imgDest, $bg);
-            }
-        } else {
-            // Если прозрачности нет, зальем полностью непрозрачным цветом, чтобы не было шума при наложении прозрачных цветов
-            $bg = imagecolorallocatealpha($this->imgDest, $this->_background[0], $this->_background[1], $this->_background[2], 0);
+            imagecolortransparent($this->imgDest, $bg);
         }
         imagefill($this->imgDest, 0, 0, $bg);
     }
@@ -725,14 +667,25 @@ class Thumbnail
     private function copyImage()
     {
         if (($this->wSrc * $this->_hFrame) >= ($this->hSrc * $this->_wFrame)) {
-            imagecopyresampled(
-                $this->imgDest, $this->imgSrc, $this->uOut, $this->vOut, $this->uIn, $this->vIn, $this->lOut, $this->dOut, $this->lIn, $this->dIn
-            );
+            $dstX = $this->uOut;
+            $dstY = $this->vOut;
+            $srcX = $this->uIn;
+            $srcY = $this->vIn;
+            $dstW = $this->lOut;
+            $dstH = $this->dOut;
+            $srcW = $this->lIn;
+            $srcH = $this->dIn;
         } else {
-            imagecopyresampled(
-                $this->imgDest, $this->imgSrc, $this->vOut, $this->uOut, $this->vIn, $this->uIn, $this->dOut, $this->lOut, $this->dIn, $this->lIn
-            );
+            $dstX = $this->vOut;
+            $dstY = $this->uOut;
+            $srcX = $this->vIn;
+            $srcY = $this->uIn;
+            $dstW = $this->dOut;
+            $dstH = $this->lOut;
+            $srcW = $this->dIn;
+            $srcH = $this->lIn;
         }
+        imagecopyresampled($this->imgDest, $this->imgSrc, $dstX, $dstY, $srcX, $srcY, $dstW, $dstH, $srcW, $srcH);
     }
 
 
@@ -745,12 +698,19 @@ class Thumbnail
             imagealphablending($this->imgDest, false);
             // Если объявлен прозрачный фон, то назначим прозрачный цвет
             if (!isset($this->transindex) && $this->_background[3] >= $this->_transparencyThreshold) {
-                $this->transindex = imagecolorallocatealpha($this->imgDest, $this->_background[0], $this->_background[1], $this->_background[2], 127);
+                $this->transindex = imagecolorallocatealpha(
+                    $this->imgDest,
+                    $this->_background[0],
+                    $this->_background[1],
+                    $this->_background[2],
+                    127
+                );
             }
             // Если существует прозрачный цвет, применим его как прозрачный цвет
             if ($this->transindex) {
                 imagecolortransparent($this->imgDest, $this->transindex);
-                // Пройдемся по изображению: у точек, у которых прозрачность больше порогового значения, установим прозрачный цвет
+                // Пройдемся по изображению: у точек, у которых прозрачность больше порогового значения, установим
+                // прозрачный цвет
                 for ($y = 0; $y < $this->hOut; ++$y) {
                     for ($x = 0; $x < $this->wOut; ++$x) {
                         if (((imagecolorat($this->imgDest, $x, $y) >> 24) & 0x7F) >= $this->_transparencyThreshold) {
@@ -767,21 +727,23 @@ class Thumbnail
      */
     private function outputImage()
     {
+        $outputDest = $this->_createFile ? $this->_dest : null;
         switch ($this->typeDest) {
-            case \IMAGETYPE_GIF:
-            case \IMAGETYPE_WBMP:
-            case \IMAGETYPE_XBM:
+            case IMAGETYPE_GIF:
+            case IMAGETYPE_WBMP:
+            case IMAGETYPE_XBM:
                 $func = $this->functionDest;
-                $func($this->imgDest, $this->_createFile ? $this->_dest : null);
+                $func($this->imgDest, $outputDest);
                 break;
-            case \IMAGETYPE_JPEG:
-                \imagejpeg($this->imgDest, $this->_createFile ? $this->_dest : null, $this->_quality);
+            case IMAGETYPE_JPEG:
+                imagejpeg($this->imgDest, $outputDest, $this->_quality);
                 break;
-            case \IMAGETYPE_PNG:
-                \imagepng($this->imgDest, $this->_createFile ? $this->_dest : null, (9 - (int)min($this->_quality / 10, 9)));
+            case IMAGETYPE_PNG:
+                $quality = (9 - (int)min($this->_quality / 10, 9));
+                imagepng($this->imgDest, $outputDest, $quality);
                 break;
-            case \IMAGETYPE_WEBP:
-                \imagewebp($this->imgDest, $this->_createFile ? $this->_dest : null, $this->_quality);
+            case IMAGETYPE_WEBP:
+                imagewebp($this->imgDest, $outputDest, $this->_quality);
                 break;
         }
     }
