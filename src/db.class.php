@@ -188,10 +188,6 @@ class DB
             if ($this->encoding && !in_array($this->dbtype, ['sqlite', 'sqlite2'])) {
                 $this->query("SET NAMES '" . $this->encoding . "'");
             }
-            if (!in_array($this->dbtype, ['sqlite', 'sqlite2'])) {
-                // 2024-12-02, AVS: добавил для совместимости
-                $this->query("SET SESSION sql_mode = 'ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
-            }
         } catch (PDOException $e) {
             if ($this->error_handler) {
                 call_user_func($this->error_handler, $e);
