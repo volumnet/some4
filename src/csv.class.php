@@ -30,19 +30,19 @@ final class CSV
      * Двумерный массив-таблица (индексированный массив индексированных массивов) строк, содержащих значения ячеек CSV-таблицы.
      * @var array
      */
-    private $_data;
+    private $data;
 
     /**
      * Строка, являющаяся разделителем колонок в CSV-таблице.
      * @var string
      */
-    private $_sep;
+    private $sep;
 
     /**
      * Если установлен в true, управляющие символы будут экранироваться.
      * @var bool
      */
-    private $_escchars;
+    private $escchars;
 
 
     /**
@@ -82,13 +82,13 @@ final class CSV
     {
         switch ($var) {
             case 'data':
-                return $this->_data;
+                return $this->data;
                 break;
             case 'sep':
-                return $this->_sep;
+                return $this->sep;
                 break;
             case 'escchars':
-                return $this->_escchars;
+                return $this->escchars;
                 break;
             case 'csv':
                 return $this->getcsv();
@@ -107,7 +107,7 @@ final class CSV
         $rows = [];
         for ($i = 0; $i < count($this->data); $i++) {
             for ($j = 0; $j < count($this->data[$i]); $j++) {
-                if ($this->_escchars) {
+                if ($this->escchars) {
                     $data[$i][$j] = addcslashes(
                         $this->data[$i][$j],
                         "\0..\37\\"
