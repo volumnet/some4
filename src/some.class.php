@@ -1043,7 +1043,7 @@ abstract class SOME extends ArrayObject
      *
      * Возвращает дочерние объекты по именованной ссылке
      *
-     * @param string $ref Название ссылки из массива $children
+     * @param ?string $ref Название ссылки из массива $children
      * @param string $where Условие WHERE для SQL-запроса, получающего список дочерних элементов.
      *               При пустом значении не используется.
      * @param string $addSQL Дополнительные SQL-инструкции
@@ -1053,7 +1053,7 @@ abstract class SOME extends ArrayObject
      * @return SOME[]|false Индексированный массив дочерних объектов. либо false, если пытаемся получить нерекурсивные
      *     дочерние элементы глубже 1 уровня
      */
-    final public function children(string $ref = null, string $where = '', string $addSQL = '', int $maxLevel = 1)
+    final public function children(?string $ref = null, string $where = '', string $addSQL = '', int $maxLevel = 1)
     {
         $classname = static::$children[$ref]['classname'];
         if ($maxLevel != 1 && $classname != static::class) {
@@ -1210,13 +1210,13 @@ abstract class SOME extends ArrayObject
      * Инициализация предполагает сбор информации об объекте из базы данных. С помощью этого же метода
      * можно переопределить объект подключения к базе данных либо префикс таблиц.
      *
-     * @param DB $SQL Объект подключения к базе данных
-     * @param string $dbprefix Префикс таблиц баз данных
+     * @param ?DB $SQL Объект подключения к базе данных
+     * @param ?string $dbprefix Префикс таблиц баз данных
      * @return true|array При инициализации класса SOME возвращает true
      *     При инициализации наследующего класса — запись класса из массива self::$classes
      * @throws Exception Выбрасывает исключение в случае неверных настроек класса
      */
-    public static function init(DB $SQL = null, string $dbprefix = null)
+    public static function init(?DB $SQL = null, ?string $dbprefix = null)
     {
         // Установим базу данных
         if ($SQL !== null) {
@@ -1727,7 +1727,7 @@ abstract class SOME extends ArrayObject
      * Метод выполняет SQL-запрос и при необходимости формирует из него список сущностей с постраничной разбивкой
      *
      * @param string $sqlQuery текст SQL-запроса
-     * @param Pages|null $Pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
+     * @param ?Pages $Pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
      *     После обработки запроса свойства $Pages устанавливаются в соответствии с полученным результатом.
      *     В случае установки в null, постраничной разбивки не происходит.
      * @param string|callback|null $type Принудительное назначение типа.
@@ -1741,7 +1741,7 @@ abstract class SOME extends ArrayObject
      *     базы данных.
      * @return array
      */
-    final public static function getSQLSet($sqlQuery, Pages $Pages = null, $type = null): array
+    final public static function getSQLSet($sqlQuery, ?Pages $Pages = null, $type = null): array
     {
         static::init();
         // Проверка правильности постраничной разбивки
@@ -1838,7 +1838,7 @@ abstract class SOME extends ArrayObject
      * Метод формирует список сущностей из массива, при необходимости производя постраничную разбивку
      *
      * @param array $array Входной массив. Передается по ссылке для уменьшения расхода памяти.
-     * @param Pages|null $pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
+     * @param ?Pages $pages указатель на экземпляр класса страниц SOME для постраничной разбивки.
      *     После обработки запроса свойства $pages устанавливаются в соответствии с полученным результатом.
      *     В случае установки в null, постраничной разбивки не происходит.
      * @param string|callback|null $type Принудительное назначение типа.
@@ -1850,7 +1850,7 @@ abstract class SOME extends ArrayObject
      *     При указании null из класса SOME, элементом массива является элемент $array.
      * @return array
      */
-    final public static function getArraySet(&$array, Pages $pages = null, $type = null): array
+    final public static function getArraySet(&$array, ?Pages $pages = null, $type = null): array
     {
         static::init();
         do {
@@ -1902,10 +1902,10 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$references
-     * @param string $key ключ для выборки конкретного элемента массива
+     * @param ?string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _references(string $key = null): array
+    public static function _references(?string $key = null): array
     {
         return $key ? static::$references[$key] : static::$references;
     }
@@ -1913,10 +1913,10 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$children
-     * @param string $key ключ для выборки конкретного элемента массива
+     * @param ?string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _children(string $key = null): array
+    public static function _children(?string $key = null): array
     {
         return $key ? static::$children[$key] : static::$children;
     }
@@ -1924,10 +1924,10 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$parents
-     * @param string $key ключ для выборки конкретного элемента массива
+     * @param ?string $key ключ для выборки конкретного элемента массива
      * @return array|string весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _parents(string $key = null)
+    public static function _parents(?string $key = null)
     {
         return $key ? static::$parents[$key] : static::$parents;
     }
@@ -1935,10 +1935,10 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$links
-     * @param string $key ключ для выборки конкретного элемента массива
+     * @param ?string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _links(string $key = null): array
+    public static function _links(?string $key = null): array
     {
         return $key ? static::$links[$key] : static::$links;
     }
@@ -1946,10 +1946,10 @@ abstract class SOME extends ArrayObject
 
     /**
      * Возвращает значение статического свойства static::$caches
-     * @param string $key ключ для выборки конкретного элемента массива
+     * @param ?string $key ключ для выборки конкретного элемента массива
      * @return array весь массив или один его элемент (тоже являющийся массивом)
      */
-    public static function _caches(string $key = null): array
+    public static function _caches(?string $key = null): array
     {
         return $key ? static::$caches[$key] : static::$caches;
     }
@@ -2106,17 +2106,17 @@ abstract class SOME extends ArrayObject
      *
      * Возвращает классы, содержащие ссылки на данный
      *
-     * @param bool|null $cascade Фильтр по каскадируемости ссылок.
-     *                  Если установлен в null, возвращаются классы с любым типом ссылок.
-     *                  Если true или false — соответственно только с каскадируемыми либо некаскадируемыми
-     *                  ссылками
+     * @param ?bool $cascade Фильтр по каскадируемости ссылок.
+     *     Если установлен в null, возвращаются классы с любым типом ссылок.
+     *     Если true или false — соответственно только с каскадируемыми либо некаскадируемыми
+     *     ссылками
      * @return array <pre><code>array<
      *     string[] Имя класса => array<
      *         string[] Имя ссылки класса => array Ссылка класса
      *     >
      * ></code></pre>
      */
-    final protected static function isReferencedBy(bool $cascade = null): array
+    final protected static function isReferencedBy(?bool $cascade = null): array
     {
         $temp = [];
         foreach (self::$classes as $classname => $class) {
@@ -2132,13 +2132,13 @@ abstract class SOME extends ArrayObject
     /**
      * Определяет, есть ли в данном классе ссылки на класс $classname
      * @param string $classname имя класса для проверки ссылок
-     * @param bool|null $cascade Фильтр по каскадируемости ссылок.
-     *                  Если установлен в null, возвращаются классы с любым типом ссылок.
-     *                  Если true или false — соответственно только с каскадируемыми либо некаскадируемыми
-     *                  ссылками
+     * @param ?bool $cascade Фильтр по каскадируемости ссылок.
+     *     Если установлен в null, возвращаются классы с любым типом ссылок.
+     *     Если true или false — соответственно только с каскадируемыми либо некаскадируемыми
+     *     ссылками
      * @return array <pre><code>array<string[] Имя ссылки => array Ссылка>
      */
-    final protected static function getReferencesByClassname(string $classname, bool $cascade = null): array
+    final protected static function getReferencesByClassname(string $classname, ?bool $cascade = null): array
     {
         $result = [];
         foreach (static::$references as $ref => $reference) {
@@ -2166,11 +2166,11 @@ abstract class SOME extends ArrayObject
      * последовательными номерами (1, 2, 3... и т.д.). Используется для непрерывного и экономного
      * расходования порядковых номеров при больших объемах данных.
      *
-     * @param string $priorityN Наименование колонки, отвечающей за приоритет
+     * @param ?string $priorityN Наименование колонки, отвечающей за приоритет
      * @return bool true
      * @throws Exception Если возникли ошибки
      */
-    final public static function priorityRepair(string $priorityN = null): bool
+    final public static function priorityRepair(?string $priorityN = null): bool
     {
         static::init();
         if (!$priorityN && static::$defaultOrderBy) {

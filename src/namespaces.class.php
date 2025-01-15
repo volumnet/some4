@@ -29,10 +29,10 @@ final class Namespaces
      * Возвращает пространство имен либо его срез
      * @param string|object $var Объект или имя класса для проверки
      * @param int $offset Смещение в массиве пространства имен
-     * @param int|null $length Длина в массиве пространства имен
+     * @param ?int $length Длина в массиве пространства имен
      * @return string
      */
-    public static function getNS($var, int $offset = 0, int $length = null): string
+    public static function getNS($var, int $offset = 0, ?int $length = null): string
     {
         $class = self::getNSArray($var, $offset, $length);
         return implode('\\', $class);
@@ -42,10 +42,10 @@ final class Namespaces
      * Возвращает массив пространства имен либо его срез
      * @param string|object $var Объект или имя класса для проверки
      * @param int $offset Смещение в массиве пространства имен
-     * @param int|null $length Длина в массиве пространства имен
+     * @param ?int $length Длина в массиве пространства имен
      * @return string[]
      */
-    public static function getNSArray($var, int $offset = 0, int $length = null): array
+    public static function getNSArray($var, int $offset = 0, ?int $length = null): array
     {
         $class = self::getClassArray($var);
         $ns = array_slice($class, 0, -1);

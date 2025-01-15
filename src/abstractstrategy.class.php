@@ -61,11 +61,11 @@ abstract class AbstractStrategy extends Singleton
 
     /**
      * Возвращает зарегистрированные стратегии или одну для заданного ключа
-     * @param string|null $key Ключ для получения стратегии (null для всех)
+     * @param ?string $key Ключ для получения стратегии (null для всех)
      * @return string|array Одна стратегия (имя класса) или массив зарегистрированных
      * @throws Exception В случае, если стратегия для ключа не задана
      */
-    public static function get(string $key = null)
+    public static function get(?string $key = null)
     {
         if ($key) {
             if (!isset(static::$registeredStrategies[$key])) {
@@ -79,12 +79,13 @@ abstract class AbstractStrategy extends Singleton
 
     /**
      * Возвращает экземпляр конкретной стратегии
-     * @param string|null $key Ключ для получения стратегии
+     * @param ?string $key Ключ для получения стратегии
      * @throws Exception В случае, если стратегия для ключа не задана
      * @return self
      */
-    public static function spawn(string $key = null): self
+    public static function spawn(?string $key = null): self
     {
+        $key = (string)$key;
         if (!isset(static::$registeredStrategies[$key])) {
             throw new Exception('Strategy for key "' . $key . '" is not registered');
         }
