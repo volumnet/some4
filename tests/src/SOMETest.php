@@ -4,6 +4,7 @@
  */
 namespace SOME;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use RAAS\Application;
 use RAAS\CMS\Block;
 use RAAS\CMS\Field;
@@ -26,8 +27,8 @@ use RAAS\CMS\Shop\Cart_Type;
 
 /**
  * Класс теста сущности SOME
- * @covers SOME\SOME
  */
+#[CoversClass(SOME::class)]
 class SOMETest extends BaseTest
 {
     public static $tables = [
@@ -1207,7 +1208,7 @@ class SOMETest extends BaseTest
 
             protected static $objectCascadeDelete = false;
 
-            public static function _references(string $key = null): array
+            public static function _references(?string $key = null): array
             {
                 return [
                     'parent' => [
@@ -1218,7 +1219,7 @@ class SOMETest extends BaseTest
                 ];
             }
 
-            public static function _children(string $key = null): array
+            public static function _children(?string $key = null): array
             {
                 return [
                     'children' => [
@@ -1228,14 +1229,14 @@ class SOMETest extends BaseTest
                 ];
             }
 
-            public static function _parents(string $key = null)
+            public static function _parents(?string $key = null)
             {
                 return [
                     'myParents' => 'parent'
                 ];
             }
 
-            public static function _links(string $key = null): array
+            public static function _links(?string $key = null): array
             {
                 return [
                     'materials' => [
@@ -1247,7 +1248,7 @@ class SOMETest extends BaseTest
                 ];
             }
 
-            public static function _caches(string $key = null): array
+            public static function _caches(?string $key = null): array
             {
                 return [
                     'pvis' => [

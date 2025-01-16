@@ -5,11 +5,12 @@
 namespace SOME;
 
 use Exception;
+use PHPUnit\Framework\Attributes\CoversClass;
 
 /**
  * Тест для класса AbstractStrategy
- * @covers \SOME\AbstractStrategy
  */
+#[CoversClass(AbstractStrategy::class)]
 class AbstractStrategyTest extends BaseTest
 {
     /**

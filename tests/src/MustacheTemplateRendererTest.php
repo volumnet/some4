@@ -4,35 +4,25 @@
  */
 namespace SOME;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
+
 /**
  * Тест для класса MustacheTemplateRenderer
- * @covers \SOME\MustacheTemplateRenderer
  */
+#[CoversClass(MustacheTemplateRenderer::class)]
 class MustacheTemplateRendererTest extends BaseTest
 {
-    /**
-     * Провайдер данных для метода render
-     * @return array <pre><code>array<[
-     *     string Шаблон,
-     *     array Данные,
-     * ]></code></pre>
-     */
-    public function renderDataProvider(): array
-    {
-        return [
-            ['Test {{aaa}}', ['aaa' => 'bbb'], 'Test bbb'],
-            ['{{#aaa}}Is aaa{{/aaa}}', ['aaa' => true], 'Is aaa'],
-            ['{{#aaa}}Is aaa{{/aaa}}', ['aaa' => false], ''],
-        ];
-    }
-
     /**
      * Тестирует метод render
      * @param string $template Шаблон
      * @param array $data Данные
      * @param string $expected Ожидаемая строка
-     * @dataProvider renderDataProvider
      */
+    #[TestWith(['Test {{aaa}}', ['aaa' => 'bbb'], 'Test bbb'])]
+    #[TestWith(['{{#aaa}}Is aaa{{/aaa}}', ['aaa' => true], 'Is aaa'])]
+    #[TestWith(['{{#aaa}}Is aaa{{/aaa}}', ['aaa' => false], ''])]
     public function testRender(string $template, array $data, string $expected)
     {
         $renderer = new MustacheTemplateRenderer();

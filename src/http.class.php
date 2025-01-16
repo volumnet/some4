@@ -117,4 +117,25 @@ final class HTTP
         }
         return min($re, $ge);
     }
+
+
+    /**
+     * Парсит URL
+     * @param string $url URL для разбора
+     * @return array <pre><code>array<
+     *     Результат parse_url,
+     *     'path' => string[] Путь URL, разбитый по слэшам,
+     *     'query' => array<string[] => string> Ассоциативный массив GET-параметров
+     * ></code></pre>
+     */
+    public static function parseURL(string $url): array
+    {
+        $urlArr = parse_url($url);
+        $pathArr = explode('/', trim($urlArr['path'] ?? '', '/'));
+        parse_str(trim($urlArr['query'] ?? '', ' ?'), $queryArr);
+        $result = $urlArr;
+        $result['path'] = $pathArr;
+        $result['query'] = $queryArr;
+        return $result;
+    }
 }

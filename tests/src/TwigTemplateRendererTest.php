@@ -4,36 +4,26 @@
  */
 namespace SOME;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
+
 /**
  * Тест для класса TwigTemplateRenderer
- * @covers \SOME\TwigTemplateRenderer
  */
+#[CoversClass(TwigTemplateRenderer::class)]
 class TwigTemplateRendererTest extends BaseTest
 {
-    /**
-     * Провайдер данных для метода render
-     * @return array <pre><code>array<[
-     *     string Шаблон,
-     *     array Данные,
-     * ]></code></pre>
-     */
-    public function renderDataProvider(): array
-    {
-        return [
-            ['Test {{aaa}}', ['aaa' => 'bbb'], 'Test bbb'],
-            ['{% if aaa %}Is aaa{% else %}Is not aaa{% endif %}', ['aaa' => true], 'Is aaa'],
-            ['{% if aaa %}Is aaa{% else %}Is not aaa{% endif %}', ['aaa' => false], 'Is not aaa'],
-            ['{% if aaa %}Is aaa{% else %}Is not aaa{% endif %}', [], 'Is not aaa'],
-        ];
-    }
-
     /**
      * Тестирует метод render
      * @param string $template Шаблон
      * @param array $data Данные
      * @param string $expected Ожидаемая строка
-     * @dataProvider renderDataProvider
      */
+    #[TestWith(['Test {{aaa}}', ['aaa' => 'bbb'], 'Test bbb'])]
+    #[TestWith(['{% if aaa %}Is aaa{% else %}Is not aaa{% endif %}', ['aaa' => true], 'Is aaa'])]
+    #[TestWith(['{% if aaa %}Is aaa{% else %}Is not aaa{% endif %}', ['aaa' => false], 'Is not aaa'])]
+    #[TestWith(['{% if aaa %}Is aaa{% else %}Is not aaa{% endif %}', [], 'Is not aaa'])]
     public function testRender(string $template, array $data, string $expected)
     {
         $renderer = new TwigTemplateRenderer();

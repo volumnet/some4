@@ -4,13 +4,16 @@
  */
 namespace SOME;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use SOME\Pages;
 use RAAS\CMS\Page;
 
 /**
  * Класс теста абстрактного рекурсивного кэша
- * @covers \SOME\AbstractRecursiveCache
  */
+#[CoversClass(AbstractRecursiveCache::class)]
 class AbstractRecursiveCacheTest extends BaseTest
 {
     public static $tables = [
@@ -255,7 +258,7 @@ class AbstractRecursiveCacheTest extends BaseTest
     /**
      * Провайдер данных для функции testGetParentId
      */
-    public function getParentIdDataProvider()
+    public static function getParentIdDataProvider()
     {
         static::installTables();
         return [
@@ -294,8 +297,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getParentIdDataProvider
      */
+    #[DataProvider('getParentIdDataProvider')]
     public function testGetParentId($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -313,8 +316,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getParentIdDataProvider
      */
+    #[DataProvider('getParentIdDataProvider')]
     public function testGetParent($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -337,8 +340,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      * @param SOME|int|SOME[]int[] $data Дочерняя сущность или ID# дочерней сущности или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getParentIdDataProvider
      */
+    #[DataProvider('getParentIdDataProvider')]
     public function testGetParentCache($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -359,7 +362,7 @@ class AbstractRecursiveCacheTest extends BaseTest
     /**
      * Провайдер данных для функции testGetParentsIds
      */
-    public function getParentsIdsDataProvider()
+    public static function getParentsIdsDataProvider()
     {
         static::installTables();
         return [
@@ -605,8 +608,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                   1 - на уровне дочерних ID#
      *                   2 - на уровне родительских ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getParentsIdsDataProvider
      */
+    #[DataProvider('getParentsIdsDataProvider')]
     public function testGetParentsIds($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -624,8 +627,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getParentsIdsDataProvider
      */
+    #[DataProvider('getParentsIdsDataProvider')]
     public function testGetParents($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -656,8 +659,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getParentsIdsDataProvider
      */
+    #[DataProvider('getParentsIdsDataProvider')]
     public function testGetParentsCache($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -684,7 +687,7 @@ class AbstractRecursiveCacheTest extends BaseTest
     /**
      * Провайдер данных для функции testGetSelfAndParentsIds
      */
-    public function getSelfAndParentsIdsDataProvider()
+    public static function getSelfAndParentsIdsDataProvider()
     {
         static::installTables();
         return [
@@ -930,8 +933,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                   1 - на уровне дочерних ID#
      *                   2 - на уровне родительских ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getSelfAndParentsIdsDataProvider
      */
+    #[DataProvider('getSelfAndParentsIdsDataProvider')]
     public function testGetSelfAndParentsIds($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -949,8 +952,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getSelfAndParentsIdsDataProvider
      */
+    #[DataProvider('getSelfAndParentsIdsDataProvider')]
     public function testGetSelfAndParents($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -981,8 +984,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param bool $assoc Возвращать массив с ассоциацией по ID#
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getSelfAndParentsIdsDataProvider
      */
+    #[DataProvider('getSelfAndParentsIdsDataProvider')]
     public function testGetSelfAndParentsCache($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1009,7 +1012,7 @@ class AbstractRecursiveCacheTest extends BaseTest
     /**
      * Провайдер данных для функции testGetChildrenIds
      */
-    public function getChildrenIdsDataProvider()
+    public static function getChildrenIdsDataProvider()
     {
         static::installTables();
         return [
@@ -1201,8 +1204,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getChildrenIdsDataProvider
      */
+    #[DataProvider('getChildrenIdsDataProvider')]
     public function testGetChildrenIds($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1220,8 +1223,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
-     * @dataProvider getChildrenIdsDataProvider
      */
+    #[DataProvider('getChildrenIdsDataProvider')]
     public function testGetChildren($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1252,8 +1255,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
-     * @dataProvider getChildrenIdsDataProvider
      */
+    #[DataProvider('getChildrenIdsDataProvider')]
     public function testGetChildrenCache($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1280,7 +1283,7 @@ class AbstractRecursiveCacheTest extends BaseTest
     /**
      * Провайдер данных для функции testGetAllChildrenIds
      */
-    public function getAllChildrenIdsDataProvider()
+    public static function getAllChildrenIdsDataProvider()
     {
         static::installTables();
         return [
@@ -1700,8 +1703,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getAllChildrenIdsDataProvider
      */
+    #[DataProvider('getAllChildrenIdsDataProvider')]
     public function testGetAllChildrenIds($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1719,8 +1722,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
-     * @dataProvider getAllChildrenIdsDataProvider
      */
+    #[DataProvider('getAllChildrenIdsDataProvider')]
     public function testGetAllChildren($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1751,8 +1754,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
-     * @dataProvider getAllChildrenIdsDataProvider
      */
+    #[DataProvider('getAllChildrenIdsDataProvider')]
     public function testGetAllChildrenCache($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -1779,7 +1782,7 @@ class AbstractRecursiveCacheTest extends BaseTest
     /**
      * Провайдер данных для функции testGetSelfAndChildrenIds
      */
-    public function getSelfAndChildrenIdsDataProvider()
+    public static function getSelfAndChildrenIdsDataProvider()
     {
         static::installTables();
         return [
@@ -2187,8 +2190,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
      * @param mixed $expected Ожидаемый результат
-     * @dataProvider getSelfAndChildrenIdsDataProvider
      */
+    #[DataProvider('getSelfAndChildrenIdsDataProvider')]
     public function testGetSelfAndChildrenIds($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -2206,8 +2209,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
-     * @dataProvider getSelfAndChildrenIdsDataProvider
      */
+    #[DataProvider('getSelfAndChildrenIdsDataProvider')]
     public function testGetSelfAndAllChildren($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();
@@ -2238,8 +2241,8 @@ class AbstractRecursiveCacheTest extends BaseTest
      *                                       или их массив
      * @param int $assoc Возвращать массив с ассоциацией по ID#
      *                   (константа из static::ASSOC_...)
-     * @dataProvider getSelfAndChildrenIdsDataProvider
      */
+    #[DataProvider('getSelfAndChildrenIdsDataProvider')]
     public function testGetSelfAndAllChildrenCache($data, $assoc, $expected)
     {
         $cache = ConcreteRecursiveCache::i();

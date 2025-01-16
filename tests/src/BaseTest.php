@@ -227,9 +227,9 @@ class BaseTest extends TestCase
 
     /**
      * Отслеживает запросы по классу
-     * @param string|null $classname Название класса, либо null для выключения
+     * @param ?string $classname Название класса, либо null для выключения
      */
-    public static function watchQueries(string $classname = null)
+    public static function watchQueries(?string $classname = null)
     {
         if ($classname) {
             Application::i()->SQL->query_handler = function ($query) use ($classname) {
@@ -316,9 +316,9 @@ class BaseTest extends TestCase
     /**
      * Выводит сообщение
      * @param string $message Сообщение
-     * @param string|null $color Цвет из массива static::$terminalColors
+     * @param ?string $color Цвет из массива static::$terminalColors
      */
-    public static function doLog(string $message, string $color = null)
+    public static function doLog(string $message, ?string $color = null)
     {
         $coloredStart = $coloredEnd = '';
         if ($color && (static::$terminalColors[$color] ?? null)) {

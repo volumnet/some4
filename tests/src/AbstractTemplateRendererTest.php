@@ -4,37 +4,26 @@
  */
 namespace SOME;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
+
 /**
  * Тест для класса AbstractTemplateRenderer
- * @covers \SOME\AbstractTemplateRenderer
  */
+#[CoversClass(AbstractTemplateRenderer::class)]
 class AbstractTemplateRendererTest extends BaseTest
 {
-    /**
-     * Провайдер данных для метода testSpawn
-     * @return array <pre><code>array<[
-     *     string Движок,
-     *     string|null Ожидаемый класс,
-     *     bool? Выбрасывает исключение
-     * ]></code></pre>
-     */
-    public function spawnDataProvider(): array
-    {
-        return [
-            ['twig', TwigTemplateRenderer::class],
-            ['mustache', MustacheTemplateRenderer::class],
-            ['aaa', null, true],
-        ];
-    }
-
     /**
      * Тестирует метод spawn
      * @param string $engine Движок
      * @param string $expectedClass Ожидаемый класс
      * @param boolean $withException Выбрасывает исключение
-     * @dataProvider spawnDataProvider
      */
-    public function testSpawn(string $engine, string $expectedClass = null, $withException = false)
+    #[TestWith(['twig', TwigTemplateRenderer::class])]
+    #[TestWith(['mustache', MustacheTemplateRenderer::class])]
+    #[TestWith(['aaa', null, true])]
+    public function testSpawn(string $engine, ?string $expectedClass = null, $withException = false)
     {
         if ($withException) {
             $this->expectException(Exception::class);
