@@ -1,6 +1,6 @@
 <?php
 /**
- * Рендерер шаблонов Twig
+ * @package SOME
  */
 declare(strict_types=1);
 
@@ -10,7 +10,7 @@ use Twig\Environment;
 use Twig\Loader\ArrayLoader;
 
 /**
- * Класс рендерера шаблонов Twig
+ * Рендерер шаблонов Twig
  */
 class TwigTemplateRenderer extends AbstractTemplateRenderer
 {

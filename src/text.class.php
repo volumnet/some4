@@ -1,6 +1,6 @@
 <?php
 /**
- * Файл работы с текстовыми данными
+ * @package SOME
  */
 declare(strict_types=1);
 

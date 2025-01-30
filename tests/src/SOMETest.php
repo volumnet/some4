@@ -1590,7 +1590,7 @@ class SOMETest extends BaseTest
     public function testInitWithSQLite()
     {
         $oldDb = SOME::_SQL();
-        $filename = $this->getResourcesDir() . '/test.sqlite';
+        $filename = static::getResourcesDir() . '/test.sqlite';
         $db = new DB('sqlite:' . $filename);
         SOME::init($db);
 

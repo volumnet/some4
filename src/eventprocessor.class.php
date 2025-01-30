@@ -1,23 +1,11 @@
 <?php
 /**
- * Файл класса инициатора событий
- *
- * Этот файл - часть библиотеки, предоставляющий основной функционал
- * работы с сущностями SOME (Semantic Object Modelling Extensible) - базовыми
- * семантическими объектами с неопределенным количеством параметров
  * @package SOME
- * @subpackage Event
- * @author Александр В. Сурнин <avs@volumnet.ru>
- * @copyright © 2018, Volume Networks
- * @version 4.2
- * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
 namespace SOME;
 
 /**
  * Класс инициатора событий
- * @package SOME
- * @subpackage Event
  */
 class EventProcessor extends Singleton
 {
@@ -29,14 +17,14 @@ class EventProcessor extends Singleton
 
     /**
      * Зарегистрированные наблюдатели
-     * @var array<string[] Имя события => array<
-     *          string[] Имя класса объекта (пустая строка если для всех) => array<
-     *              string[] ID# наблюдателя => callable(
-     *                  stdClass|null Объект, породивший событие,
-     *                  array Дополнительные данные
-     *              ) Событие
-     *          >
-     *      >>
+     * @var array <pre><code>array<string[] Имя события => array<
+     *     string[] Имя класса объекта (пустая строка если для всех) => array<
+     *         string[] ID# наблюдателя => callable(
+     *             stdClass|null Объект, породивший событие,
+     *             array Дополнительные данные
+     *         ) Событие
+     *     >
+     * >></code></pre>
      */
     protected $listeners = array();
 

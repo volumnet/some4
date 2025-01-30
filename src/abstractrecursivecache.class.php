@@ -1,6 +1,6 @@
 <?php
 /**
- * Файл абстрактного рекурсивного кэша
+ * @package SOME
  */
 declare(strict_types=1);
 
@@ -16,15 +16,15 @@ namespace SOME;
  *     string[] ID# дочерней сущности =>
  *     int ID# родительской сущности
  * ></code></pre> Соответствие дочерних и родительских ID#
- * @property-read $parentsIds <pre><code>array<
+ * @property-read array $parentsIds <pre><code>array<
  *     string[] ID# дочерней сущности =>
  *     array<string ID# родительской сущности => int ID# родительской сущности>
  * ></code></pre> Родительские ID# в порядке от верхнего к нижнему
- * @property-read $childrenIds array<
+ * @property-read array $childrenIds array<
  *     string[] ID# родительской сущности =>
  *     array<string ID# дочерней сущности => int ID# дочерней сущности>
  * ></code></pre> Дочерние ID# первого уровня
- * @property-read $allChildrenIds array<
+ * @property-read array $allChildrenIds array<
  *     string[] ID# родительской сущности =>
  *     array<string ID# дочерней сущности => int ID# дочерней сущности>
  * ></code></pre> Дочерние ID# всех уровней

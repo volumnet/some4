@@ -1,6 +1,6 @@
 <?php
 /**
- * Абстрактный рендерер шаблонов
+ * @package SOME
  */
 declare(strict_types=1);
 

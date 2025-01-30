@@ -1,13 +1,10 @@
 <?php
 /**
- * Файл загрузчика классов
  * @package SOME
- * @author Александр В. Сурнин <info@volumnet.ru>
- * @copyright © 2020, Volume Networks
  */
 namespace SOME;
 
-use \InvalidArgumentException;
+use InvalidArgumentException;
 
 /**
  * Загрузчик классов

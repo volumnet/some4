@@ -1,6 +1,6 @@
 <?php
 /**
- * Абстрактная стратегия
+ * @package SOME
  */
 declare(strict_types=1);
 

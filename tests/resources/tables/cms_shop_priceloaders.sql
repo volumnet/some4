@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.29, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.2.0, for Win64 (x86_64)
 --
--- Host: localhost    Database: test
+-- Host: MySQL-8.2    Database: test
 -- ------------------------------------------------------
--- Server version	8.0.29
+-- Server version	8.2.0
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -39,6 +39,7 @@ CREATE TABLE `cms_shop_priceloaders` (
   `catalog_offset` int unsigned NOT NULL DEFAULT '0' COMMENT 'Catalog offset',
   `media_action` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Media fields action',
   `cats_usage` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Categories usage',
+  `step_interface` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Step interface',
   PRIMARY KEY (`id`),
   KEY `mtype` (`mtype`),
   KEY `ufid` (`ufid`),
@@ -55,7 +56,7 @@ CREATE TABLE `cms_shop_priceloaders` (
 
 LOCK TABLES `cms_shop_priceloaders` WRITE;
 /*!40000 ALTER TABLE `cms_shop_priceloaders` DISABLE KEYS */;
-INSERT INTO `cms_shop_priceloaders` VALUES (1,4,'25','Стандартный загрузчик прайсов','default','RAAS\\CMS\\Shop\\PriceloaderInterface',0,0,0,15,0,1,1,0,0,0);
+INSERT INTO `cms_shop_priceloaders` VALUES (1,4,'25','Стандартный загрузчик прайсов','default','RAAS\\CMS\\Shop\\PriceloaderInterface',0,0,0,15,0,1,1,0,0,0,0);
 /*!40000 ALTER TABLE `cms_shop_priceloaders` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -68,4 +69,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-07-02 18:23:05
+-- Dump completed on 2025-01-17 14:10:58

@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.29, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.2.0, for Win64 (x86_64)
 --
--- Host: localhost    Database: test
+-- Host: MySQL-8.2    Database: test
 -- ------------------------------------------------------
--- Server version	8.0.29
+-- Server version	8.2.0
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -614,7 +614,7 @@ CREATE TABLE `cms_feedback` (
   `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Post date',
   `vis` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Visited',
   `ip` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'IP address',
-  `user_agent` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT 'User Agent',
+  `user_agent` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '' COMMENT 'User Agent',
   PRIMARY KEY (`id`),
   KEY `uid` (`uid`),
   KEY `pid` (`pid`),
@@ -1317,8 +1317,8 @@ CREATE TABLE `cms_shop_blocks_cart` (
   `epay_interface_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay interface classname',
   `epay_interface_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'E-pay interface ID#',
   `epay_login` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay login',
-  `epay_pass1` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay pass1',
-  `epay_pass2` varchar(255) NOT NULL DEFAULT '' COMMENT 'E-pay pass2',
+  `epay_pass1` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci COMMENT 'E-pay pass1',
+  `epay_pass2` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci COMMENT 'E-pay pass2',
   `epay_test` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'E-pay test mode',
   `epay_currency` varchar(255) NOT NULL DEFAULT '' COMMENT 'Currency',
   PRIMARY KEY (`id`),
@@ -1408,7 +1408,7 @@ CREATE TABLE `cms_shop_blocks_yml_fields` (
   `mtype` int unsigned NOT NULL DEFAULT '0' COMMENT 'Material type ID#',
   `field_name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field name',
   `field_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field ID#',
-  `field_callback` text CHARACTER SET utf8mb3 COLLATE utf8_general_ci COMMENT 'Field callback',
+  `field_callback` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci COMMENT 'Field callback',
   `field_static_value` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field static value',
   PRIMARY KEY (`id`,`mtype`,`field_name`),
   KEY `id` (`id`),
@@ -1467,7 +1467,7 @@ CREATE TABLE `cms_shop_blocks_yml_material_types_assoc` (
   `mtype` int unsigned NOT NULL DEFAULT '0' COMMENT 'Material type ID#',
   `type` varchar(255) NOT NULL DEFAULT '' COMMENT 'YM type',
   `param_exceptions` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Params from all fields except...',
-  `params_callback` text CHARACTER SET utf8mb3 COLLATE utf8_general_ci COMMENT 'Params callback',
+  `params_callback` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci COMMENT 'Params callback',
   PRIMARY KEY (`id`,`mtype`),
   KEY `id` (`id`),
   KEY `mtype` (`mtype`)
@@ -1522,7 +1522,7 @@ CREATE TABLE `cms_shop_blocks_yml_params` (
   `mtype` int unsigned NOT NULL DEFAULT '0' COMMENT 'Material type ID#',
   `param_name` varchar(255) NOT NULL DEFAULT '' COMMENT 'Param name',
   `field_id` varchar(255) NOT NULL DEFAULT '' COMMENT 'Field ID#',
-  `field_callback` text CHARACTER SET utf8mb3 COLLATE utf8_general_ci COMMENT 'Field callback',
+  `field_callback` text CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci COMMENT 'Field callback',
   `param_unit` varchar(255) NOT NULL DEFAULT '' COMMENT 'Param unit',
   `param_static_value` varchar(255) NOT NULL DEFAULT '' COMMENT 'Param static value',
   PRIMARY KEY (`id`,`mtype`,`param_name`),
@@ -1685,7 +1685,7 @@ CREATE TABLE `cms_shop_orders` (
   `post_date` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT 'Post date',
   `vis` int unsigned NOT NULL DEFAULT '0' COMMENT 'Visited',
   `ip` varchar(255) NOT NULL DEFAULT '0.0.0.0' COMMENT 'IP address',
-  `user_agent` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8_general_ci NOT NULL DEFAULT '' COMMENT 'User Agent',
+  `user_agent` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL DEFAULT '' COMMENT 'User Agent',
   `status_id` int unsigned NOT NULL DEFAULT '0' COMMENT 'Status ID#',
   `paid` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Payment status',
   `payment_interface_classname` varchar(255) NOT NULL DEFAULT '' COMMENT 'Payment interface classname',
@@ -1830,6 +1830,7 @@ CREATE TABLE `cms_shop_priceloaders` (
   `catalog_offset` int unsigned NOT NULL DEFAULT '0' COMMENT 'Catalog offset',
   `media_action` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Media fields action',
   `cats_usage` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Categories usage',
+  `step_interface` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Step interface',
   PRIMARY KEY (`id`),
   KEY `mtype` (`mtype`),
   KEY `ufid` (`ufid`),
@@ -1846,7 +1847,7 @@ CREATE TABLE `cms_shop_priceloaders` (
 
 LOCK TABLES `cms_shop_priceloaders` WRITE;
 /*!40000 ALTER TABLE `cms_shop_priceloaders` DISABLE KEYS */;
-INSERT INTO `cms_shop_priceloaders` VALUES (1,4,'25','Стандартный загрузчик прайсов','default','RAAS\\CMS\\Shop\\PriceloaderInterface',0,0,0,15,0,1,1,0,0,0);
+INSERT INTO `cms_shop_priceloaders` VALUES (1,4,'25','Стандартный загрузчик прайсов','default','RAAS\\CMS\\Shop\\PriceloaderInterface',0,0,0,15,0,1,1,0,0,0,0);
 /*!40000 ALTER TABLE `cms_shop_priceloaders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2450,7 +2451,7 @@ CREATE TABLE `processes` (
 
 LOCK TABLES `processes` WRITE;
 /*!40000 ALTER TABLE `processes` DISABLE KEYS */;
-INSERT INTO `processes` VALUES (3788,'2024-03-19 23:11:08','http://test/admin/?p=cms&sub=dev&action=copy_snippet&id=49','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(2492,'2024-03-29 15:46:20','http://test/admin/?p=cms&action=edit_block&id=34&pid=18','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(13568,'2024-04-04 10:40:12','http://test/admin/?p=cms&sub=dev&action=edit_form&id=3','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(16992,'2024-06-11 14:47:56','http://test/admin/?mode=admin&sub=modules','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(10384,'2024-06-12 12:21:26','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(15724,'2024-06-13 16:58:55','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(13648,'2024-06-26 19:18:23','http://test/admin/?p=cms&sub=dev&action=forms','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(16100,'2024-07-02 18:22:28','http://test/admin/?p=cms&sub=dev&action=edit_snippet&id=16','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1');
+INSERT INTO `processes` VALUES (3788,'2024-03-19 23:11:08','http://test/admin/?p=cms&sub=dev&action=copy_snippet&id=49','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(2492,'2024-03-29 15:46:20','http://test/admin/?p=cms&action=edit_block&id=34&pid=18','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(13568,'2024-04-04 10:40:12','http://test/admin/?p=cms&sub=dev&action=edit_form&id=3','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(16992,'2024-06-11 14:47:56','http://test/admin/?mode=admin&sub=modules','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(10384,'2024-06-12 12:21:26','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(15724,'2024-06-13 16:58:55','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(13648,'2024-06-26 19:18:23','http://test/admin/?p=cms&sub=dev&action=forms','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(16100,'2024-07-02 18:22:28','http://test/admin/?p=cms&sub=dev&action=edit_snippet&id=16','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(14516,'2025-01-17 14:10:38','http://test/admin/?mode=admin&sub=modules','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 YaBrowser/24.12.0.0 Safari/537.36','127.0.0.1');
 /*!40000 ALTER TABLE `processes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2478,7 +2479,7 @@ CREATE TABLE `registry` (
 
 LOCK TABLES `registry` WRITE;
 /*!40000 ALTER TABLE `registry` DISABLE KEYS */;
-INSERT INTO `registry` VALUES ('','installDate','2024-06-26 19:15:12',1),('','cookieLifetime','14',0),('','minPasswordLength','3',0),('','rowsPerPage','20',0),('cms','tnsize','300',0),('cms','maxsize','1920',0),('cms','cache','0',0),('cms','installDate','2024-07-02 18:22:31',1),('cms','isActive','1',0),('cms.meta_checker','installDate','2018-04-05 11:34:16',1),('cms.meta_checker','isActive','1',0),('cms.shop','installDate','2024-07-02 18:22:32',1),('cms.shop','isActive','1',0),('cms.users','activation_notify','<?php\nnamespace RAAS\\CMS\\Users;\n\n$recoveryBlocks = Block_Recovery::getSet(array(\n    \'where\' => \"block_type = \'RAAS\\\\\\\\CMS\\\\\\\\Users\\\\\\\\Block_Recovery\'\",\n    \'orderBy\' => \'id\'\n));\n$recoveryPages = array();\nif ($recoveryBlocks) {\n    $recoveryPages = array();\n    foreach ($recoveryBlocks as $recoveryBlock) {\n        $recoveryPages = array_merge($recoveryPages, $recoveryBlock->pages);\n    }\n}\n$recoveryPage = null;\n$langRecoveryPages = array_filter($recoveryPages, function ($x) use ($User) {\n    return $x->lang == $User->lang;\n});\nif ($langRecoveryPages) {\n    $recoveryPage = array_shift($langRecoveryPages);\n}\nif (!$recoveryPage->id && $recoveryPages) {\n    $recoveryPage = array_shift($recoveryPages);\n}\n?>\n<p><?php echo GREETINGS?></p>\n\n<?php if ($active) { ?>\n    <p><?php echo YOUR_ACCOUNT_HAS_BEEN_ACTIVATED?></p>\n    <p><?php echo NOW_YOU_CAN_LOG_IN_INTO_THE_SYSTEM?></p>\n    <p>\n      <strong><?php echo YOUR_LOGIN?>:</strong> <?php echo htmlspecialchars($User->login)?><br />\n      <?php\n      $recoveryUrl = (\'http\' . ($_SERVER[\'HTTPS\'] == \'on\' ? \'s\' : \'\') . \'://\' . $_SERVER[\'HTTP_HOST\'])\n                   . ($recoveryPage->id ? $recoveryPage->url : \'/recovery/\');\n      echo sprintf(YOUR_PASSWORD_ISNT_STORED_IN_DATABASE_FOR_SECURITY_REASON, htmlspecialchars($recoveryUrl));\n      ?>\n    </p>\n<?php } else { ?>\n    <p><?php echo YOUR_ACCOUNT_HAS_BEEN_BLOCKED?></p>\n    <p><?php echo PLEASE_CONTACT_SITE_ADMINISTRATOR_TO_ASK_REASON?></p>\n<?php } ?>\n\n<p>--</p>\n<p>\n  <?php echo WITH_RESPECT?>,<br />\n  <?php echo ADMINISTRATION_OF_SITE?> <a href=\"http<?php echo ($_SERVER[\'HTTPS\'] == \'on\' ? \'s\' : \'\')?>://<?php echo htmlspecialchars($_SERVER[\'HTTP_HOST\'])?>\"><?php echo htmlspecialchars($_SERVER[\'HTTP_HOST\'])?></a>\n</p>\n',0),('cms.users','automatic_notification','1',0),('cms.users','installDate','2024-06-26 19:15:17',1),('cms.users','isActive','1',0),('','baseVersion','4.3.44',0),('cms','baseVersion','4.3.91',0),('cms.shop','baseVersion','4.3.91',0),('cms.users','baseVersion','4.3.24',0);
+INSERT INTO `registry` VALUES ('','installDate','2025-01-17 14:10:25',1),('','cookieLifetime','14',0),('','minPasswordLength','3',0),('','rowsPerPage','20',0),('cms','tnsize','300',0),('cms','maxsize','1920',0),('cms','cache','0',0),('cms','installDate','2025-01-17 14:10:29',1),('cms','isActive','1',0),('cms.meta_checker','installDate','2018-04-05 11:34:16',1),('cms.meta_checker','isActive','1',0),('cms.shop','installDate','2025-01-17 14:10:34',1),('cms.shop','isActive','1',0),('cms.users','activation_notify','<?php\nnamespace RAAS\\CMS\\Users;\n\n$recoveryBlocks = Block_Recovery::getSet(array(\n    \'where\' => \"block_type = \'RAAS\\\\\\\\CMS\\\\\\\\Users\\\\\\\\Block_Recovery\'\",\n    \'orderBy\' => \'id\'\n));\n$recoveryPages = array();\nif ($recoveryBlocks) {\n    $recoveryPages = array();\n    foreach ($recoveryBlocks as $recoveryBlock) {\n        $recoveryPages = array_merge($recoveryPages, $recoveryBlock->pages);\n    }\n}\n$recoveryPage = null;\n$langRecoveryPages = array_filter($recoveryPages, function ($x) use ($User) {\n    return $x->lang == $User->lang;\n});\nif ($langRecoveryPages) {\n    $recoveryPage = array_shift($langRecoveryPages);\n}\nif (!$recoveryPage->id && $recoveryPages) {\n    $recoveryPage = array_shift($recoveryPages);\n}\n?>\n<p><?php echo GREETINGS?></p>\n\n<?php if ($active) { ?>\n    <p><?php echo YOUR_ACCOUNT_HAS_BEEN_ACTIVATED?></p>\n    <p><?php echo NOW_YOU_CAN_LOG_IN_INTO_THE_SYSTEM?></p>\n    <p>\n      <strong><?php echo YOUR_LOGIN?>:</strong> <?php echo htmlspecialchars($User->login)?><br />\n      <?php\n      $recoveryUrl = (\'http\' . ($_SERVER[\'HTTPS\'] == \'on\' ? \'s\' : \'\') . \'://\' . $_SERVER[\'HTTP_HOST\'])\n                   . ($recoveryPage->id ? $recoveryPage->url : \'/recovery/\');\n      echo sprintf(YOUR_PASSWORD_ISNT_STORED_IN_DATABASE_FOR_SECURITY_REASON, htmlspecialchars($recoveryUrl));\n      ?>\n    </p>\n<?php } else { ?>\n    <p><?php echo YOUR_ACCOUNT_HAS_BEEN_BLOCKED?></p>\n    <p><?php echo PLEASE_CONTACT_SITE_ADMINISTRATOR_TO_ASK_REASON?></p>\n<?php } ?>\n\n<p>--</p>\n<p>\n  <?php echo WITH_RESPECT?>,<br />\n  <?php echo ADMINISTRATION_OF_SITE?> <a href=\"http<?php echo ($_SERVER[\'HTTPS\'] == \'on\' ? \'s\' : \'\')?>://<?php echo htmlspecialchars($_SERVER[\'HTTP_HOST\'])?>\"><?php echo htmlspecialchars($_SERVER[\'HTTP_HOST\'])?></a>\n</p>\n',0),('cms.users','automatic_notification','1',0),('cms.users','installDate','2025-01-17 14:10:38',1),('cms.users','isActive','1',0),('','baseVersion','4.5.3',0),('cms','baseVersion','4.5.4',0),('cms.shop','baseVersion','4.5.1',0),('cms.users','baseVersion','4.5.1',0);
 /*!40000 ALTER TABLE `registry` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2605,4 +2606,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-07-02 18:22:55
+-- Dump completed on 2025-01-17 14:10:43

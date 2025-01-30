@@ -1,20 +1,11 @@
 <?php
 /**
- * Файл работы с шаблоном Singleton ("одиночка")
- *
- * Этот файл - часть библиотеки, предоставляющий основной функционал работы с шаблоном Singleton ("одиночка")
- *
  * @package SOME
- * @subpackage Singleton
- * @author Александр В. Сурнин <info@volumnet.ru>
- * @copyright © 2022, ООО «Объемные Сети»
- * @license GPL для собственных и некоммерческих проектов, коммерческая для веб-разработчиков и студий
  */
 namespace SOME;
 
 /**
  * Класс шаблона Singleton ("одиночка")
- * @package RAAS
  */
 abstract class Singleton
 {

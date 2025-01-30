@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.29, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.2.0, for Win64 (x86_64)
 --
--- Host: localhost    Database: test
+-- Host: MySQL-8.2    Database: test
 -- ------------------------------------------------------
--- Server version	8.0.29
+-- Server version	8.2.0
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -39,7 +39,7 @@ CREATE TABLE `processes` (
 
 LOCK TABLES `processes` WRITE;
 /*!40000 ALTER TABLE `processes` DISABLE KEYS */;
-INSERT INTO `processes` VALUES (3788,'2024-03-19 23:11:08','http://test/admin/?p=cms&sub=dev&action=copy_snippet&id=49','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(2492,'2024-03-29 15:46:20','http://test/admin/?p=cms&action=edit_block&id=34&pid=18','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(13568,'2024-04-04 10:40:12','http://test/admin/?p=cms&sub=dev&action=edit_form&id=3','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(16992,'2024-06-11 14:47:56','http://test/admin/?mode=admin&sub=modules','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(10384,'2024-06-12 12:21:26','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(15724,'2024-06-13 16:58:55','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(13648,'2024-06-26 19:18:23','http://test/admin/?p=cms&sub=dev&action=forms','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(16100,'2024-07-02 18:22:28','http://test/admin/?p=cms&sub=dev&action=edit_snippet&id=16','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1');
+INSERT INTO `processes` VALUES (3788,'2024-03-19 23:11:08','http://test/admin/?p=cms&sub=dev&action=copy_snippet&id=49','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(2492,'2024-03-29 15:46:20','http://test/admin/?p=cms&action=edit_block&id=34&pid=18','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 YaBrowser/24.1.0.0 Safari/537.36','127.0.0.1'),(13568,'2024-04-04 10:40:12','http://test/admin/?p=cms&sub=dev&action=edit_form&id=3','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(16992,'2024-06-11 14:47:56','http://test/admin/?mode=admin&sub=modules','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(10384,'2024-06-12 12:21:26','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 YaBrowser/24.4.0.0 Safari/537.36','127.0.0.1'),(15724,'2024-06-13 16:58:55','http://test/admin/?p=cms&sub=dev&action=snippets','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(13648,'2024-06-26 19:18:23','http://test/admin/?p=cms&sub=dev&action=forms','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(16100,'2024-07-02 18:22:28','http://test/admin/?p=cms&sub=dev&action=edit_snippet&id=16','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 YaBrowser/24.6.0.0 Safari/537.36','127.0.0.1'),(14516,'2025-01-17 14:10:38','http://test/admin/?mode=admin&sub=modules','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 YaBrowser/24.12.0.0 Safari/537.36','127.0.0.1');
 /*!40000 ALTER TABLE `processes` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-07-02 18:23:07
+-- Dump completed on 2025-01-17 14:11:00

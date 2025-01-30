@@ -1,6 +1,6 @@
 <?php
 /**
- * Рендерер шаблонов Mustache
+ * @package SOME
  */
 declare(strict_types=1);
 

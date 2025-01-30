@@ -291,8 +291,10 @@ class BaseTest extends TestCase
             }
         }
         $queryToChange = preg_match('/(^| )(INSERT|REPLACE|UPDATE|DELETE|ALTER) /umis', $query);
-        if ($queryToChange) {
-            static::$affectedTables[$table] = true;
+        foreach ($tables as $table) {
+            if ($queryToChange) {
+                static::$affectedTables[$table] = true;
+            }
         }
         return [$tables, $queryToChange];
     }
@@ -330,9 +332,10 @@ class BaseTest extends TestCase
 
 
     /**
-     * Получение папки ресурсов
+     * Получение имени папки ресурсов
+     * @return string
      */
-    public function getResourcesDir()
+    public static function getResourcesDir(): string
     {
         return 'resources';
     }
