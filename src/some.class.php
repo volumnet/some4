@@ -1312,8 +1312,11 @@ abstract class SOME extends ArrayObject
                     $classname = $reference['classname'];
                     $remoteRef = $classname::getReferenceByFK($reference['FK']);
                     // 2015-05-04, AVS: добавили !is_subclass_of, чтобы обеспечить наследуемость
-                    if (($classname::$references[$remoteRef]['classname'] != static::class) &&
-                        !is_subclass_of(static::class, $classname::$references[$remoteRef]['classname'])
+                    if (!$remoteRef ||
+                        (
+                            ($classname::$references[$remoteRef]['classname'] != static::class) &&
+                            !is_subclass_of(static::class, $classname::$references[$remoteRef]['classname'])
+                        )
                     ) {
                         $err = 'Cannot initialize class "' . static::class . '": '
                             . 'class "' . $classname . '" is not its child with the foreign key "'
