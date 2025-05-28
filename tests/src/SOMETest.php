@@ -46,6 +46,7 @@ class SOMETest extends BaseTest
         'cms_blocks_pages_assoc',
         'cms_blocks_search_pages_assoc',
         'cms_data',
+        'cms_fieldgroups',
         'cms_fields',
         'cms_fields_form_vis',
         'cms_forms',
