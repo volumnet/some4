@@ -659,7 +659,9 @@ class DB
                     $temp[] = $row;
                 }
             }
-            $sqlQuery = ($replace && !is_array($replace) ? "REPLACE" : "INSERT") . " INTO `" . $table . "` (";
+            $tableArr = explode(".", $table);
+            $tableArr = array_map(fn($x) => "`" . $x . "`", $tableArr);
+            $sqlQuery = ($replace && !is_array($replace) ? "REPLACE" : "INSERT") . " INTO " . implode(".", $tableArr) . " (";
             $sqlQuery .= implode(", ", array_map(function ($x) {
                 return "`" . $x . "`";
             }, $fields));

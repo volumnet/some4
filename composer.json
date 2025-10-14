@@ -1,39 +1,39 @@
 {
-    "name": "volumnet/some4",
-    "version": "4.7.8",
-    "description": "SOME Framework",
-    "license": "GPL-3.0-or-later",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
-    "require": {
-        "php": ">=8.0",
-        "twig/twig": "*",
-        "mustache/mustache": "*",
-        "pelago/emogrifier": "*",
-        "phpoffice/phpspreadsheet": "*",
-        "phpdocumentor/reflection-docblock": "*"
-    },
-    "require-dev": {
-        "phpunit/phpunit": "*",
-        "volumnet/raas.cms": "4.*",
-        "volumnet/raas.cms.shop": "4.*",
-        "volumnet/raas.cms.users": "4.*"
-    },
-    "authors": [
-        {
-            "name": "Alex V. Surnin",
-            "email": "info@volumnet.ru"
-        }
-    ],
-    "autoload": {
-        "classmap": ["src"] 
-    },
-    "autoload-dev": {
-        "classmap": ["tests"]
-    },
-    "config": {
-        "allow-plugins": {
-            "robloach/component-installer": false
-        }
+  "name": "volumnet/some4",
+  "version": "4.7.9",
+  "description": "SOME Framework",
+  "license": "GPL-3.0-or-later",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "require": {
+    "php": ">=8.0",
+    "twig/twig": "*",
+    "mustache/mustache": "*",
+    "pelago/emogrifier": "*",
+    "phpoffice/phpspreadsheet": "*",
+    "phpdocumentor/reflection-docblock": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "*",
+    "volumnet/raas.cms": "4.*",
+    "volumnet/raas.cms.shop": "4.*",
+    "volumnet/raas.cms.users": "4.*"
+  },
+  "authors": [
+    {
+      "name": "Alex V. Surnin",
+      "email": "info@volumnet.ru"
     }
+  ],
+  "autoload": {
+    "classmap": ["src"]
+  },
+  "autoload-dev": {
+    "classmap": ["tests"]
+  },
+  "config": {
+    "allow-plugins": {
+      "robloach/component-installer": false
+    }
+  }
 }
