@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package SOME
  */
@@ -61,42 +62,42 @@ abstract class SOME extends ArrayObject
     /**
      * Тип свойства — первичный ключ
      */
-    const FIELD_ID = 0x1;
+    public const FIELD_ID = 0x1;
 
     /**
      * Тип свойства — обычное (регулярное) поле или его обновление
      */
-    const FIELD_REGULAR = 0x2;
+    public const FIELD_REGULAR = 0x2;
 
     /**
      * Тип свойства — именованная ссылка по внешнему ключу
      */
-    const FIELD_REFERENCE = 0x4;
+    public const FIELD_REFERENCE = 0x4;
 
     /**
      * Тип свойства — массив по таблице-связке
      */
-    const FIELD_LINK = 0x8;
+    public const FIELD_LINK = 0x8;
 
     /**
      * Тип свойства — вычисляемое ("осознаваемое") свойство
      */
-    const FIELD_COGNIZABLE = 0x10;
+    public const FIELD_COGNIZABLE = 0x10;
 
     /**
      * Тип свойства — дочерние элементы
      */
-    const FIELD_CHILDREN = 0x20;
+    public const FIELD_CHILDREN = 0x20;
 
     /**
      * Тип свойства — родительские элементы
      */
-    const FIELD_PARENTS = 0x40;
+    public const FIELD_PARENTS = 0x40;
 
     /**
      * Тип свойства — мета-данные
      */
-    const FIELD_META = 0x80;
+    public const FIELD_META = 0x80;
 
 
     /**
@@ -1087,16 +1088,16 @@ abstract class SOME extends ArrayObject
     }
 
 
-     /**
-     * Родительские элементы для данного объекта
-     *
-     * Работает только для древовидных структур, т.е. таких, где сущность является родительской для самой себя.
-     * Возвращает все родительские элементы по именованной ссылке
-     *
-     * @param string $ref Название ссылки из массива static::$parents
-     * @return SOME[]|false Индексированный массив родительских объектов от корневого до непосредственного родителя,
-     *     либо false, если ссылка не рекурсивная
-     */
+    /**
+    * Родительские элементы для данного объекта
+    *
+    * Работает только для древовидных структур, т.е. таких, где сущность является родительской для самой себя.
+    * Возвращает все родительские элементы по именованной ссылке
+    *
+    * @param string $ref Название ссылки из массива static::$parents
+    * @return SOME[]|false Индексированный массив родительских объектов от корневого до непосредственного родителя,
+    *     либо false, если ссылка не рекурсивная
+    */
     final public function parents(string $ref)
     {
         if (!(static::$parents[$ref] ?? null)) {
@@ -2343,8 +2344,8 @@ abstract class SOME extends ArrayObject
                 try { // Для работы с временными таблицами, которые остались в кэше SOME
                     $newIds = $refererClassname::$SQL->getcol($sqlQuery);
                     $refererClassname::$SQL->query($sqlUpdate);
-                // @codeCoverageIgnoreStart
-                // В рамках тестирования не будем проверять заведомо ошибочные случаи
+                    // @codeCoverageIgnoreStart
+                    // В рамках тестирования не будем проверять заведомо ошибочные случаи
                 } catch (PDOException $e) {
                 }
                 // @codeCoverageIgnoreEnd

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package SOME
  */
@@ -83,7 +84,7 @@ final class Text
         $d = floor((int)$number / 10) % 10;
         if ($e == 1 && $d != 1) {
             return $wordForms[1];
-        } else if ($e >= 2 && $e <= 4 && $d != 1) {
+        } elseif ($e >= 2 && $e <= 4 && $d != 1) {
             return $wordForms[2];
         } else {
             return $wordForms[0];
@@ -198,13 +199,13 @@ final class Text
     }
 
 
-     /**
-     * Возвращает транслитерированную строку
-     *
-     * Преобразует текст, набранный кириллицей, в текст, набранный латиницей, с учетом входной кодировки
-     * @param string $string исходная строка для преобразования - кириллицей
-     * @return string преобразованная строка
-     */
+    /**
+    * Возвращает транслитерированную строку
+    *
+    * Преобразует текст, набранный кириллицей, в текст, набранный латиницей, с учетом входной кодировки
+    * @param string $string исходная строка для преобразования - кириллицей
+    * @return string преобразованная строка
+    */
     public static function translit(string $string): string
     {
         $result = $string;
@@ -566,8 +567,8 @@ final class Text
             if ($summary && ($summary != $classname)) {
                 return $summary;
             }
-        // @codeCoverageIgnoreStart
-        // Не могу у существующих классов проверять ошибку
+            // @codeCoverageIgnoreStart
+            // Не могу у существующих классов проверять ошибку
         } catch (Exception $e) {
         }
         return '';

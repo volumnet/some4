@@ -34,7 +34,7 @@ abstract class Singleton
 
     /**
      * Возвращает (и при необходимости создает) экземпляр класса
-     * @return Singleton
+     * @return static
      */
     public static function i()
     {
