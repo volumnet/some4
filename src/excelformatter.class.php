@@ -1,7 +1,9 @@
 <?php
+
 /**
  * Файл форматирования данных в Excel
  */
+
 namespace SOME;
 
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -11,7 +13,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Worksheet\MemoryDrawing;
+use PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing;
 
 /**
  * Класс форматирования данных в Excel
@@ -21,12 +23,12 @@ class ExcelFormatter extends Spreadsheet
     /**
      * Миллиметров на единицу ширины
      */
-    const MM_PER_WIDTH_UNIT = 1.966667;
+    public const MM_PER_WIDTH_UNIT = 1.966667;
 
     /**
      * Миллиметров на единицу высоты
      */
-    const MM_PER_HEIGHT_UNIT = 0.353;
+    public const MM_PER_HEIGHT_UNIT = 0.353;
 
     /**
      * Конструктор класса
