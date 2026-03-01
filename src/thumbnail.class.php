@@ -1,7 +1,9 @@
 <?php
+
 /**
  * @package SOME
  */
+
 namespace SOME;
 
 /**
@@ -28,24 +30,29 @@ namespace SOME;
 class Thumbnail
 {
     /**
-     * Создание эскиза, вписанного в рамку, с удаленными полями
+     * Создание эскиза, вписанного в рамку
      */
-    const THUMBNAIL_INLINE = 1;
+    public const THUMBNAIL_INLINE = 1;
 
     /**
      * Создание эскиза, вписанного в рамку, с оставленными полями
      */
-    const THUMBNAIL_FRAME = 2;
+    public const THUMBNAIL_FRAME = 2;
 
     /**
      * Создание эскиза, описанного около рамки, с удаленными выступающими частями
      */
-    const THUMBNAIL_CROP = 3;
+    public const THUMBNAIL_CROP = 3;
+
+    /**
+     * Создание эскиза, описанного около рамки
+     */
+    public const THUMBNAIL_COVER = 4;
 
     /**
      * Размер эскиза по умолчанию.
      */
-    const TN_SIZE = 128;
+    public const TN_SIZE = 128;
 
     /**
      * Путь к исходному файлу.
@@ -287,7 +294,7 @@ class Thumbnail
         if (!$functionSrc) {
             $functionSrc = 'imagecreatefromjpeg';
         }
-        $this->imgSrc =@ $functionSrc($this->_src);
+        $this->imgSrc = @ $functionSrc($this->_src);
     }
 
 
@@ -567,6 +574,21 @@ class Thumbnail
                 $this->dIn = $this->dSrc;
                 $this->uIn = ($this->lSrc - $this->lIn) / 2;
                 $this->vIn = ($this->dSrc - $this->dIn) / 2;
+                break;
+            case self::THUMBNAIL_COVER:
+                $this->lIn = $this->lSrc;
+                $this->dIn = $this->dSrc;
+                $this->uIn = ($this->lSrc - $this->lIn) / 2;
+                $this->vIn = ($this->dSrc - $this->dIn) / 2;
+
+                $this->uOut = 0;
+                $this->vOut = 0;
+                if ($this->_allowEnlarge) {
+                    $this->dOut =  $this->dFrame;
+                } else {
+                    $this->dOut = min($this->dFrame, $this->dSrc);
+                }
+                $this->lOut = $this->dOut * $this->lSrc / $this->dSrc;
                 break;
         }
         foreach (['uIn', 'vIn', 'lIn', 'dIn', 'uOut', 'vOut', 'lOut', 'dOut'] as $var) {
