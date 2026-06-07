@@ -1,7 +1,9 @@
 <?php
+
 /**
  * @package SOME
  */
+
 namespace SOME;
 
 /**
@@ -94,32 +96,35 @@ final class CSV
     private function getcsv()
     {
         $rows = [];
-        for ($i = 0; $i < count($this->data); $i++) {
-            for ($j = 0; $j < count($this->data[$i]); $j++) {
+        $data = $this->data;
+        for ($i = 0; $i < count($data); $i++) {
+            for ($j = 0; $j < count($data[$i]); $j++) {
                 if ($this->escchars) {
-                    $data[$i][$j] = addcslashes(
-                        $this->data[$i][$j],
-                        "\0..\37\\"
-                    );
+                    // 2026-03-11, AVS: в предыдущей версии ни на что не влияло
+                    // (была "висящая" переменная $data)
+                    // $data[$i][$j] = addcslashes(
+                    //     $data[$i][$j],
+                    //     "\0..\37\\"
+                    // );
                 }
-                if (substr($this->data[$i][$j], 0, 1) == '+' ||
-                    substr($this->data[$i][$j], 0, 1) == "-"
+                if (substr($data[$i][$j], 0, 1) == '+' ||
+                    substr($data[$i][$j], 0, 1) == "-"
                 ) {
-                    $this->data[$i][$j] = ' ' . $this->data[$i][$j];
+                    $data[$i][$j] = ' ' . $data[$i][$j];
                 }
-                if (strstr($this->data[$i][$j], '"') ||
-                    strstr($this->data[$i][$j], ";") ||
-                    strstr($this->data[$i][$j], "\r") ||
-                    strstr($this->data[$i][$j], "\n") ||
-                    strstr($this->data[$i][$j], "\t") ||
-                    strstr($this->data[$i][$j], ' ')
+                if (strstr($data[$i][$j], '"') ||
+                    strstr($data[$i][$j], $this->sep) ||
+                    strstr($data[$i][$j], "\r") ||
+                    strstr($data[$i][$j], "\n") ||
+                    strstr($data[$i][$j], "\t") ||
+                    strstr($data[$i][$j], ' ')
                 ) {
-                    $this->data[$i][$j] = '"'
-                        . str_replace('"', '""', $this->data[$i][$j])
+                    $data[$i][$j] = '"'
+                        . str_replace('"', '""', $data[$i][$j])
                         . '"';
                 }
             }
-            $rows[$i] = implode($this->sep, $this->data[$i]);
+            $rows[$i] = implode($this->sep, $data[$i]);
         }
 
         $text = implode("\n", $rows);
